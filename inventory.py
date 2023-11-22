@@ -1,3 +1,3 @@
 robots = [
-    ("192.168.0.137", {"ssh_user": "danny"})
+    ("learnrob3.local", {"ssh_user": "danny"})
 ]
