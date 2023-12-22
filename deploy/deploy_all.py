@@ -1,4 +1,5 @@
 from deploy import \
-    update_packages, \
     base_packages, \
+    deploy_inventor_hat_mini, \
+    configure_pi, \
     update_code
