@@ -1,10 +1,28 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, FlatList } from 'react-native';
+
+const MENU_ITEMS = [
+  { id: 'manual_drive', label: 'Manual drive' },
+  { id: 'behavior_path', label: 'Drive path'}
+];
+
+function Item({label}) {
+  return (
+  <View style={styles.item}>
+    <Text>{label}</Text>
+  </View>
+  );
+}
 
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text>Robot control</Text>
+      <Text style={styles.title}>Robot control</Text>
+      <FlatList 
+        data={MENU_ITEMS}
+        renderItem={({ item }) => <Item label={item.label}/>}
+        keyExtractor={item => item.id}
+      />
       <StatusBar style="auto" />
     </View>
   );
@@ -14,7 +32,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'center',
+    alignItems: 'stretch',
     justifyContent: 'center',
+    marginTop: StatusBar.currentHeight || 60,
+  },
+  title: {
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  item: {
+    backgroundColor: '#cdcdcd',
+    alignItems: 'center',
+    padding: 20,
+    borderTopWidth: 4,
+    borderBottomWidth: 4,
+    borderColor: '#000',
   },
 });
