@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { styles } from '../styles';
 
 export default function Page() {
     return (
@@ -9,18 +10,3 @@ export default function Page() {
       </View>
     );
   }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-        alignItems: 'stretch',
-        justifyContent: 'center',
-        marginTop: StatusBar.currentHeight || 60,
-    },
-    title: {
-        alignSelf: 'center',
-        marginBottom: 20,
-    }
-}
-);
