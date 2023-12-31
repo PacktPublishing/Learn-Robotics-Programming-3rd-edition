@@ -6,10 +6,10 @@ const MENU_ITEMS = [
   { id: 'behavior_path', label: 'Drive path'}
 ];
 
-function Item({label}) {
+function Item({item}) {
   return (
   <View style={styles.item}>
-    <Text>{label}</Text>
+    <Text>{item.label}</Text>
   </View>
   );
 }
@@ -20,7 +20,7 @@ export default function App() {
       <Text style={styles.title}>Robot control</Text>
       <FlatList 
         data={MENU_ITEMS}
-        renderItem={({ item }) => <Item label={item.label}/>}
+        renderItem={({ item }) => <Item item={item}/>}
         keyExtractor={item => item.id}
       />
       <StatusBar style="auto" />
