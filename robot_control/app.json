@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "robot-control",
-    "slug": "robot-control",
+    "name": "robot_control",
+    "slug": "robot_control",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
