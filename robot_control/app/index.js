@@ -10,7 +10,7 @@ const MENU_ITEMS = [
 function Item({item}) {
   return (
   <View style={styles.item}>
-    <Text>{item.label}</Text>
+    <Link href={item.id}>{item.label}</Link>
   </View>
   );
 }

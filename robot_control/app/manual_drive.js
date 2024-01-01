@@ -6,6 +6,7 @@ export default function Page() {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Manual drive</Text>
+        <Link href="/">Back</Link>
         <StatusBar style="auto" />
       </View>
     );
