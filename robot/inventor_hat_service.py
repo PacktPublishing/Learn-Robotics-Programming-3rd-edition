@@ -28,7 +28,11 @@ def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
     client.subscribe("motors/#")
 
-atexit.register(stop_motors)
+def exit_handler():
+    stop_motors()
+    board.leds.clear()
+
+atexit.register(exit_handler)
 
 mqtt_username = "robot"
 mqtt_password = "robot"
@@ -43,4 +47,5 @@ client.message_callback_add("motors/left", set_left_motor)
 client.message_callback_add("motors/right", set_right_motor)
 
 client.connect("localhost", 1883)
+board.leds.set_rgb(0, 0, 255, 0)
 client.loop_forever()
