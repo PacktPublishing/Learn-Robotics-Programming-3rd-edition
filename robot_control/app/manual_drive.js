@@ -48,10 +48,14 @@ mqttClient.connect({
 });
 
 function onJoystickMove(data) {
-  console.log('Joystick move');
-  console.log(data);
+  let speed = Math.sin(data.angle.radian) * Math.min(1, data.force);
+  let curve = Math.cos(data.angle.radian) * Math.min(1, data.force);
+  console.log("speed: "+speed+"\t curve: "+curve);
+  mqttClient.publish("motors/left", JSON.stringify(speed + curve));
+  mqttClient.publish("motors/right", JSON.stringify(speed - curve));
 }
 
 function onJoystickStop() {
   console.log('Joystick stop');
+  mqttClient.publish("motors/stop", "{}");
 }
