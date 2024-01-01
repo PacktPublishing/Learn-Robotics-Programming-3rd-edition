@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { Text, View } from 'react-native';
+import { Link } from 'expo-router';
 import { styles } from '../styles';
 
 export default function Page() {
