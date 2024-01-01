@@ -40,7 +40,11 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("leds/#")
 
 
-atexit.register(stop_motors)
+def exit_handler():
+    stop_motors()
+    board.leds.clear()
+
+atexit.register(exit_handler)
 
 mqtt_username = "robot"
 mqtt_password = "robot"
