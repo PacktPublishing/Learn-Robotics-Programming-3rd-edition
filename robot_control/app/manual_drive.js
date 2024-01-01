@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KorolJoystick } from "korol-joystick";
+import { Link } from 'expo-router';
 import { styles } from '../styles';
 
 export default function Page() {
