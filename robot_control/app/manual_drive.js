@@ -1,3 +1,4 @@
+import Paho from "paho-mqtt";
 import { StatusBar } from 'expo-status-bar';
 import { Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -15,6 +16,36 @@ export default function Page() {
       </GestureHandlerRootView>
     );
   }
+
+const env = {
+  PI_HOSTNAME: "learnrob3.local",
+  MQTT_USERNAME: "robot",
+  MQTT_PASSWORD: "robot",
+};
+
+const mqttClient = new Paho.Client(
+  env.PI_HOSTNAME,
+  9001,
+  "robot_control"
+);
+
+mqttClient.onConnectionLost = (err) => {
+  console.log("Connected to MQTT broker lost");
+  console.log(err);
+};
+
+console.log("Attempting to connect to " + env.PI_HOSTNAME);
+mqttClient.connect({
+  userName: env.MQTT_USERNAME,
+  password: env.MQTT_PASSWORD,
+  onSuccess: () => {
+    console.log("Connected");
+  },
+  onFailure: (err) => {
+    console.log('Connection failed');
+    console.log(err)
+  },
+});
 
 function onJoystickMove(data) {
   console.log('Joystick move');
