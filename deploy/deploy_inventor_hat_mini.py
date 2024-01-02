@@ -40,6 +40,7 @@ if code.changed or service.changed:
         name="Restart inventor HAT mini service",
         service="inventor_hat_mini",
         running=True,
+        enabled=True,
         restarted=True,
         daemon_reload=True,
         _sudo=True,
