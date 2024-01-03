@@ -7,6 +7,7 @@ Type=simple
 Restart=always
 WorkingDirectory=/home/{{ pi_user }}/
 ExecStart=/usr/local/bin/robotpython robot/inventor_hat_service.py
+KillSignal=SIGINT
 
 [Install]
 WantedBy=multi-user.target
