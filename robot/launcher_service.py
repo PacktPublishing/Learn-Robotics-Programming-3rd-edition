@@ -1,11 +1,6 @@
-import atexit
-import json
 import subprocess
 import paho.mqtt.client as mqtt
 
-
-mqtt_username = "robot"
-mqtt_password = "robot"
 
 def print_message(client, userdata, msg):
     print(f"{msg.topic} {msg.payload}")
@@ -39,6 +34,9 @@ def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
     client.subscribe("launcher/#")
     client.publish("leds/set", "[1, 0, 0, 255]")
+
+mqtt_username = "robot"
+mqtt_password = "robot"
 
 client = mqtt.Client()
 client.username_pw_set(mqtt_username, mqtt_password)
