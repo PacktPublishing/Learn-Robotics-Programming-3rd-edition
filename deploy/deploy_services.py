@@ -1,4 +1,3 @@
-from deploy import virtual_env
 from pyinfra.operations import files, systemd
 from pyinfra import host
 
