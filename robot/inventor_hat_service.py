@@ -24,9 +24,14 @@ def stop_motors(client=None, userdata=None, msg=None):
 def print_message(client, userdata, msg):
     print(f"{msg.topic} {msg.payload}")
 
+def set_led(client, userdata, msg):
+    index, r, g, b = json.loads(msg.payload)
+    board.leds.set_rgb(index, r, g, b)
+
 def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
     client.subscribe("motors/#")
+    client.subscribe("leds/#")
 
 def exit_handler():
     stop_motors()
@@ -46,6 +51,9 @@ client.message_callback_add("motors/stop", stop_motors)
 client.message_callback_add("motors/left", set_left_motor)
 client.message_callback_add("motors/right", set_right_motor)
 
+client.message_callback_add("leds/#", print_message)
+client.message_callback_add("leds/set", set_led)
+
 client.connect("localhost", 1883)
-board.leds.set_rgb(0, 0, 255, 0)
+board.leds.set_rgb(0, 0, 90, 0)
 client.loop_forever()

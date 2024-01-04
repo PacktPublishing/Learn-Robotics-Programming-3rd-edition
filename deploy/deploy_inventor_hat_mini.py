@@ -25,7 +25,7 @@ code = files.put(
 # Create the service unit file
 service = files.template(
     name="Create inventor HAT mini service",
-    src="deploy/inventor_hat_mini.j2",
+    src="deploy/inventor_hat_service.j2",
     dest="/etc/systemd/system/inventor_hat_mini.service",
     mode="644",
     user="root",
@@ -38,7 +38,7 @@ if code.changed or service.changed:
     # Restart the service
     systemd.service(
         name="Restart inventor HAT mini service",
-        service="inventor_hat_mini",
+        service="inventor_hat_service",
         running=True,
         enabled=True,
         restarted=True,

@@ -1,0 +1,14 @@
+
+[Unit]
+Description=Behavior Path task
+
+[Service]
+Type=simple
+Restart=no
+WorkingDirectory=/home/{{ pi_user }}/
+ExecStart=/usr/local/bin/robotpython robot/behavior_path.py
+KillSignal=SIGINT
+User={{ pi_user }}
+
+[Install]
+WantedBy=multi-user.target

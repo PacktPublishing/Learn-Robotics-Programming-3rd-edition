@@ -9,9 +9,17 @@ export const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     marginTop: StatusBar.currentHeight || 60,
   },
+  titleBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  backlink: {
+    marginLeft: 10,
+  },
   title: {
     alignSelf: 'center',
-    marginBottom: 20,
   },
   item: {
     backgroundColor: '#cdcdcd',
