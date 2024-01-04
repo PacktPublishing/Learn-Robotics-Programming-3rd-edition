@@ -1,0 +1,13 @@
+[Unit]
+Description=Robot launcher service
+After=inventor_hat_mini.service
+
+[Service]
+Type=simple
+Restart=always
+WorkingDirectory=/home/{{ pi_user }}/
+ExecStart=/usr/local/bin/robotpython robot/launcher_service.py
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
