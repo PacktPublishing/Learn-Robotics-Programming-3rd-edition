@@ -1,8 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
-import { connect } from '../lib/connection'
+import { View , Text } from 'react-native';
+import { Link } from 'expo-router';
 import { styles } from '../styles';
-import { TitleBar } from '../components/title_bar';
+import { connect } from '../lib/connection'
 
 export default function Page() {
     mqttClient = connect({
@@ -13,8 +13,9 @@ export default function Page() {
 
     return (
         <View style={styles.container}>
-            <TitleBar title="Drive path" />
+            <Text style={styles.title}>Drive path</Text>
+            <Link href="/">Back</Link>
             <StatusBar style="auto" />
-        </View>        
+        </View>
     );
 }

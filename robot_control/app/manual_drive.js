@@ -1,20 +1,22 @@
 import { StatusBar } from 'expo-status-bar';
+import { Text } from 'react-native';
+import { Link } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ReactNativeJoystick } from "@korsolutions/react-native-joystick";
 import { styles } from '../styles';
 import { connect } from '../lib/connection'
-import { TitleBar } from '../components/title_bar';
 
 
 export default function Page() {
-    return (
-      <GestureHandlerRootView style={styles.container}>
-        <TitleBar title="Manual drive" />
-        <ReactNativeJoystick color="#06b6d4" radius={75} onMove={onJoystickMove} onStop={onJoystickStop }/>
-        <StatusBar style="auto" />
-      </GestureHandlerRootView>
-    );
-  }
+  return (
+    <GestureHandlerRootView style={styles.container}>
+      <Text style={styles.title}>Manual drive</Text>
+      <Link href="/">Back</Link>
+      <ReactNativeJoystick color="#06b6d4" radius={75} onMove={onJoystickMove} onStop={onJoystickStop }/>
+      <StatusBar style="auto" />
+    </GestureHandlerRootView>
+  );
+}
 
 mqttClient = connect({});
 
