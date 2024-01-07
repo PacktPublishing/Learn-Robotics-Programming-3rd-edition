@@ -1,27 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ReactNativeJoystick } from "@korsolutions/react-native-joystick";
-import { connect } from '../lib/connection'
 import { styles } from '../styles';
+import { connect } from '../lib/connection'
 import { TitleBar } from '../components/title_bar';
 
 
 export default function Page() {
-  mqttClient = connect({});
-
-  function onJoystickMove(data) {
-    let speed = Math.sin(data.angle.radian) * Math.min(1, data.force);
-    let curve = Math.cos(data.angle.radian) * Math.min(1, data.force);
-    console.log("speed: "+speed+"\t curve: "+curve);
-    mqttClient.publish("motors/left", JSON.stringify(speed + curve));
-    mqttClient.publish("motors/right", JSON.stringify(speed - curve));
-  }
-
-  function onJoystickStop() {
-    console.log('Joystick stop');
-    mqttClient.publish("motors/stop", "{}");
-  }
-
     return (
       <GestureHandlerRootView style={styles.container}>
         <TitleBar title="Manual drive" />
@@ -30,3 +15,18 @@ export default function Page() {
       </GestureHandlerRootView>
     );
   }
+
+mqttClient = connect({});
+
+function onJoystickMove(data) {
+  let speed = Math.sin(data.angle.radian) * Math.min(1, data.force);
+  let curve = Math.cos(data.angle.radian) * Math.min(1, data.force);
+  console.log("speed: "+speed+"\t curve: "+curve);
+  mqttClient.publish("motors/left", JSON.stringify(speed + curve));
+  mqttClient.publish("motors/right", JSON.stringify(speed - curve));
+}
+
+function onJoystickStop() {
+  console.log('Joystick stop');
+  mqttClient.publish("motors/stop", "{}");
+}
