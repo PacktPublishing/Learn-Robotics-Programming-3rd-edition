@@ -1,12 +1,12 @@
 [Unit]
-Description=Inventor HAT Mini service
+Description={{ service_name }}
 After=mosquitto.service
 
 [Service]
 Type=simple
-Restart=always
+Restart={{ restart }}
 WorkingDirectory=/home/{{ pi_user }}/
-ExecStart=/home/{{ pi_user }}/robotvenv/bin/python robot/inventor_hat_service.py
+ExecStart=/home/{{ pi_user }}/robotvenv/bin/python {{ service_file }}
 KillSignal=SIGINT
 
 [Install]
