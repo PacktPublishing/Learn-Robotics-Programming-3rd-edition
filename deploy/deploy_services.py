@@ -1,14 +1,13 @@
 from pyinfra.operations import files, systemd
 from pyinfra import host
 
+services = [
+    ["inventor_hat_service", "robot/inventor_hat_service.py", True],
+    ["launcher_service", "robot/launcher_service.py", True],
+    ["behavior_path", "robot/behavior_path.py", False],
+]
 
-services = {
-    "inventor_hat_service": ("robot/inventor_hat_service.py", True),
-    "launcher_service": ("robot/launcher_service.py", True),
-    "behavior_path": ("robot/behavior_path.py", False),
-}
-
-for service_name, (service_file, auto_start) in services.items():
+for service_name, service_file, auto_start in services:
     code = files.put(
         name=f"Update {service_name} code",
         src=service_file,

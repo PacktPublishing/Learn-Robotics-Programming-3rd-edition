@@ -15,33 +15,3 @@ pip.packages(
     ],
     virtualenv=virtual_env.robot_venv,
 )
-
-code = files.put(
-    name="Update Inventor HAT mini code",
-    src="robot/inventor_hat_service.py",
-    dest="robot/inventor_hat_service.py",
-)
-
-# Create the service unit file
-service = files.template(
-    name="Create inventor HAT mini service",
-    src="deploy/inventor_hat_service.j2",
-    dest="/etc/systemd/system/inventor_hat_mini.service",
-    mode="644",
-    user="root",
-    group="root",
-    pi_user=host.data.get('ssh_user'),
-    _sudo=True
-)
-
-if code.changed or service.changed:
-    # Restart the service
-    systemd.service(
-        name="Restart inventor HAT mini service",
-        service="inventor_hat_service",
-        running=True,
-        enabled=True,
-        restarted=True,
-        daemon_reload=True,
-        _sudo=True,
-    )
