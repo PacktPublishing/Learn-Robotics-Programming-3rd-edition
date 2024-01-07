@@ -5,26 +5,10 @@ import paho.mqtt.client as mqtt
 def print_message(client, userdata, msg):
     print(f"{msg.topic} {msg.payload}")
 
-registered_units = ["behavior_path.service"]
-
 def start_systemd_unit(client, userdata, msg):
     unit_name = msg.payload.decode()
-    if unit_name in registered_units:
-        subprocess.run(["systemctl", "start", unit_name])
-        client.publish(f"launcher/{unit_name}/status", "started")
-    else:
-        print(f"Unit {unit_name} is not registered")
-        client.publish(f"err/launcher", f"{unit_name} not registered")
-
-def stop_systemd_unit(client, userdata, msg):
-    unit_name = msg.payload.decode()
-    if unit_name in registered_units:
-        subprocess.run(["systemctl", "stop", unit_name])
-        client.publish(f"launcher/{unit_name}/status", "stopped")
-    else:
-        print(f"Unit {unit_name} is not registered")
-        client.publish(f"err/launcher", f"{unit_name} not registered")
-
+    subprocess.run(["systemctl", "start", unit_name])
+    print(unit_name, "started")
 
 def poweroff(client, userdata, msg):
     print("Powering off")
