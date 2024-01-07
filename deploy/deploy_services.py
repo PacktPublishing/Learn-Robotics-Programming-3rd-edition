@@ -15,14 +15,22 @@ for service_name, service_file, auto_start in services:
     )
 
     # Create the service unit file
+    if auto_start:
+        restart="always"
+    else:
+        restart="no"
+
     service = files.template(
         name=f"Create {service_name} service",
-        src=f"deploy/{service_name}.j2",
+        src=f"deploy/service_template.j2",
         dest=f"/etc/systemd/system/{service_name}.service",
         mode="644",
         user="root",
         group="root",
         pi_user=host.data.get('ssh_user'),
+        service_name=service_name,
+        service_file=service_file,
+        restart=restart,
         _sudo=True
     )
 
