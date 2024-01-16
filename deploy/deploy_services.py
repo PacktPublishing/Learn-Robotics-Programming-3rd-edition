@@ -22,7 +22,7 @@ for service_name, service_file, auto_start in services:
 
     service = files.template(
         name=f"Create {service_name} service",
-        src=f"deploy/service_template.j2",
+        src="deploy/service_template.j2",
         dest=f"/etc/systemd/system/{service_name}.service",
         mode="644",
         user="root",
