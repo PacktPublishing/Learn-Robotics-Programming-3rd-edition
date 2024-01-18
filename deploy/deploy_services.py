@@ -1,19 +1,15 @@
 from pyinfra.operations import files, systemd
 from pyinfra import host
+from deploy import update_code
 
 services = [
     ["inventor_hat_service", "robot/inventor_hat_service.py", True],
     ["launcher_service", "robot/launcher_service.py", True],
+    ["distance_sensor_service", "robot/distance_sensor_service.py", True],
     ["behavior_path", "robot/behavior_path.py", False],
 ]
 
 for service_name, service_file, auto_start in services:
-    code = files.put(
-        name=f"Update {service_name} code",
-        src=service_file,
-        dest=service_file,
-    )
-
     # Create the service unit file
     if auto_start:
         restart="always"
@@ -34,7 +30,7 @@ for service_name, service_file, auto_start in services:
         _sudo=True
     )
 
-    if code.changed or service.changed:
+    if update_code.code.changed or service.changed:
         # Restart the service
         systemd.service(
             name=f"Restart {service_name} service",

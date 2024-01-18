@@ -4,4 +4,4 @@ from deploy import \
     deploy_distance_sensor, \
     deploy_mqtt, \
     configure_pi, \
-    update_code
+    deploy_services
