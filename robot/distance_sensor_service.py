@@ -1,6 +1,7 @@
 import json
 import vl53l5cx_ctypes
 import numpy as np
+import time
 
 from mqtt_behavior import connect
 
@@ -24,7 +25,8 @@ class DistanceSensorService:
     def update_data(self):
         data = self.sensor.get_data()
         as_array = np.array(data.distance_mm).reshape((8, 8))
-        as_json = json.dumps(as_array.tolist())
+        flipped = np.flipud(as_array)
+        as_json = json.dumps(flipped.tolist())
         self.client.publish("sensors/distance_mm", as_json)
 
     def loop_forever(self):
@@ -35,11 +37,12 @@ class DistanceSensorService:
         client.message_callback_add("sensors/distance/control/stop_ranging", self.stop_ranging)
         client.publish("sensors/distance/status", "ready")
         self.client = client
+        client.loop_start()
         print("Starting loop")
         while True:
-            client.loop(0.1)
             if self.is_ranging and self.sensor.data_ready():
                 self.update_data()
+            time.sleep(0.01)
 
 print("Initialising sensor")
 service = DistanceSensorService()
