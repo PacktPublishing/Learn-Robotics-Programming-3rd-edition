@@ -18,16 +18,17 @@ export function connect(options) {
         console.log(err);
     };
 
+    mqttClient.onConnected = (reconnect, uri) => {
+        console.log("Connected to " + uri + " via MQTT broker");
+        if (options.onConnectionMade !== undefined) {
+            options.onConnectionMade(mqttClient);
+        }
+    };
+
     console.log("Attempting to connect to " + env.PI_HOSTNAME);
     mqttClient.connect({
         userName: env.MQTT_USERNAME,
         password: env.MQTT_PASSWORD,
-        onSuccess: () => {
-            console.log("Connected");
-            if (options.onConnectionMade !== undefined) {
-                options.onConnectionMade(mqttClient);
-            }
-        },
         onFailure: (err) => {
             console.log('Connection failed');
             console.log(err)

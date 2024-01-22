@@ -6,7 +6,8 @@ import { styles } from '../styles';
 const MENU_ITEMS = [
   { id: 'manual_drive', label: 'Manual drive' },
   { id: 'behavior_path', label: 'Drive path'},
-  { id: 'power_off', label: 'Power off'}
+  { id: 'power_off', label: 'Power off'},
+  { id: 'distance_sensor', label: 'Distance sensor'},
 ];
 
 function Item({item}) {
@@ -21,7 +22,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Robot control</Text>
-      <FlatList 
+      <FlatList
         data={MENU_ITEMS}
         renderItem={({ item }) => <Item item={item}/>}
         keyExtractor={item => item.id}
