@@ -28,7 +28,6 @@ client.on_connect = on_connect
 
 client.message_callback_add("launcher/#", print_message)
 client.message_callback_add("launcher/start", start_systemd_unit)
-client.message_callback_add("launcher/stop", stop_systemd_unit)
 client.message_callback_add("launcher/poweroff", poweroff)
 
 client.connect("localhost", 1883)
