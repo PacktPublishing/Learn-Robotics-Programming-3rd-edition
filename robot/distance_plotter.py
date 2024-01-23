@@ -34,13 +34,16 @@ class DistancePlotter:
         # ax.plot(as_array[0], range(8))
         ax.imshow(as_array, cmap="gray")
         img = io.BytesIO()
-        fig.savefig(img, format="png")
+        fig.savefig(img, format="jpeg")
         self.frame = img.getbuffer()
 
     def update_plot(self, client, userdata, msg):
-        data = json.loads(msg.payload)
-        # print("Received", data)
-        self.make_plot(data)
+        try:
+            data = json.loads(msg.payload)
+            self.make_plot(data)
+        except Exception as err:
+            print("Error:", err)
+            print("Payload:", msg.payload)
 
     async def run_loop(self):
         print("Making connection")
@@ -58,12 +61,18 @@ def frame_generator():
     while True:
         yield (
             b"--frame\r\n"
-            b"Content-Type: image/png\r\n\r\n" + plotter.frame + b"\r\n"
+            b"Content-Type: image/jpeg\r\n\r\n" + plotter.frame + b"\r\n"
         )
 
 @app.route("/display")
-def app_display():
-    return quart.Response(frame_generator(), mimetype="multipart/x-mixed-replace; boundary=frame")
+async def app_display():
+    response = await quart.make_response(
+        frame_generator(),
+        200,
+        {"Content-Type": "multipart/x-mixed-replace; boundary=frame"}
+    )
+    response.timeout = None
+    return response
 
 async def before_serving():
     print("Starting plotter")
