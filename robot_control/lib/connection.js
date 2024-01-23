@@ -1,12 +1,12 @@
 import Paho from "paho-mqtt";
 
-export function connect(options) {
-    const env = {
-        PI_HOSTNAME: "learnrob3.local",
-        MQTT_USERNAME: "robot",
-        MQTT_PASSWORD: "robot",
-    };
+export const env = {
+    PI_HOSTNAME: "learnrob3.local",
+    MQTT_USERNAME: "robot",
+    MQTT_PASSWORD: "robot",
+};
 
+export function connect(options={}) {
     const mqttClient = new Paho.Client(
         env.PI_HOSTNAME,
         9001,
