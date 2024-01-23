@@ -37,7 +37,6 @@ class DistanceSensorService:
         client.message_callback_add("sensors/distance/control/stop_ranging", self.stop_ranging)
         client.publish("sensors/distance/status", "ready")
         self.client = client
-        client.loop_start()
         print("Starting loop")
         while True:
             if self.is_ranging and self.sensor.data_ready():
