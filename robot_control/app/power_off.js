@@ -4,13 +4,13 @@ import { Link } from 'expo-router';
 import { connect } from '../lib/connection'
 import { styles } from '../styles';
 
-mqttClient = connect({
-    onConnectionMade: (client) => {
-        client.publish("launcher/poweroff", "");
-    },
-});
-
 export default function Page() {
+    mqttClient = connect({
+        onConnectionMade: (client) => {
+            client.publish("launcher/poweroff", "");
+        },
+    });
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Power off</Text>

@@ -3,18 +3,18 @@ import asyncio
 import json
 import io
 import numpy as np
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import paho.mqtt.client as mqtt
 
 
 class DistancePlotter:
     def __init__(self) -> None:
-        self.make_plot(np.zeros((8, 8)))
+        self.sensor_data = np.zeros((8, 8))
 
     def on_connect(self, client, userdata, flags, rc):
         print(f"Connected with result code {rc}")
         client.subscribe("sensors/distance_mm")
-        client.message_callback_add("sensors/distance_mm", self.update_plot)
+        client.message_callback_add("sensors/distance_mm", self.data_received)
 
     def connect(self):
         mqtt_username = "robot"
@@ -26,27 +26,24 @@ class DistancePlotter:
         client.connect("localhost", 1883)
         return client
 
-    def make_plot(self, data):
-        as_array = np.array(data)
-        as_array = np.clip(as_array, 0, 300)
-        fig = plt.Figure()
-        ax = fig.subplots()
-        # ax.plot(as_array[0], range(8))
-        ax.imshow(as_array, cmap="gray")
-        img = io.BytesIO()
-        fig.savefig(img, format="jpeg")
-        self.frame = img.getbuffer()
-
-    def update_plot(self, client, userdata, msg):
+    def data_received(self, client, userdata, msg):
         try:
-            data = json.loads(msg.payload)
-            self.make_plot(data)
+            self.sensor_data = json.loads(msg.payload)
         except Exception as err:
             print("Error:", err)
             print("Payload:", msg.payload)
 
+    def make_plot(self):
+        as_array = np.array(self.sensor_data)
+        as_array = np.clip(as_array, 0, 300)
+        fig = Figure()
+        ax = fig.subplots()
+        ax.imshow(as_array, cmap="gray")
+        img = io.BytesIO()
+        fig.savefig(img, format="png", dpi=80)
+        return img.getbuffer()
+
     async def run_loop(self):
-        print("Making connection")
         client = self.connect()
         print("Starting loop")
         while True:
@@ -57,12 +54,14 @@ class DistancePlotter:
 app = quart.Quart(__name__)
 plotter = DistancePlotter()
 
-def frame_generator():
+async def frame_generator():
     while True:
         yield (
             b"--frame\r\n"
-            b"Content-Type: image/jpeg\r\n\r\n" + plotter.frame + b"\r\n"
+            b"Content-Type: image/png\r\n\r\n" + plotter.make_plot() + b"\r\n"
         )
+        await asyncio.sleep(1/10)
+
 
 @app.route("/display")
 async def app_display():
