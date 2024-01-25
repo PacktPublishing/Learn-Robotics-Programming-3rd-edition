@@ -1,5 +1,5 @@
 import atexit
-import json
+import ujson as json
 import inventorhatmini
 import paho.mqtt.client as mqtt
 
@@ -16,6 +16,13 @@ def set_right_motor(client, userdata, msg):
     speed = json.loads(msg.payload)
     right_motor.enable()
     right_motor.speed(speed)
+
+def set_both_motors(client, userdata, msg):
+    left_speed, right_speed = json.loads(msg.payload)
+    left_motor.enable()
+    right_motor.enable()
+    left_motor.speed(left_speed)
+    right_motor.speed(right_speed)
 
 def stop_motors(client=None, userdata=None, msg=None):
     left_motor.stop()
@@ -50,6 +57,7 @@ client.message_callback_add("motors/#", print_message)
 client.message_callback_add("motors/stop", stop_motors)
 client.message_callback_add("motors/left", set_left_motor)
 client.message_callback_add("motors/right", set_right_motor)
+client.message_callback_add("motors/set_both", set_both_motors)
 
 client.message_callback_add("leds/#", print_message)
 client.message_callback_add("leds/set", set_led)

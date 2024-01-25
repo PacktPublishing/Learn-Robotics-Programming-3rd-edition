@@ -11,7 +11,7 @@ pip_packages = pip.packages(
 
 apt_packages = apt.packages(
     name="Install apt dependencies for services",
-    packages=["python3-matplotlib", "python3-numpy"],
+    packages=["python3-matplotlib", "python3-numpy", "python3-ujson"],
     _sudo=True,
 )
 
@@ -21,6 +21,7 @@ services = [
     ["distance_sensor_service", "robot/distance_sensor_service.py", True],
     ["distance_plotter_service", "robot/distance_plotter.py", True],
     ["behavior_path", "robot/behavior_path.py", False],
+    ["behavior_simple_obstacle_avoiding", "robot/behavior_simple_obstacle_avoiding.py", False],
 ]
 
 for service_name, service_file, auto_start in services:

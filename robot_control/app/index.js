@@ -6,8 +6,9 @@ import { styles } from '../styles';
 const MENU_ITEMS = [
   { id: 'manual_drive', label: 'Manual drive' },
   { id: 'behavior_path', label: 'Drive path'},
-  { id: 'power_off', label: 'Power off'},
   { id: 'distance_sensor', label: 'Distance sensor'},
+  { id: 'behavior_simple_avoiding' , label: 'Simple Wall Avoiding Behavior'},
+  { id: 'power_off', label: 'Power off'},
 ];
 
 function Item({item}) {

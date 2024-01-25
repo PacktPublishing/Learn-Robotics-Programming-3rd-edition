@@ -1,6 +1,6 @@
 import quart
 import asyncio
-import json
+import ujson as json
 import io
 import numpy as np
 from matplotlib.figure import Figure

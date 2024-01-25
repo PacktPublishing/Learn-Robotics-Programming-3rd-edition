@@ -1,10 +1,10 @@
 import paho.mqtt.client as mqtt
 import time
 
-def on_connect(client, userdata, flags, rc):
+def default_on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
 
-def connect():
+def connect(on_connect=default_on_connect):
     mqtt_username = "robot"
     mqtt_password = "robot"
 

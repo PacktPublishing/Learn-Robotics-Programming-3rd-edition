@@ -1,4 +1,4 @@
-import json
+import ujson as json
 import vl53l5cx_ctypes
 import numpy as np
 import time
