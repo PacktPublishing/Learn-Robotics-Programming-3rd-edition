@@ -23,3 +23,9 @@ files.link(
     path="/usr/local/bin/robotpython",
     _sudo=True,
 )
+
+pip_packages = pip.packages(
+    name="Install pip dependencies for services",
+    packages=["vl53l5cx-ctypes", "quart"],
+    virtualenv=robot_venv,
+)
