@@ -14,6 +14,8 @@ export default function Page() {
             <Link href="/">Back</Link>
             <Button title="Start" onPress={() => mqttClient.publish("sensors/distance/control/start_ranging", "{}")} />
             <Button title="Stop" onPress={() => mqttClient.publish("sensors/distance/control/stop_ranging", "{}")} />
+            <Button title="Resolution:64" onPress={() => mqttClient.publish("sensors/distance/control/set_resolution", '64')} />
+            <Button title="Resolution:16" onPress={() => mqttClient.publish("sensors/distance/control/set_resolution", '16')} />
             <WebView style={styles.container}
                 source={{ html: '<img src="http://' + env.PI_HOSTNAME + ':5000/display"></img>'}}
                 cacheEnabled={false}
