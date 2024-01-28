@@ -18,7 +18,7 @@ export default function Page() {
   );
 }
 
-mqttClient = connect({});
+const mqttClient = connect({});
 
 function onJoystickMove(data) {
   let speed = Math.sin(data.angle.radian) * Math.min(1, data.force);

@@ -5,9 +5,9 @@ import { styles } from '../styles';
 import { connect, env } from '../lib/connection'
 import { WebView } from 'react-native-webview';
 
-mqttClient = connect();
 
 export default function Page() {
+    const mqttClient = connect();
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Distance Sensor</Text>

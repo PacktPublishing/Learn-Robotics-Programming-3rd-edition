@@ -5,9 +5,9 @@ import { Link } from 'expo-router';
 import { styles } from '../styles';
 import { connect } from '../lib/connection'
 
-mqttClient = connect();
-
 export default function Page() {
+    const mqttClient = connect();
+
     const [distanceLeft, setDistanceLeft] = useState(0);
     const [distanceRight, setDistanceRight] = useState(0);
     const [motorLeft, setMotorLeft] = useState(0);

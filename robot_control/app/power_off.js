@@ -5,7 +5,7 @@ import { connect } from '../lib/connection'
 import { styles } from '../styles';
 
 export default function Page() {
-    mqttClient = connect({
+    const mqttClient = connect({
         onConnectionMade: (client) => {
             client.publish("launcher/poweroff", "");
         },

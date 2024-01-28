@@ -5,7 +5,7 @@ import { styles } from '../styles';
 import { connect } from '../lib/connection'
 
 export default function Page() {
-    mqttClient = connect({
+    const mqttClient = connect({
         onConnectionMade: (client) => {
             client.publish("launcher/start", "behavior_path.service");
         },
