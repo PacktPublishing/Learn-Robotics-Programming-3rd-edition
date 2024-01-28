@@ -6,14 +6,19 @@ import { styles } from '../styles';
 import { connect } from '../lib/connection'
 
 export default function Page() {
-    const mqttClient = connect();
+    const mqttClient = connect(
+        {
+            onConnectionMade: (client) => {
+                client.subscribe("log/obstacle_avoiding/distances");
+            }
+        }
+    );
 
     const [distanceLeft, setDistanceLeft] = useState(0);
     const [distanceRight, setDistanceRight] = useState(0);
     const [motorLeft, setMotorLeft] = useState(0);
     const [motorRight, setMotorRight] = useState(0);
 
-    mqttClient.subscribe("log/obstacle_avoiding/distances");
     mqttClient.onMessageArrived = (message) => {
         // console.log(message.payloadString);
         const logData = JSON.parse(message.payloadString);
