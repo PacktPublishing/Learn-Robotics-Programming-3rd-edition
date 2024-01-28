@@ -4,7 +4,6 @@ import { Link } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ReactNativeJoystick } from "@korsolutions/react-native-joystick";
 import { styles } from '../styles';
-import { connect } from '../lib/connection'
 
 
 export default function Page() {
@@ -18,17 +17,15 @@ export default function Page() {
   );
 }
 
-const mqttClient = connect({});
-
 function onJoystickMove(data) {
   let speed = Math.sin(data.angle.radian) * Math.min(1, data.force);
   let curve = Math.cos(data.angle.radian) * Math.min(1, data.force);
   console.log("speed: "+speed+"\t curve: "+curve);
-  mqttClient.publish("motors/left", JSON.stringify(speed + curve));
-  mqttClient.publish("motors/right", JSON.stringify(speed - curve));
+  global.mqttClient.publish("motors/left", JSON.stringify(speed + curve));
+  global.mqttClient.publish("motors/right", JSON.stringify(speed - curve));
 }
 
 function onJoystickStop() {
   console.log('Joystick stop');
-  mqttClient.publish("motors/stop", "{}");
+  global.mqttClient.publish("motors/stop", "{}");
 }

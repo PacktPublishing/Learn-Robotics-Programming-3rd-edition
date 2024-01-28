@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Text, View, FlatList } from 'react-native';
 import { Link } from 'expo-router';
 import { styles } from '../styles';
+import { connect } from '../lib/connection'
 
 const MENU_ITEMS = [
   { id: 'manual_drive', label: 'Manual drive' },
@@ -32,3 +33,5 @@ export default function App() {
     </View>
   );
 }
+
+global.mqttClient = connect();
