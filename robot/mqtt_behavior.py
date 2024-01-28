@@ -4,7 +4,7 @@ import time
 def default_on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
 
-def connect(on_connect=default_on_connect):
+def connect(on_connect=default_on_connect, start_loop=True):
     mqtt_username = "robot"
     mqtt_password = "robot"
 
@@ -14,7 +14,8 @@ def connect(on_connect=default_on_connect):
     client.will_set("motors/stop", "")
     client.connect("localhost", 1883)
 
-    client.loop_start()
-    while not client.is_connected():
-        time.sleep(0.01)
+    if start_loop:
+        client.loop_start()
+        while not client.is_connected():
+            time.sleep(0.01)
     return client
