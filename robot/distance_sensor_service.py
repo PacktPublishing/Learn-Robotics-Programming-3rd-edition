@@ -34,12 +34,9 @@ class DistanceSensorService:
         #     print("Skipping low confidence data:", data.target_status)
         #     return
         as_array = np.array(data.distance_mm)
-        if self.resolution == 64:
-            as_array = as_array.reshape((8, 8))
-        elif self.resolution == 16:
-            as_array = as_array[0][:16].reshape((4, 4))
-        flipped = np.flipud(as_array)
-        as_json = json.dumps(flipped.tolist())
+        if self.resolution == 16:
+            as_array = as_array[0][:16]
+        as_json = json.dumps(as_array.tolist())
         self.client.publish("sensors/distance_mm", as_json)
 
     def loop_forever(self):

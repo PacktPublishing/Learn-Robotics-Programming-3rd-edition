@@ -4,12 +4,13 @@ import ujson as json
 import io
 import numpy as np
 from matplotlib.figure import Figure
-import paho.mqtt.client as mqtt
+from mqtt_behavior import connect
 
 
 class DistancePlotter:
     def __init__(self) -> None:
-        self.sensor_data = np.zeros((8, 8))
+        # self.sensor_data = np.zeros((8, 8))
+        self.sensor_data = None
 
     def on_connect(self, client, userdata, flags, rc):
         print(f"Connected with result code {rc}")
@@ -17,38 +18,43 @@ class DistancePlotter:
         client.message_callback_add("sensors/distance_mm", self.data_received)
 
     def connect(self):
-        mqtt_username = "robot"
-        mqtt_password = "robot"
-
-        client = mqtt.Client()
-        client.username_pw_set(mqtt_username, mqtt_password)
-        client.on_connect = self.on_connect
-        client.connect("localhost", 1883)
-        return client
+        return connect(on_connect=self.on_connect, start_loop=False)
 
     def data_received(self, client, userdata, msg):
         try:
-            self.sensor_data = json.loads(msg.payload)
+            raw_data = json.loads(msg.payload)
+            as_array = np.array(raw_data)
+            if as_array.size == 16:
+                as_array = as_array.reshape((4, 4))
+            else:
+                as_array = as_array.reshape((8, 8))
+            as_array = np.flipud(as_array)
+
+            self.sensor_data = np.clip(as_array, 0, 300)
         except Exception as err:
             print("Error:", err)
             print("Payload:", msg.payload)
 
-    def make_plot(self):
-        as_array = np.array(self.sensor_data)
-        as_array = np.clip(as_array, 0, 300)
+    async def make_plot(self):
+        while self.sensor_data is None:
+            await asyncio.sleep(0.01)
+        new_data = self.sensor_data
+        self.sensor_data = None
+
         fig = Figure()
         ax = fig.subplots()
-        ax.imshow(as_array, cmap="gray")
+        ax.imshow(new_data, cmap="gray")
         img = io.BytesIO()
         fig.savefig(img, format="png", dpi=80)
         return img.getbuffer()
+
 
     async def run_loop(self):
         client = self.connect()
         print("Starting loop")
         while True:
-            client.loop()
-            await asyncio.sleep(0)
+            client.loop(timeout=0.1)
+            await asyncio.sleep(0.01)
 
 
 app = quart.Quart(__name__)
@@ -58,9 +64,9 @@ async def frame_generator():
     while True:
         yield (
             b"--frame\r\n"
-            b"Content-Type: image/png\r\n\r\n" + plotter.make_plot() + b"\r\n"
+            b"Content-Type: image/png\r\n\r\n" + await plotter.make_plot() + b"\r\n"
         )
-        await asyncio.sleep(1/10)
+        # await asyncio.sleep(0.1)
 
 
 @app.route("/display")
