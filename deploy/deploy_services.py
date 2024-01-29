@@ -1,7 +1,8 @@
 from pyinfra.operations import files, systemd
 from pyinfra import host
-from deploy import update_code
 
+common = files.put(
+    src="robot/mqtt_behavior.py", dest="robot/mqtt_behavior.py")
 
 services = [
     ["inventor_hat_service", "robot/inventor_hat_service.py", True],
@@ -14,6 +15,12 @@ services = [
 ]
 
 for service_name, service_file, auto_start in services:
+    code = files.put(
+        name=f"Update {service_name} code",
+        src=service_file,
+        dest=service_file,
+    )
+
     # Create the service unit file
     if auto_start:
         restart="always"
@@ -34,7 +41,7 @@ for service_name, service_file, auto_start in services:
         _sudo=True
     )
 
-    if update_code.code.changed or service.changed:
+    if (service.changed or auto_start) and (code.changed or common.changed):
         # Restart the service
         systemd.service(
             name=f"Restart {service_name} service",

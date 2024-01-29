@@ -1,18 +1,22 @@
 import paho.mqtt.client as mqtt
 import time
 
+env = {
+    "MQTT_HOSTNAME": "localhost",
+    "MQTT_USERNAME": "robot",
+    "MQTT_PASSWORD": "robot",
+}
+
 def default_on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
 
 def connect(on_connect=default_on_connect, start_loop=True):
-    mqtt_username = "robot"
-    mqtt_password = "robot"
-
     client = mqtt.Client()
-    client.username_pw_set(mqtt_username, mqtt_password)
     client.on_connect = on_connect
+    print("Attempting to connect to " + env["MQTT_HOSTNAME"])
+    client.username_pw_set(env["MQTT_USERNAME"], env["MQTT_PASSWORD"])
     client.will_set("motors/stop", "")
-    client.connect("localhost", 1883)
+    client.connect(env["MQTT_HOSTNAME"], 1883)
 
     if start_loop:
         client.loop_start()
