@@ -10,6 +10,7 @@ services = [
     ["distance_plotter_service", "robot/distance_plotter.py", True],
     ["behavior_path", "robot/behavior_path.py", False],
     ["behavior_simple_obstacle_avoiding", "robot/behavior_simple_obstacle_avoiding.py", False],
+    ["behavior_smooth_obstacle_avoiding", "robot/behavior_smooth_obstacle_avoiding.py", False],
 ]
 
 for service_name, service_file, auto_start in services:

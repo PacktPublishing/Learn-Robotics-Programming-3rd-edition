@@ -29,15 +29,15 @@ class DistanceSensorService:
 
     def update_data(self):
         data = self.sensor.get_data()
-        # # Skip low confidence data
-        # if any(status not in (5, 9) for status in data.target_status):
-        #     print("Skipping low confidence data:", data.target_status)
-        #     return
-        as_array = np.array(data.distance_mm)
+        as_array = np.array(data.distance_mm[0])
+        # Skip low confidence data
+        for n, data in enumerate(np.array(data.target_status[0])):
+            if data not in (vl53l5cx_ctypes.STATUS_RANGE_VALID, vl53l5cx_ctypes.STATUS_RANGE_VALID_LARGE_PULSE):
+                as_array[n] = 3000 # max 3m.
         if self.resolution == 64:
             as_array = as_array.reshape((8, 8))
         elif self.resolution == 16:
-            as_array = as_array[0][:16].reshape((4, 4))
+            as_array = as_array[:16].reshape((4, 4))
         flipped = np.flipud(as_array)
         as_json = json.dumps(flipped.tolist())
         self.client.publish("sensors/distance_mm", as_json)

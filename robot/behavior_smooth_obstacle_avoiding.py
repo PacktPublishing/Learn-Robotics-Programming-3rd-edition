@@ -6,7 +6,7 @@ import ujson as json
 class ObstacleAvoidingBehavior:
     def __init__(self):
         self.sensor_data = None
-        self.speed = 0.6
+        self.speed = 0.8
 
     def on_connect(self, client, userdata, flags, rc):
         print(f"Connected with result code {rc}")
@@ -21,12 +21,29 @@ class ObstacleAvoidingBehavior:
             print("Error:", err)
             print("Payload:", msg.payload)
 
-    def get_motor_speed(self, distance_mm):
-        # Handle 0 - special case, usually means no data.
-        if distance_mm > 0 and distance_mm < 300:
-            return -self.speed
-        else:
-            return self.speed
+    def get_speeds(self, nearest_distance):
+        if nearest_distance >= 600:
+            nearest_speed = self.speed
+            furthest_speed = self.speed
+            delay = 25
+        elif nearest_distance > 400:
+            nearest_speed = self.speed * 0.6
+            furthest_speed = self.speed
+            delay = 25
+        elif nearest_distance > 300:
+            nearest_speed = self.speed * 0.4
+            furthest_speed = self.speed
+            delay = 25
+        elif nearest_distance > 150:
+            nearest_speed = -self.speed * 0.4
+            furthest_speed = self.speed
+            delay = 25
+        else: # collison
+            nearest_speed = -self.speed * 0.6
+            furthest_speed = self.speed * 0.6
+            delay = 30
+        return nearest_speed, furthest_speed, delay
+
 
     def run(self):
         client = mqtt_behavior.connect(self.on_connect)
@@ -45,12 +62,17 @@ class ObstacleAvoidingBehavior:
                 # The distance is the minimum distance in each bucket.
                 left_distance = int(np.min(left_buckets))
                 right_distance = int(np.min(right_buckets))
-                # print(f"[{left_distance},{right_distance}]")
-                left_motor_speed = self.get_motor_speed(left_distance)
-                right_motor_speed = self.get_motor_speed(right_distance)
+                nearest_speed, furthest_speed, delay = self.get_speeds(min(left_distance, right_distance))
+                if left_distance < right_distance:
+                    left_motor_speed = nearest_speed
+                    right_motor_speed = furthest_speed
+                else:
+                    left_motor_speed = furthest_speed
+                    right_motor_speed = nearest_speed
                 print(left_distance,right_distance,left_motor_speed,right_motor_speed)
-                client.publish("log/obstacle_avoiding/distances", json.dumps([left_distance,right_distance,left_motor_speed,right_motor_speed]))
+                client.publish("log/obstacle_avoiding/smooth", json.dumps([left_distance,right_distance,nearest_speed,furthest_speed,left_motor_speed,right_motor_speed]))
                 client.publish("motors/set_both", json.dumps([left_motor_speed, right_motor_speed]))
+                sleep(delay * 0.0001)
         except KeyboardInterrupt:
             print("Stop requested")
         finally:
