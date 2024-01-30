@@ -3,7 +3,7 @@ import time
 
 sensor = vl53l5cx_ctypes.VL53L5CX()
 sensor.set_resolution(8 * 8)
-sensor.set_ranging_frequency_hz(15)
+sensor.set_ranging_frequency_hz(10)
 sensor.start_ranging()
 
 try:
