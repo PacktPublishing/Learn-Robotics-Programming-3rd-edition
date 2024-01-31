@@ -16,18 +16,14 @@ class DistancePlotter:
         client.message_callback_add("sensors/distance_mm", self.data_received)
 
     def data_received(self, client, userdata, msg):
-        try:
-            self.sensor_data = json.loads(msg.payload)
-        except Exception as err:
-            print("Error:", err)
-            print("Payload:", msg.payload)
+        self.sensor_data = json.loads(msg.payload)
 
     def make_plot(self):
         as_array = np.array(self.sensor_data)
-        as_array = np.clip(as_array, 0, 300)
+        as_array = np.log(as_array)
         fig = Figure()
         ax = fig.subplots()
-        ax.imshow(as_array, cmap="gray")
+        ax.imshow(as_array, cmap="Greys_r")
         img = io.BytesIO()
         fig.savefig(img, format="png", dpi=80)
         return img.getbuffer()
@@ -69,6 +65,3 @@ async def before_serving():
 # Start it all up
 app.before_serving(before_serving)
 app.run(host="0.0.0.0", port=5000)
-
-# Improvements:
-# - Add a slider to change the clipping range

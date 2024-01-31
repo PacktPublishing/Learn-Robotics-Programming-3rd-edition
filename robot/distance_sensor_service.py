@@ -1,7 +1,7 @@
+import time
 import ujson as json
 import vl53l5cx_ctypes
 import numpy as np
-import time
 
 from mqtt_behavior import connect
 
@@ -28,8 +28,8 @@ class DistanceSensorService:
         for n, data in enumerate(np.array(data.target_status[0])):
             if data not in (vl53l5cx_ctypes.STATUS_RANGE_VALID, vl53l5cx_ctypes.STATUS_RANGE_VALID_LARGE_PULSE):
                 as_array[n] = 3000 # max 3m.
-        as_array = np.flip(as_array).reshape((8, 8))
-        as_json = json.dumps(as_array.tolist())
+        flipped = np.flip(as_array).reshape((8, 8))
+        as_json = json.dumps(flipped.tolist())
         self.client.publish("sensors/distance_mm", as_json)
 
     def loop_forever(self):

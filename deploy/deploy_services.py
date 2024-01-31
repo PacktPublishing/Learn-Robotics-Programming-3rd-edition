@@ -41,7 +41,7 @@ for service_name, service_file, auto_start in services:
         _sudo=True
     )
 
-    if (service.changed or auto_start) and (code.changed or common.changed):
+    if ((code.changed or common.changed) and auto_start) or service.changed:
         # Restart the service
         systemd.service(
             name=f"Restart {service_name} service",
@@ -49,6 +49,6 @@ for service_name, service_file, auto_start in services:
             running=auto_start,
             enabled=auto_start,
             restarted=auto_start,
-            daemon_reload=True,
+            daemon_reload=service.changed,
             _sudo=True,
         )
