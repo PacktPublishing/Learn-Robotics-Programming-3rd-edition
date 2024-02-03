@@ -9,7 +9,7 @@ const MENU_ITEMS = [
   { id: 'behavior_path', label: 'Drive path'},
   { id: 'distance_plotter', label: 'Distance plotter'},
   { id: 'behavior_simple_avoiding' , label: 'Simple Wall Avoiding Behavior'},
-  { id: 'behavior_smooth_avoiding' , label: 'Smooth Wall Avoiding Behavior'},
+  { id: 'behavior_proportional_avoiding' , label: 'Proportional Wall Avoiding Behavior'},
   { id: 'power_off', label: 'Power off'},
 ];
 

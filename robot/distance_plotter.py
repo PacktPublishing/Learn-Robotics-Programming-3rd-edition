@@ -4,7 +4,7 @@ import ujson as json
 import io
 import numpy as np
 from matplotlib.figure import Figure
-from mqtt_behavior import connect
+from common.mqtt_behavior import connect
 
 class DistancePlotter:
     def __init__(self) -> None:
@@ -20,6 +20,7 @@ class DistancePlotter:
 
     def make_plot(self):
         as_array = np.array(self.sensor_data)
+        as_array = np.clip(as_array, 1, None)
         as_array = np.log(as_array)
         fig = Figure()
         ax = fig.subplots()
@@ -28,7 +29,7 @@ class DistancePlotter:
         fig.savefig(img, format="png", dpi=80)
         return img.getbuffer()
 
-    async def run_loop(self):
+    async def loop_forever(self):
         client = connect(on_connect=self.on_connect, start_loop=False)
         print("Starting loop")
         while True:
@@ -60,7 +61,7 @@ async def app_display():
 
 async def before_serving():
     print("Starting plotter")
-    asyncio.create_task(plotter.run_loop())
+    asyncio.create_task(plotter.loop_forever())
 
 # Start it all up
 app.before_serving(before_serving)

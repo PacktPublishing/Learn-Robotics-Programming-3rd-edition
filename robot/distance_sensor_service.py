@@ -3,7 +3,7 @@ import ujson as json
 import vl53l5cx_ctypes
 import numpy as np
 
-from mqtt_behavior import connect
+from common.mqtt_behavior import connect
 
 
 class DistanceSensorService:

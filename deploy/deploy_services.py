@@ -1,8 +1,8 @@
 from pyinfra.operations import files, systemd
 from pyinfra import host
 
-common = files.put(
-    src="robot/mqtt_behavior.py", dest="robot/mqtt_behavior.py")
+common = files.sync(
+    src="robot/common", dest="robot/common")
 
 services = [
     ["inventor_hat_service", "robot/inventor_hat_service.py", True],
@@ -10,8 +10,8 @@ services = [
     ["distance_sensor_service", "robot/distance_sensor_service.py", True],
     ["distance_plotter_service", "robot/distance_plotter.py", True],
     ["behavior_path", "robot/behavior_path.py", False],
-    ["behavior_simple_obstacle_avoiding", "robot/behavior_simple_obstacle_avoiding.py", False],
-    ["behavior_smooth_obstacle_avoiding", "robot/behavior_smooth_obstacle_avoiding.py", False],
+    ["behavior_simple_avoiding", "robot/behavior_simple_avoiding.py", False],
+    ["behavior_proportional_avoiding", "robot/behavior_proportional_avoiding.py", False],
 ]
 
 for service_name, service_file, auto_start in services:

@@ -2,66 +2,86 @@ import atexit
 import ujson as json
 import inventorhatmini
 import paho.mqtt.client as mqtt
+import time
 
-board = inventorhatmini.InventorHATMini()
-left_motor = board.motors[1]
-right_motor = board.motors[0]
+class InventorHATService:
+    last_message = 0
+    def __init__(self) -> None:
+        self.board = inventorhatmini.InventorHATMini()
+        self.left_motor = self.board.motors[1]
+        self.right_motor = self.board.motors[0]
+        self.client = None
 
-def set_left_motor(client, userdata, msg):
-    speed = json.loads(msg.payload)
-    left_motor.enable()
-    left_motor.speed(speed)
+        atexit.register(self.exit_handler)
 
-def set_right_motor(client, userdata, msg):
-    speed = json.loads(msg.payload)
-    right_motor.enable()
-    right_motor.speed(speed)
+    def loop_forever(self):
+        self.connect()
+        self.client.message_callback_add("motors/#", self.print_message)
+        self.client.message_callback_add("motors/stop", self.stop_motors)
+        self.client.message_callback_add("motors/left", self.set_left_motor)
+        self.client.message_callback_add("motors/right", self.set_right_motor)
+        self.client.message_callback_add("motors/set_both", self.set_both_motors)
 
-def set_both_motors(client, userdata, msg):
-    left_speed, right_speed = json.loads(msg.payload)
-    left_motor.enable()
-    right_motor.enable()
-    left_motor.speed(left_speed)
-    right_motor.speed(right_speed)
+        self.client.message_callback_add("leds/#", self.print_message)
+        self.client.message_callback_add("leds/set", self.set_led)
 
-def stop_motors(client=None, userdata=None, msg=None):
-    left_motor.stop()
-    right_motor.stop()
+        self.client.connect("localhost", 1883)
+        self.board.leds.set_rgb(0, 0, 90, 0)
+        while True:
+            if time.time() - self.last_message > 1:
+                self.stop_motors()
+            self.client.loop()
+            # time.sleep(0.01)
 
-def print_message(client, userdata, msg):
-    print(f"{msg.topic} {msg.payload}")
+    def connect(self):
+        mqtt_username = "robot"
+        mqtt_password = "robot"
 
-def set_led(client, userdata, msg):
-    index, r, g, b = json.loads(msg.payload)
-    board.leds.set_rgb(index, r, g, b)
+        self.client = mqtt.Client()
+        self.client.username_pw_set(mqtt_username, mqtt_password)
+        self.client.on_connect = self.on_connect
 
-def on_connect(client, userdata, flags, rc):
-    print(f"Connected with result code {rc}")
-    client.subscribe("motors/#")
-    client.subscribe("leds/#")
+    def set_left_motor(self, client, userdata, msg):
+        speed = json.loads(msg.payload)
+        self.left_motor.enable()
+        self.left_motor.speed(speed)
+        self.last_message = time.time()
 
-def exit_handler():
-    stop_motors()
-    board.leds.clear()
+    def set_right_motor(self, client, userdata, msg):
+        speed = json.loads(msg.payload)
+        self.right_motor.enable()
+        self.right_motor.speed(speed)
+        self.last_message = time.time()
 
-atexit.register(exit_handler)
+    def set_both_motors(self, client, userdata, msg):
+        left_speed, right_speed = json.loads(msg.payload)
+        self.left_motor.enable()
+        self.right_motor.enable()
+        self.left_motor.speed(left_speed)
+        self.right_motor.speed(right_speed)
+        self.last_message = time.time()
 
-mqtt_username = "robot"
-mqtt_password = "robot"
+    def stop_motors(self, client=None, userdata=None, msg=None):
+        self.left_motor.stop()
+        self.right_motor.stop()
 
-client = mqtt.Client()
-client.username_pw_set(mqtt_username, mqtt_password)
-client.on_connect = on_connect
+    def print_message(self, client, userdata, msg):
+        print(f"{msg.topic} {msg.payload}")
+        self.last_message = time.time()
 
-client.message_callback_add("motors/#", print_message)
-client.message_callback_add("motors/stop", stop_motors)
-client.message_callback_add("motors/left", set_left_motor)
-client.message_callback_add("motors/right", set_right_motor)
-client.message_callback_add("motors/set_both", set_both_motors)
+    def set_led(self, client, userdata, msg):
+        index, r, g, b = json.loads(msg.payload)
+        self.board.leds.set_rgb(index, r, g, b)
+        self.last_message = time.time()
 
-client.message_callback_add("leds/#", print_message)
-client.message_callback_add("leds/set", set_led)
+    def on_connect(self, client, userdata, flags, rc):
+        print(f"Connected with result code {rc}")
+        client.subscribe("motors/#")
+        client.subscribe("leds/#")
 
-client.connect("localhost", 1883)
-board.leds.set_rgb(0, 0, 90, 0)
-client.loop_forever()
+    def exit_handler(self):
+        self.stop_motors()
+        self.board.leds.clear()
+
+service = InventorHATService()
+service.loop_forever()

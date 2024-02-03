@@ -20,7 +20,7 @@ export default function Page() {
 function onJoystickMove(data) {
   let speed = Math.sin(data.angle.radian) * Math.min(1, data.force);
   let curve = Math.cos(data.angle.radian) * Math.min(1, data.force);
-  console.log("speed: "+speed+"\t curve: "+curve);
+  // console.log("speed: "+speed+"\t curve: "+curve);
   global.mqttClient.publish("motors/left", JSON.stringify(speed + curve));
   global.mqttClient.publish("motors/right", JSON.stringify(speed - curve));
 }
