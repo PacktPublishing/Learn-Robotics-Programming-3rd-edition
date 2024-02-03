@@ -15,17 +15,7 @@ class ObstacleAvoidingBehavior:
         client.publish("sensors/distance/control/start_ranging", " ")
 
     def data_received(self, client, userdata, msg):
-        try:
-            self.sensor_data = json.loads(msg.payload)
-        except Exception as err:
-            print("Error:", err)
-            print("Payload:", msg.payload)
-
-    def get_motor_speed(self, distance_mm):
-        if distance_mm < 300:
-            return -self.speed
-        else:
-            return self.speed
+        self.sensor_data = json.loads(msg.payload)
 
     def act(self):
         as_array = np.array(self.sensor_data)
@@ -39,8 +29,14 @@ class ObstacleAvoidingBehavior:
         # <class 'numpy.int64'>
         left_distance = int(np.min(left_sensors))
         right_distance = int(np.min(right_sensors))
-        right_motor_speed = self.get_motor_speed(left_distance)
-        left_motor_speed = self.get_motor_speed(right_distance)
+        left_motor_speed = self.speed
+        right_motor_speed = self.speed
+        if left_distance < 300:
+            right_motor_speed = -self.speed
+        elif right_distance < 300:
+            left_motor_speed = -self.speed
+        # right_motor_speed = self.get_motor_speed(left_distance)
+        # left_motor_speed = self.get_motor_speed(right_distance)
         print(left_distance,right_distance,left_motor_speed,right_motor_speed)
         self.client.publish("log/obstacle_avoiding/distances", json.dumps([left_distance,right_distance,left_motor_speed,right_motor_speed]))
         self.client.publish("motors/set_both", json.dumps([left_motor_speed, right_motor_speed]))
