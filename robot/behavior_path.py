@@ -1,5 +1,5 @@
 from time import sleep
-from mqtt_behavior import connect
+from common.mqtt_behavior import connect
 
 def forward(client, seconds):
     client.publish("motors/left", 0.8)
