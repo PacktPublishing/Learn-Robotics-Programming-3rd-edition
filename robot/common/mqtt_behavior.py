@@ -1,6 +1,6 @@
 import paho.mqtt.client as mqtt
 import time
-
+import json
 
 def default_on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
@@ -20,3 +20,6 @@ def connect(on_connect=default_on_connect, start_loop=True):
         while not client.is_connected():
             time.sleep(0.01)
     return client
+
+def publish_json(client, topic, data):
+    client.publish(topic, json.dumps(data))
