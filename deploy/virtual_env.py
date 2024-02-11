@@ -16,10 +16,3 @@ pip.venv(
     site_packages=True,
 )
 
-# link that to make it easy
-files.link(
-    name="Link robotpython venv",
-    target=f"{robot_venv}/bin/python3",
-    path="/usr/local/bin/robotpython",
-    _sudo=True,
-)
