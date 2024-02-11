@@ -7,6 +7,8 @@ common = files.sync(
 services = [
     ["inventor_hat_service", "robot/inventor_hat_service.py", True],
     ["launcher_service", "robot/launcher_service.py", True],
+    ["distance_sensor_service", "robot/distance_sensor_service.py", True],
+    ["distance_plotter_service", "robot/distance_plotter.py", True],
     ["behavior_path", "robot/behavior_path.py", False],
 ]
 
