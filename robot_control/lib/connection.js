@@ -1,12 +1,12 @@
 import Paho from "paho-mqtt";
 
-export function connect(options) {
-    const env = {
-        PI_HOSTNAME: "learnrob3.local",
-        MQTT_USERNAME: "robot",
-        MQTT_PASSWORD: "robot",
-    };
+const env = {
+    PI_HOSTNAME: "learnrob3.local",
+    MQTT_USERNAME: "robot",
+    MQTT_PASSWORD: "robot",
+};
 
+export function connect() {
     const mqttClient = new Paho.Client(
         env.PI_HOSTNAME,
         9001,
@@ -18,16 +18,14 @@ export function connect(options) {
         console.log(err);
     };
 
+    mqttClient.onConnected = (reconnect, uri) => {
+        console.log("Connected to " + uri + " via MQTT broker");
+    };
+
     console.log("Attempting to connect to " + env.PI_HOSTNAME);
     mqttClient.connect({
         userName: env.MQTT_USERNAME,
         password: env.MQTT_PASSWORD,
-        onSuccess: () => {
-            console.log("Connected");
-            if (options.onConnectionMade !== undefined) {
-                options.onConnectionMade(mqttClient);
-            }
-        },
         onFailure: (err) => {
             console.log('Connection failed');
             console.log(err)

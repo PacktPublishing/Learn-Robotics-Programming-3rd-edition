@@ -1,6 +1,5 @@
 from deploy import virtual_env
-from pyinfra.operations import apt, pip, files, systemd
-from pyinfra import host
+from pyinfra.operations import apt, pip
 
 apt.packages(
     name = "Install smbus2",

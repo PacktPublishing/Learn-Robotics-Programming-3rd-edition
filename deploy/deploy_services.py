@@ -1,6 +1,9 @@
 from pyinfra.operations import files, systemd
 from pyinfra import host
 
+common = files.sync(
+    src="robot/common", dest="robot/common")
+
 services = [
     ["inventor_hat_service", "robot/inventor_hat_service.py", True],
     ["launcher_service", "robot/launcher_service.py", True],
@@ -34,7 +37,7 @@ for service_name, service_file, auto_start in services:
         _sudo=True
     )
 
-    if code.changed or service.changed:
+    if ((code.changed or common.changed) and auto_start) or service.changed:
         # Restart the service
         systemd.service(
             name=f"Restart {service_name} service",
@@ -42,6 +45,6 @@ for service_name, service_file, auto_start in services:
             running=auto_start,
             enabled=auto_start,
             restarted=auto_start,
-            daemon_reload=True,
+            daemon_reload=service.changed,
             _sudo=True,
         )

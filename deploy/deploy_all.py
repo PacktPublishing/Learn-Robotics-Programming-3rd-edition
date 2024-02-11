@@ -3,4 +3,5 @@ from deploy import \
     deploy_inventor_hat_mini, \
     deploy_mqtt, \
     configure_pi, \
-    update_code
+    update_code, \
+    deploy_services
