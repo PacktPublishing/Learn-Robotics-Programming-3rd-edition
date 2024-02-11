@@ -42,6 +42,7 @@ def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
     client.subscribe("motors/#")
     client.subscribe("leds/#")
+    client.subscribe("all/#")
 
 def exit_handler():
     stop_motors()
