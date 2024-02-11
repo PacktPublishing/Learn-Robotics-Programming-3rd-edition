@@ -12,7 +12,7 @@ def connect(on_connect=default_on_connect, start_loop=True):
     client = mqtt.Client()
     client.on_connect = on_connect
     client.username_pw_set(mqtt_username, mqtt_password)
-    client.will_set("motors/stop", "")
+    client.will_set("all/stop", "")
     client.connect("localhost", 1883)
 
     if start_loop:
