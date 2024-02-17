@@ -13,13 +13,20 @@ class DistanceSensorService:
         self.sensor.set_ranging_frequency_hz(10)
         self.is_ranging = False
 
-    def start_ranging(self, client, userdata, msg):
-        self.sensor.start_ranging()
-        self.is_ranging = True
+    def sensor_control(self, client, userdata, msg):
+        if msg.payload == b"start_ranging":
+            if not self.is_ranging:
+                self.sensor.start_ranging()
+                self.is_ranging = True
+        elif msg.payload == b"stop_ranging":
+            self.stop_ranging()
+        else:
+            print(f"Unknown control message: {msg.payload}")
 
-    def stop_ranging(self, client, userdata, msg):
-        self.sensor.stop_ranging()
-        self.is_ranging = False
+    def stop_ranging(self):
+        if self.is_ranging:
+            self.sensor.stop_ranging()
+            self.is_ranging = False
 
     def update_data(self):
         data = self.sensor.get_data()
@@ -35,10 +42,9 @@ class DistanceSensorService:
     def loop_forever(self):
         print("Making connection")
         self.client = connect()
-        self.client.subscribe("sensors/distance/control/#")
+        self.client.subscribe("sensors/distance/control")
         self.client.subscribe("all/stop")
-        self.client.message_callback_add("sensors/distance/control/start_ranging", self.start_ranging)
-        self.client.message_callback_add("sensors/distance/control/stop_ranging", self.stop_ranging)
+        self.client.message_callback_add("sensors/distance/control", self.sensor_control)
         self.client.message_callback_add("all/stop", self.stop_ranging)
         self.client.publish("sensors/distance/status", "ready")
         print("Starting loop")

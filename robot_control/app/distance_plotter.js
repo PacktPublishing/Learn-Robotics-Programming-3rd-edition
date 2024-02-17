@@ -11,10 +11,10 @@ export default function Page() {
         <View style={styles.container}>
             <Text style={styles.title}>Distance Sensor</Text>
             <Link href="/">Back</Link>
-            <Button title="Start" onPress={() => global.mqttClient.publish("sensors/distance/control/start_ranging", "{}")} />
-            <Button title="Stop" onPress={() => global.mqttClient.publish("sensors/distance/control/stop_ranging", "{}")} />
+            <Button title="Start" onPress={() => global.mqttClient.publish("sensors/distance/control", "start_ranging")} />
+            <Button title="Stop" onPress={() => global.mqttClient.publish("sensors/distance/control", "stop_ranging")} />
             <WebView style={styles.container}
-                source={{ html: '<img src="http://' + env.PI_HOSTNAME + ':5000/display"></img>'}}
+                source={{uri: "http://" + env.PI_HOSTNAME + ":5000/"}}
                 cacheEnabled={false}
                 cacheMode='LOAD_NO_CACHE'
                 />
