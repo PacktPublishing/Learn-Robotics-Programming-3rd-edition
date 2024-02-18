@@ -15,8 +15,6 @@ export default function Page() {
             <Button title="Stop" onPress={() => global.mqttClient.publish("sensors/distance/control", "stop_ranging")} />
             <WebView style={styles.container}
                 source={{uri: "http://" + env.PI_HOSTNAME + ":5000/"}}
-                cacheEnabled={false}
-                cacheMode='LOAD_NO_CACHE'
                 />
             <StatusBar style="auto" />
         </View>
