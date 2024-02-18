@@ -23,7 +23,7 @@ class DistanceSensorService:
         else:
             print(f"Unknown control message: {msg.payload}")
 
-    def stop_ranging(self):
+    def stop_ranging(self, *args):
         if self.is_ranging:
             self.sensor.stop_ranging()
             self.is_ranging = False
