@@ -6,7 +6,7 @@ After=mosquitto.service
 Type=simple
 Restart={{ restart }}
 WorkingDirectory=/home/{{ pi_user }}/
-ExecStart=/home/{{ pi_user }}/robotvenv/bin/python -u {{ service_file }}
+ExecStart=/usr/local/bin/robotpython -u {{ service_file }}
 KillSignal=SIGINT
 
 [Install]
