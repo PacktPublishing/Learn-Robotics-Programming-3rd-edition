@@ -16,3 +16,20 @@ pip.venv(
     site_packages=True,
 )
 
+files.file(
+    name="Create robotpython script",
+    path="/usr/local/bin/robotpython",
+    mode="755",
+    _sudo=True,
+)
+
+files.block(
+    name="Setup robotpython script content",
+    path="/usr/local/bin/robotpython",
+    content=f"""
+        #!/bin/bash
+        {robot_venv}/bin/python3 $@
+    """,
+    try_prevent_shell_expansion=True,
+    _sudo=True,
+)
