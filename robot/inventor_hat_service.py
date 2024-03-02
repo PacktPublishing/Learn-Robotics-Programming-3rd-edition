@@ -1,8 +1,8 @@
 import atexit
 import json
+import time
 import inventorhatmini
 import paho.mqtt.client as mqtt
-import time
 
 last_message = 0
 board = inventorhatmini.InventorHATMini()
@@ -29,17 +29,11 @@ def stop_motors(client=None, userdata=None, msg=None):
     right_motor.stop()
 
 
-def set_led(client, userdata, msg):
-    index, r, g, b = json.loads(msg.payload)
-    board.leds.set_rgb(index, r, g, b)
-
-
 def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
     client.subscribe("motors/#")
     client.subscribe("leds/#")
     client.subscribe("all/#")
-
 
 atexit.register(stop_motors)
 
