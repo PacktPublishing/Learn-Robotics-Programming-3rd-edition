@@ -7,7 +7,8 @@ import { connect } from '../lib/connection'
 const MENU_ITEMS = [
   { id: 'manual_drive', label: 'Manual drive' },
   { id: 'behavior_path', label: 'Drive path'},
-  { id: 'distance_plotter', label: 'Distance plotter'},  
+  { id: 'distance_plotter', label: 'Distance plotter'},
+  { id: 'bang_bang_obstacle_avoiding', label: 'Bang Bang Avoiding' },
   { id: 'power_off', label: 'Power off'},
 ];
 
