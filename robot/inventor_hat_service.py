@@ -1,8 +1,8 @@
 import atexit
 import json
+import time
 import inventorhatmini
 import paho.mqtt.client as mqtt
-import time
 
 last_message = 0
 board = inventorhatmini.InventorHATMini()
@@ -60,8 +60,6 @@ client.on_connect = on_connect
 client.message_callback_add("motors/#", all_messages)
 client.message_callback_add("motors/stop", stop_motors)
 client.message_callback_add("motors/wheels", set_motor_wheels)
-client.message_callback_add("leds/#", all_messages)
-client.message_callback_add("leds/set", set_led)
 client.message_callback_add("all/stop", stop_motors)
 
 client.message_callback_add("leds/#", print_message)
