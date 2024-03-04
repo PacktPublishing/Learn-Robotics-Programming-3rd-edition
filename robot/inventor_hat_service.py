@@ -34,10 +34,6 @@ def set_led(client, userdata, msg):
     board.leds.set_rgb(index, r, g, b)
 
 
-def set_led(client, userdata, msg):
-    index, r, g, b = json.loads(msg.payload)
-    board.leds.set_rgb(index, r, g, b)
-
 def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
     client.subscribe("motors/#")
