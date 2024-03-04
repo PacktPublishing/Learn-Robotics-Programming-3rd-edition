@@ -56,10 +56,9 @@ client.on_connect = on_connect
 client.message_callback_add("motors/#", all_messages)
 client.message_callback_add("motors/stop", stop_motors)
 client.message_callback_add("motors/wheels", set_motor_wheels)
-client.message_callback_add("all/stop", stop_motors)
-
 client.message_callback_add("leds/#", all_messages)
 client.message_callback_add("leds/set", set_led)
+client.message_callback_add("all/stop", stop_motors)
 
 client.connect("localhost", 1883)
 board.leds.set_rgb(0, 0, 90, 0)
