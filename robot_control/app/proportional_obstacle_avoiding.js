@@ -20,10 +20,10 @@ export default function Page({ navigation }) {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Bang Bang Obstacle Avoiding</Text>
+            <Text style={styles.title}>Proportional Obstacle Avoiding Behavior</Text>
             <Link href="/">Back</Link>
-            <Button title="Start" onPress={() => global.mqttClient.publish("launcher/start", "bang_bang_obstacle_avoiding")} />
-            <Button title="Stop" onPress={() => global.mqttClient.publish("launcher/stop", "bang_bang_obstacle_avoiding")} />
+            <Button title="Start" onPress={() => global.mqttClient.publish("launcher/start", "proportional_obstacle_avoiding")} />
+            <Button title="Stop" onPress={() => global.mqttClient.publish("launcher/stop", "proportional_obstacle_avoiding")} />
             <Text>Left Distance: {distanceLogs.left_distance}, Motor: {distanceLogs.left_motor_speed}</Text>
             <Text>Right Distance: {distanceLogs.right_distance}, Motor: {distanceLogs.right_motor_speed}</Text>
             <WebView style={styles.container}

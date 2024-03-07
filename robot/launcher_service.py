@@ -10,6 +10,11 @@ def start_systemd_unit(client, userdata, msg):
     subprocess.run(["systemctl", "start", unit_name])
     print(unit_name, "started")
 
+def stop_systemd_unit(client, userdata, msg):
+    unit_name = msg.payload.decode()
+    subprocess.run(["systemctl", "stop", unit_name])
+    print(unit_name, "stopped")
+
 def poweroff(client, userdata, msg):
     print("Powering off")
     subprocess.run(["poweroff"])

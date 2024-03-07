@@ -11,6 +11,7 @@ services = [
     ["distance_plotter_service", "robot/distance_plotter.py", True],
     ["behavior_path", "robot/behavior_path.py", False],
     ["bang_bang_obstacle_avoiding", "robot/bang_bang_obstacle_avoiding.py", False],
+    ["proportional_obstacle_avoiding", "robot/proportional_obstacle_avoiding.py", False],
 ]
 
 for service_name, service_file, auto_start in services:
