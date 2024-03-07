@@ -23,7 +23,7 @@ function onJoystickMove(data) {
   // console.log("speed: "+speed+"\t curve: "+curve);
   global.mqttClient.publish(
     "motors/wheels", 
-    JSON.stringify(speed + curve, speed - curve)
+    JSON.stringify([speed + curve, speed - curve])
   );
 }
 

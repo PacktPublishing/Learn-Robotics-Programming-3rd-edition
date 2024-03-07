@@ -1,3 +1,5 @@
+from io import BytesIO
+
 from deploy import base_packages
 from pyinfra.facts.server import Home
 from pyinfra import host
@@ -16,22 +18,16 @@ pip.venv(
     site_packages=True,
 )
 
-files.file(
-    name="Create robotpython script",
-    path="/usr/local/bin/robotpython",
-    mode="755",
-    _sudo=True,
-)
+robotpython = f"""\
+#!/bin/bash
+{robot_venv}/bin/python3 $@
+"""
 
-files.block(
-    name="Setup robotpython script content",
-    path="/usr/local/bin/robotpython",
-    content=f"""
-        #!/bin/bash
-        {robot_venv}/bin/python3 $@
-    """,
-    try_prevent_shell_expansion=True,
-    _sudo=True,
+files.put(
+    name="Create robotpython script",
+    src=BytesIO(robotpython.encode("utf-8")),
+    mode="755",
+    dest="/usr/local/bin/robotpython", _sudo=True,
 )
 
 pip.packages(
