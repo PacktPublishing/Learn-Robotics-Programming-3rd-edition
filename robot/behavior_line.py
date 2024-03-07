@@ -1,9 +1,8 @@
 from time import sleep
-import json
-from common.mqtt_behavior import connect
+from common.mqtt_behavior import connect, publish_json
 
 client = connect()
-client.publish("motors/wheels", json.dumps([0.8, 0.8]))
-sleep(2)
-client.publish("motors/stop", "")
-client.loop_stop()
+publish_json(client, "motors/wheels", [0.8, 0.8])
+sleep(1)
+publish_json(client, "motors/wheels", [0.8, 0.8])
+sleep(1)
