@@ -8,14 +8,14 @@ import { WebView } from 'react-native-webview';
 
 export default function Page({ navigation }) {
     const [distanceLogs, setDistanceLogs] = useState({});
-    global.mqttClient.subscribe("log");
+    global.mqttClient.subscribe("log/obstacle_avoider");
     global.mqttClient.onMessageArrived = (message) => {
         const logData = JSON.parse(message.payloadString);
         setDistanceLogs(logData);
     }
 
     useNavigation().addListener('beforeRemove', (e) => {
-        global.mqttClient.unsubscribe("log");
+        global.mqttClient.unsubscribe("log/obstacle_avoider");
     });
 
     return (

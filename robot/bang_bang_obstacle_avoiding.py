@@ -37,7 +37,7 @@ class BangBangObstacleAvoidingBehavior:
             "left_motor_speed": left_motor_speed, 
             "right_motor_speed": right_motor_speed
         }
-        publish_json(client, "log", log_data)
+        publish_json(client, "log/obstacle_avoider", log_data)
         print(log_data)
         publish_json(client, "motors/wheels", [left_motor_speed, right_motor_speed])
 

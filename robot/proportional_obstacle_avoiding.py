@@ -7,12 +7,27 @@ import ujson as json
 class ProportionalObstacleAvoidingBehavior:
     def __init__(self):
         self.speed = 0.6
-        self.curve_proportion = 70
+        self.curve_proportion = 140
+        # Lower proportion = smoother, but more likely to steer into something.
+        # Higher proportion, corrects away from a collision, but will have a characteristic proportional wobble.
 
+    def behavior_settings(self, client, userdata, msg):
+        try:
+            settings = json.loads(msg.payload)
+            if "speed" in settings:
+                self.speed = settings["speed"]
+            if "curve_proportion" in settings:
+                self.curve_proportion = settings["curve_proportion"]
+            print(f"Updated settings: {settings}")
+        except Exception as e:
+            print(f"Failed to update settings: {e}, {msg.payload}")
+    
     def on_connect(self, client, userdata, flags, rc):
         print(f"Connected with result code {rc}")
         client.subscribe("sensors/distance_mm")
         client.message_callback_add("sensors/distance_mm", self.data_received)
+        client.subscribe("behavior/settings")
+        client.message_callback_add("behavior/settings", self.behavior_settings)
         client.publish("sensors/distance/control", "start_ranging")
 
     def data_received(self, client, userdata, msg):
@@ -45,7 +60,7 @@ class ProportionalObstacleAvoidingBehavior:
             "left_motor_speed": left_motor_speed, 
             "right_motor_speed": right_motor_speed
         }
-        publish_json(client, "log", log_data)
+        publish_json(client, "log/obstacle_avoider", log_data)
         print(log_data)
         publish_json(client, "motors/wheels", [left_motor_speed, right_motor_speed])
 
