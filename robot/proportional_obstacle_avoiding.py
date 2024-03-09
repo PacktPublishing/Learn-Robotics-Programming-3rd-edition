@@ -10,6 +10,7 @@ class ProportionalObstacleAvoidingBehavior:
         self.curve_proportion = 140
         # Lower proportion = smoother, but more likely to steer into something.
         # Higher proportion, corrects away from a collision, but will have a characteristic proportional wobble.
+        # TODO: Pause behavior with setting?
 
     def behavior_settings(self, client, userdata, msg):
         try:
