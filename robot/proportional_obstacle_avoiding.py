@@ -1,4 +1,3 @@
-from time import sleep
 from common.mqtt_behavior import connect, publish_json
 import numpy as np
 import ujson as json

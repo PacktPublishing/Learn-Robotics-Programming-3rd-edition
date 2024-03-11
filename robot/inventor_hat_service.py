@@ -8,6 +8,8 @@ last_message = 0
 board = inventorhatmini.InventorHATMini()
 left_motor = board.motors[1]
 right_motor = board.motors[0]
+pan_servo = board.servos[inventorhatmini.SERVO_1]
+tilt_servo = board.servos[inventorhatmini.SERVO_2]
 
 
 def all_messages(client, userdata, msg):
@@ -27,6 +29,22 @@ def set_motor_wheels(client, userdata, msg):
 def stop_motors(client=None, userdata=None, msg=None):
     left_motor.stop()
     right_motor.stop()
+    pan_servo.disable()
+    tilt_servo.disable()
+
+
+def set_servos(client, userdata, msg):
+    data = json.loads(msg.payload)
+    if "pan" in data:
+        if data["pan"] == "disable":
+            pan_servo.disable()
+        else:
+            pan_servo.value(pan_servo.mid_value() + data["pan"])
+    if "tilt" in data:
+        if data["tilt"] == "disable":
+            tilt_servo.disable()
+        else:
+            tilt_servo.value(tilt_servo.mid_value() + data["tilt"])
 
 
 def set_led(client, userdata, msg):
@@ -56,6 +74,7 @@ client.on_connect = on_connect
 client.message_callback_add("motors/#", all_messages)
 client.message_callback_add("motors/stop", stop_motors)
 client.message_callback_add("motors/wheels", set_motor_wheels)
+client.message_callback_add("motors/servos", set_servos)
 client.message_callback_add("leds/#", all_messages)
 client.message_callback_add("leds/set", set_led)
 client.message_callback_add("all/stop", stop_motors)
