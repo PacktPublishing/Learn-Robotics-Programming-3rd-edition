@@ -9,7 +9,9 @@ services = [
     ["launcher_service", "robot/launcher_service.py", True],
     ["distance_sensor_service", "robot/distance_sensor_service.py", True],
     ["distance_plotter_service", "robot/distance_plotter.py", True],
+    ["encoder_plotter_service", "robot/encoder_plotter.py", True],
     ["behavior_path", "robot/behavior_path.py", False],
+    ["behavior_line", "robot/behavior_line.py", False],
     ["bang_bang_obstacle_avoiding", "robot/bang_bang_obstacle_avoiding.py", False],
     ["proportional_obstacle_avoiding", "robot/proportional_obstacle_avoiding.py", False],
 ]
