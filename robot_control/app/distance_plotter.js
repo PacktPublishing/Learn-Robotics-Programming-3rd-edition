@@ -1,6 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
 import { View , Text, Button } from 'react-native';
-import { Link } from 'expo-router';
 import { styles, BackButton } from '../lib/styles';
 import { env } from '../lib/connection'
 import { WebView } from 'react-native-webview';

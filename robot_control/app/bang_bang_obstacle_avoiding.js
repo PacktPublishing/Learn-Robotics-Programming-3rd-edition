@@ -1,23 +1,24 @@
 import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View , Text, Button } from 'react-native';
-import { Link, useNavigation } from 'expo-router';
+import { useNavigation } from 'expo-router';
 import { styles, BackButton } from '../lib/styles';
 import { env } from '../lib/connection'
 import { WebView } from 'react-native-webview';
 
-export default function Page({ navigation }) {
+export default function Page() {
     const [distanceLogs, setDistanceLogs] = useState({});
-    global.mqttClient.subscribe("log/obstacle_avoider");
-    global.mqttClient.onMessageArrived = (message) => {
-        const logData = JSON.parse(message.payloadString);
-        setDistanceLogs(logData);
-    }
-
     useNavigation().addListener('beforeRemove', (e) => {
         global.mqttClient.unsubscribe("log/obstacle_avoider");
     });
 
+    useNavigation().addListener('focus', () => {
+        global.mqttClient.subscribe("log/obstacle_avoider");
+        global.mqttClient.onMessageArrived = (message) => {
+            const logData = JSON.parse(message.payloadString);
+            setDistanceLogs(logData);
+        }    
+    });
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Bang Bang Obstacle Avoiding</Text>

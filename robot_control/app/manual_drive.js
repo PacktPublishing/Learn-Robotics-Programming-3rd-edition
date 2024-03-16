@@ -1,6 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
 import { Text } from 'react-native';
-import { Link } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ReactNativeJoystick } from "@korsolutions/react-native-joystick";
 import { styles, BackButton } from '../lib/styles';
