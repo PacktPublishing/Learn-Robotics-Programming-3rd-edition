@@ -1,12 +1,13 @@
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, FlatList } from 'react-native';
 import { Link } from 'expo-router';
-import { styles } from '../styles';
+import { styles, BackButton } from '../lib/styles';
 import { connect } from '../lib/connection'
 
 const MENU_ITEMS = [
   { id: 'manual_drive', label: 'Manual drive' },
   { id: 'behavior_path', label: 'Drive path'},
+  { id: 'behavior_line', label: 'Drive line'},
   { id: 'distance_plotter', label: 'Distance plotter'},
   { id: 'bang_bang_obstacle_avoiding', label: 'Bang Bang Obstacle Avoiding' },
   { id: 'proportional_obstacle_avoiding', label: 'Proportional Obstacle Avoiding' },

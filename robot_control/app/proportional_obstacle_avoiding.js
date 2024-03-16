@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View , Text, Button } from 'react-native';
 import { Link, useNavigation } from 'expo-router';
-import { styles } from '../styles';
+import { styles, BackButton } from '../lib/styles';
 import { env } from '../lib/connection'
 import { WebView } from 'react-native-webview';
 import Slider from '@react-native-community/slider';
@@ -51,7 +51,7 @@ export default function Page({ navigation }) {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Proportional Obstacle Avoiding Behavior</Text>
-            <Link href="/">Back</Link>
+            <BackButton/>
             <Button title="Start" onPress={() => global.mqttClient.publish("launcher/start", "proportional_obstacle_avoiding")} />
             <Button title="Stop" onPress={() => global.mqttClient.publish("launcher/stop", "proportional_obstacle_avoiding")} />
             <Text>Left Distance: {distanceLogs.left_distance}, Motor: {distanceLogs.left_motor_speed}</Text>

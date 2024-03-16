@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet } from 'react-native';
+import { Link } from 'expo-router';
 
 export const styles = StyleSheet.create({
   container: {
@@ -29,4 +30,18 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 4,
     borderColor: '#000',
   },
+  back: {
+    margin: 8,
+    padding: 8,
+    fontSize: 20,
+    borderColor: '#000',
+    borderWidth: 1,
+    backgroundColor: 'lightgray',
+  }
 });
+
+export function BackButton() {
+  return (
+    <Link style={styles.back} href="/">&lt; Back</Link>
+  );
+}

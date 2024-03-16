@@ -3,14 +3,14 @@ import { Text } from 'react-native';
 import { Link } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ReactNativeJoystick } from "@korsolutions/react-native-joystick";
-import { styles } from '../styles';
+import { styles, BackButton } from '../lib/styles';
 
 
 export default function Page() {
   return (
     <GestureHandlerRootView style={styles.container}>
       <Text style={styles.title}>Manual drive</Text>
-      <Link href="/">Back</Link>
+      <BackButton/>
       <ReactNativeJoystick color="#06b6d4" radius={75} onMove={onJoystickMove} onStop={onJoystickStop }/>
       <ReactNativeJoystick color="#06b6d4" radius={75} onMove={onServoJoystickMove} onStop={onServoJoystickStop }/>
       <StatusBar style="auto" />
