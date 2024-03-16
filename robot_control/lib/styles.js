@@ -21,6 +21,9 @@ export const styles = StyleSheet.create({
   },
   title: {
     alignSelf: 'center',
+    margin: 8,
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   item: {
     backgroundColor: '#cdcdcd',
