@@ -36,7 +36,7 @@ class DistancePlotter(Handler):
         fig = figure(title="Distance sensor data", x_axis_label="x", y_axis_label="y")
         fig.image(source=column_source, x=0, y=0, dw=8, dh=8, palette="Greys256")
         doc.add_root(fig)
-    
+
 
 print("Starting plotter")
 distance_plotter = DistancePlotter()
