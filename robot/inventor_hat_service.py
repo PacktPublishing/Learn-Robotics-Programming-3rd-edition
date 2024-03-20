@@ -17,6 +17,8 @@ right_encoder = board.encoders[0]
 left_encoder.counts_per_rev(8 * 120)
 right_encoder.counts_per_rev(8 * 120)
 
+wheel_diameter_mm = 68 
+
 # WARNING: Using these with the motors may need external power. I recommend two 18650 battery for this.
 # You will want suitable charging, and a battery that has protection.
 pan_servo = board.servos[inventorhatmini.SERVO_1]
@@ -68,6 +70,7 @@ def set_led(client, userdata, msg):
 class EncoderMonitor(Thread):
     update_frequency = 0.1
     running: bool = False
+    start_time = time.time()
 
     def run(self):
         while True:
@@ -75,12 +78,20 @@ class EncoderMonitor(Thread):
                 # https://github.com/pimoroni/ioe-python/blob/master/docs/encoder.md
                 l_capture = left_encoder.capture()
                 r_capture = right_encoder.capture()
+                l_distance = l_capture.radians * wheel_diameter_mm
+                r_distance = r_capture.radians * wheel_diameter_mm
+                l_distance_delta = l_capture.radians_delta * wheel_diameter_mm
+                r_distance_delta = r_capture.radians_delta * wheel_diameter_mm
                 data = {
                     "left_delta": l_capture.radians_delta,
                     "right_delta": r_capture.radians_delta,
                     "left_radians": l_capture.radians,
                     "right_radians": r_capture.radians,
-                    "timestamp": time.time()
+                    "left_distance": l_distance,
+                    "right_distance": r_distance,
+                    "left_distance_delta": l_distance_delta,
+                    "right_distance_delta": r_distance_delta,
+                    "timestamp": time.time() - self.start_time
                 }
                 client.publish("sensors/encoders/data", json.dumps(data))
             time.sleep(self.update_frequency)
@@ -91,6 +102,10 @@ class EncoderMonitor(Thread):
             self.running = bool(data['running'])
         if 'frequency' in data:
             self.update_frequency = data['frequency']
+        if data.get('reset') == True:
+            left_encoder.zero()
+            right_encoder.zero()
+            self.start_time = time.time()
 
 
 def on_connect(client, userdata, flags, rc):

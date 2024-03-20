@@ -17,15 +17,24 @@ class EncoderPlotter(Handler):
 
     def data_received(self, client, userdata, msg):
         data = json.loads(msg.payload)
-        self.left_data.append(data['left_radians'])
-        self.right_data.append(data['right_radians'])
+        self.left_data.append(data['left_distance'])
+        self.right_data.append(data['right_distance'])
         self.timestamps.append(data['timestamp'])
 
     def start_mqtt(self):
         client = connect(start_loop=False)
         client.loop_start()
         client.subscribe("sensors/encoders/data")
+        client.subscribe("sensors/encoders/control")
         client.message_callback_add("sensors/encoders/data", self.data_received)
+        client.message_callback_add("sensors/encoders/control", self.control_received)
+    
+    def control_received(self, client, userdata, msg):
+        data = json.loads(msg.payload)
+        if data.get('reset') == True:
+            self.left_data = []
+            self.right_data = []
+            self.timestamps = []
     
     def modify_document(self, doc: Document) -> None:
         column_source = ColumnDataSource({'left': [], 'right': [], 'timestamps': []})
@@ -35,7 +44,7 @@ class EncoderPlotter(Handler):
                 'right': self.right_data, 
                 'timestamps': self.timestamps}
         doc.add_periodic_callback(update, 50)
-        fig = figure(title="Encoder data", x_axis_label="time", y_axis_label="radians")
+        fig = figure(title="Encoder data", x_axis_label="time", y_axis_label="mm")
         fig.line('timestamps', 'left', source=column_source, line_width=2, line_color='red')
         fig.line('timestamps', 'right', source=column_source, line_width=2, line_color='blue')
         doc.add_root(fig)
