@@ -4,7 +4,7 @@ from bokeh.application import Application
 from bokeh.application.handlers.handler import Handler
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.document import Document
-
+# TODO: Make time into an X-axis
 from common.mqtt_behavior import connect
 
 
@@ -13,11 +13,13 @@ class EncoderPlotter(Handler):
         super().__init__()
         self.left_data = []
         self.right_data = []
+        self.timestamps = []
 
     def data_received(self, client, userdata, msg):
         data = json.loads(msg.payload)
         self.left_data.append(data['left_radians'])
         self.right_data.append(data['right_radians'])
+        self.timestamps.append(data['timestamp'])
 
     def start_mqtt(self):
         client = connect(start_loop=False)
@@ -26,13 +28,16 @@ class EncoderPlotter(Handler):
         client.message_callback_add("sensors/encoders/data", self.data_received)
     
     def modify_document(self, doc: Document) -> None:
-        column_source = ColumnDataSource({'left': [], 'right': []})
+        column_source = ColumnDataSource({'left': [], 'right': [], 'timestamps': []})
         def update():
-            column_source.data = {'left': self.left_data, 'right': self.right_data}
+            column_source.data = {
+                'left': self.left_data, 
+                'right': self.right_data, 
+                'timestamps': self.timestamps}
         doc.add_periodic_callback(update, 50)
         fig = figure(title="Encoder data", x_axis_label="time", y_axis_label="radians")
-        fig.line('left', source=column_source, line_width=2)
-        fig.line('left', source=column_source, line_width=2)
+        fig.line('timestamps', 'left', source=column_source, line_width=2, line_color='red')
+        fig.line('timestamps', 'right', source=column_source, line_width=2, line_color='blue')
         doc.add_root(fig)
 
 

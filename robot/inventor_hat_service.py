@@ -67,7 +67,7 @@ def set_led(client, userdata, msg):
 
 class EncoderMonitor(Thread):
     update_frequency = 0.1
-    running = False
+    running: bool = False
 
     def run(self):
         while True:
@@ -80,6 +80,7 @@ class EncoderMonitor(Thread):
                     "right_delta": r_capture.radians_delta,
                     "left_radians": l_capture.radians,
                     "right_radians": r_capture.radians,
+                    "timestamp": time.time()
                 }
                 client.publish("sensors/encoders/data", json.dumps(data))
             time.sleep(self.update_frequency)
@@ -87,7 +88,7 @@ class EncoderMonitor(Thread):
     def mqtt_control(self, client, userdata, msg):
         data = json.loads(msg.payload)
         if 'running' in data:
-            self.running = data['running']
+            self.running = bool(data['running'])
         if 'frequency' in data:
             self.update_frequency = data['frequency']
 
