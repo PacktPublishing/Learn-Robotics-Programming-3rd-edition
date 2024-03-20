@@ -31,7 +31,8 @@ class EncoderPlotter(Handler):
             column_source.data = {'left': self.left_data, 'right': self.right_data}
         doc.add_periodic_callback(update, 50)
         fig = figure(title="Encoder data", x_axis_label="time", y_axis_label="radians")
-        fig.line('left', 'right', source=column_source, line_width=2)
+        fig.line('left', source=column_source, line_width=2)
+        fig.line('left', source=column_source, line_width=2)
         doc.add_root(fig)
 
 

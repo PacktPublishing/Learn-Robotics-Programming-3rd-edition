@@ -21,6 +21,8 @@ right_encoder.counts_per_rev(8 * 120)
 # You will want suitable charging, and a battery that has protection.
 pan_servo = board.servos[inventorhatmini.SERVO_1]
 tilt_servo = board.servos[inventorhatmini.SERVO_2]
+pan_servo.disable()
+tilt_servo.disable()
 
 
 def all_messages(client, userdata, msg):
