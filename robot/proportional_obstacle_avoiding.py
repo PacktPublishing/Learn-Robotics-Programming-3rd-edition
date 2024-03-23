@@ -1,4 +1,5 @@
 from common.mqtt_behavior import connect, publish_json
+from common.pid_control import PController
 import numpy as np
 import ujson as json
 
@@ -6,7 +7,7 @@ import ujson as json
 class ProportionalObstacleAvoidingBehavior:
     def __init__(self):
         self.speed = 0.6
-        self.curve_proportion = 140
+        self.curve_controller = PController(140)
         # Lower proportion = smoother, but more likely to steer into something.
         # Higher proportion, corrects away from a collision, but will have a characteristic proportional wobble.
         # TODO: Pause behavior with setting?
@@ -17,7 +18,7 @@ class ProportionalObstacleAvoidingBehavior:
             if "speed" in settings:
                 self.speed = settings["speed"]
             if "curve_proportion" in settings:
-                self.curve_proportion = settings["curve_proportion"]
+                self.curve_controller.k_p = settings["curve_proportion"]
             print(f"Updated settings: {settings}")
         except Exception as e:
             print(f"Failed to update settings: {e}, {msg.payload}")
@@ -41,8 +42,9 @@ class ProportionalObstacleAvoidingBehavior:
         right_distance = int(np.min(right_sensors))
         # Think
         nearest_distance = min(left_distance, right_distance)
-        inverse = 1/max(nearest_distance, 1)
-        curve = self.curve_proportion * inverse
+        # Higher error when distance is lower
+        error = 1/max(nearest_distance, 1)
+        curve = self.curve_controller.control(error)
         furthest_speed = np.clip(self.speed - curve, -1, 1)
         nearest_speed = np.clip(self.speed + curve, -1, 1)
 

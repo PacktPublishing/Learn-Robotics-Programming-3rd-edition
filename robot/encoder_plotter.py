@@ -32,6 +32,7 @@ class EncoderPlotter(Handler):
     def control_received(self, client, userdata, msg):
         data = json.loads(msg.payload)
         if data.get('reset') == True:
+            print("Resetting data")
             self.left_data = []
             self.right_data = []
             self.timestamps = []

@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, FlatList } from 'react-native';
 import { Link } from 'expo-router';
-import { styles, BackButton } from '../lib/styles';
+import { styles } from '../lib/styles';
 import { connect } from '../lib/connection'
 
 const MENU_ITEMS = [
@@ -11,6 +11,7 @@ const MENU_ITEMS = [
   { id: 'distance_plotter', label: 'Distance plotter'},
   { id: 'bang_bang_obstacle_avoiding', label: 'Bang Bang Obstacle Avoiding' },
   { id: 'proportional_obstacle_avoiding', label: 'Proportional Obstacle Avoiding' },
+  { id: 'line_with_correction', label: 'Line with correction' },
   { id: 'power_off', label: 'Power off'},
 ];
 

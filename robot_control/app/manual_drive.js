@@ -3,7 +3,7 @@ import { Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ReactNativeJoystick } from "@korsolutions/react-native-joystick";
 import { styles, BackButton } from '../lib/styles';
-
+import { publish_json } from '../lib/connection';
 
 export default function Page() {
   return (
@@ -21,37 +21,37 @@ function onJoystickMove(data) {
   let speed = Math.sin(data.angle.radian) * Math.min(1, data.force);
   let curve = Math.cos(data.angle.radian) * Math.min(1, data.force);
   // console.log("speed: "+speed+"\t curve: "+curve);
-  global.mqttClient.publish(
+  publish_json(
     "motors/wheels", 
-    JSON.stringify([speed + curve, speed - curve])
+    [speed + curve, speed - curve]
   );
 }
 
 function onJoystickStop() {
   console.log('Joystick stop');
-  global.mqttClient.publish("motors/stop", "{}");
+  publish_json("motors/stop", {});
 }
 
 function onServoJoystickMove(data) {
   let pan = Math.cos(data.angle.radian) * Math.min(1, data.force) * 70;
   let tilt = -Math.sin(data.angle.radian) * Math.min(1, data.force) * 70;
   // console.log("angle: "+angle+"\t force: "+force);
-  global.mqttClient.publish(
+  publish_json(
     "motors/servos", 
-    JSON.stringify({pan: pan, tilt: tilt})
+    {pan: pan, tilt: tilt}
   );
 }
 
 function onServoJoystickStop() {
   console.log('Servo joystick stop');
-  global.mqttClient.publish(
+  publish_json(
     "motors/servos", 
-    JSON.stringify({ pan: 0, tilt: 0 })
+    { pan: 0, tilt: 0 }
   );
   setTimeout(() => {
-    global.mqttClient.publish(
+    publish_json(
       "motors/servos", 
-      JSON.stringify({ pan: "disable", tilt: "disable" })
+      { pan: "disable", tilt: "disable" }
     );
   }, 1500);
 }

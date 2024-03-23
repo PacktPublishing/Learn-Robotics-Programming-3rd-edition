@@ -14,6 +14,7 @@ services = [
     ["behavior_line", "robot/behavior_line.py", False],
     ["bang_bang_obstacle_avoiding", "robot/bang_bang_obstacle_avoiding.py", False],
     ["proportional_obstacle_avoiding", "robot/proportional_obstacle_avoiding.py", False],
+    ["line_with_correction", "robot/line_with_correction.py", False],
 ]
 
 for service_name, service_file, auto_start in services:

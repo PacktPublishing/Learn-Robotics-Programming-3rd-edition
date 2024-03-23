@@ -35,10 +35,10 @@ def all_messages(client, userdata, msg):
 
 def set_motor_wheels(client, userdata, msg):
     left, right = json.loads(msg.payload)
-    left_motor.enable()
     left_motor.speed(left)
-    right_motor.enable()
     right_motor.speed(right)
+    left_motor.enable()
+    right_motor.enable()
 
 
 def stop_motors(client=None, userdata=None, msg=None):
@@ -68,14 +68,16 @@ def set_led(client, userdata, msg):
 
 
 class EncoderMonitor(Thread):
-    update_frequency = 0.1
+    update_period = 0.1
     running: bool = False
     start_time = time.time()
+    last_time = time.time()
 
     def run(self):
         while True:
             if self.running:
                 # https://github.com/pimoroni/ioe-python/blob/master/docs/encoder.md
+                new_time = time.time()
                 l_capture = left_encoder.capture()
                 r_capture = right_encoder.capture()
                 l_distance = l_capture.radians * wheel_diameter_mm
@@ -91,17 +93,19 @@ class EncoderMonitor(Thread):
                     "right_distance": r_distance,
                     "left_distance_delta": l_distance_delta,
                     "right_distance_delta": r_distance_delta,
-                    "timestamp": time.time() - self.start_time
+                    "timestamp": new_time - self.start_time,
+                    "delta_time": new_time - self.last_time,
                 }
+                self.last_time = new_time
                 client.publish("sensors/encoders/data", json.dumps(data))
-            time.sleep(self.update_frequency)
+            time.sleep(self.update_period)
 
     def mqtt_control(self, client, userdata, msg):
         data = json.loads(msg.payload)
         if 'running' in data:
             self.running = bool(data['running'])
         if 'frequency' in data:
-            self.update_frequency = data['frequency']
+            self.update_period = 1/data['frequency']
         if data.get('reset') == True:
             left_encoder.zero()
             right_encoder.zero()

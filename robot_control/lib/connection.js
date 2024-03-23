@@ -30,7 +30,12 @@ export function connect() {
             console.log('Connection failed');
             console.log(err)
         },
+        reconnect: true,
     });
 
     return mqttClient;
+}
+
+export function publish_json(topic, data) {
+    global.mqttClient.publish(topic, JSON.stringify(data));
 }
