@@ -22,6 +22,15 @@ export const EncoderDisplay = () => {
     );
 };
 
+export const BehaviorWebView = () => {
+    const behaviorData = useMQTTData("behavior/graph", { uri: null });
+    return (
+        <WebView style={styles.container}
+        source={{uri: behaviorData.uri}}
+        />
+    );
+}
+
 export default function Page() {
     useNavigation().addListener('beforeRemove', (e) => {
         global.mqttClient.publish("launcher/stop", "line_with_correction");
@@ -39,7 +48,7 @@ export default function Page() {
             <StatusBar style="auto" />
             <EncoderDisplay/>
             <WebView style={styles.container}
-                source={{uri: "http://" + env.PI_HOSTNAME + ":5001/"}}
+                source={{uri: "http://" + env.PI_HOSTNAME + ":5002/"}}
                 />
             <BehaviorSetting title="Speed" name="speed" minimum={0} maximum={1} step={0.1} start_value={0.6} />
             <BehaviorSetting title="Veer Proportion" name="veer_proportion" minimum={0} maximum={10} step={1} start_value={0.2} />

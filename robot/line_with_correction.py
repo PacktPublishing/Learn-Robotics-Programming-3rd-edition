@@ -1,14 +1,23 @@
-from common.mqtt_behavior import connect, publish_json
-from common.pid_control import PIController
 import numpy as np
 import ujson as json
+from bokeh.server.server import Server
+from bokeh.application import Application
+from bokeh.application.handlers.handler import Handler
+from bokeh.plotting import figure, ColumnDataSource
+from bokeh.document import Document
 
+from common.mqtt_behavior import connect, publish_json
+from common.pid_control import PIController
 
-class LineWithCorrectionBehavior:
+class LineWithCorrectionBehavior(Handler):
     def __init__(self):
+        super().__init__()
         self.speed = 0.6
         self.running = False
         self.veer_controller = PIController(0.2, 0.3)
+        self.veer_data = np.zeros(100)
+        self.error_data = np.zeros(100)
+        self.timestamps = np.linspace(0, 10, 100)
         # Lower proportion = smoother, but more likely to steer into something.
         # Higher proportion, corrects away from a collision, but will have a characteristic proportional wobble.
 
@@ -60,14 +69,37 @@ class LineWithCorrectionBehavior:
                 "veer": veer,
                 "error": error,
             }
+            self.error_data = np.roll(self.error_data, 1)
+            self.error_data[0] = error
+            self.veer_data = np.roll(self.veer_data, 1)
+            self.veer_data[0] = veer
+
             publish_json(client, "behavior/log", log_data)
             publish_json(client, "motors/wheels", [left_motor_speed, right_motor_speed])
         else:
             publish_json(client, "motors/wheels", [0, 0])
 
+    def modify_document(self, doc: Document) -> None:
+        column_source = ColumnDataSource({'error': [], 'veer': [], 'timestamps': []})
+        def update():
+            column_source.data = {
+                'error': np.flip(self.error_data),
+                'veer': np.flip(self.veer_data),
+                'timestamps': self.timestamps}
+        doc.add_periodic_callback(update, 50)
+        fig = figure(title="Encoder data", x_axis_label="time", y_axis_label="mm")
+        fig.line('timestamps', 'error', source=column_source, line_width=2, line_color='red')
+        fig.line('timestamps', 'veer', source=column_source, line_width=2, line_color='blue')
+        doc.add_root(fig)
+
     def run(self):
         self.client = connect(self.on_connect, start_loop=False)
-        self.client.loop_forever()
+        self.client.loop_start()
 
 behavior = LineWithCorrectionBehavior()
 behavior.run()
+apps = {'/': Application(behavior)}
+
+server = Server(apps, port=5002, address="0.0.0.0", allow_websocket_origin=["*"])
+server.start()
+server.run_until_shutdown()

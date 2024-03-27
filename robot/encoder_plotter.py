@@ -4,7 +4,6 @@ from bokeh.application import Application
 from bokeh.application.handlers.handler import Handler
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.document import Document
-# TODO: Make time into an X-axis
 from common.mqtt_behavior import connect
 
 
