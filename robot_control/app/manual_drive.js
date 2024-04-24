@@ -33,7 +33,7 @@ function onJoystickStop() {
 }
 
 function onServoJoystickMove(data) {
-  let pan = Math.cos(data.angle.radian) * Math.min(1, data.force) * 70;
+  let pan = -Math.cos(data.angle.radian) * Math.min(1, data.force) * 70;
   let tilt = -Math.sin(data.angle.radian) * Math.min(1, data.force) * 70;
   // console.log("angle: "+angle+"\t force: "+force);
   publish_json(
