@@ -11,7 +11,7 @@ const MENU_ITEMS = [
   { id: 'distance_plotter', label: 'Distance plotter'},
   { id: 'bang_bang_obstacle_avoiding', label: 'Bang Bang Obstacle Avoiding' },
   { id: 'proportional_obstacle_avoiding', label: 'Proportional Obstacle Avoiding' },
-  { id: 'line_with_correction', label: 'Line with correction' },
+  { id: 'encoder_driver', label: 'Encoder driver' },
   { id: 'power_off', label: 'Power off'},
 ];
 
