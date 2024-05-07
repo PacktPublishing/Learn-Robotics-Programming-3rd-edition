@@ -37,26 +37,41 @@ typecheck = ["mypy"]
 
 [[package]]
 name = "bokeh"
-version = "3.3.4"
+version = "3.4.1"
 description = "Interactive plots and applications in the browser from Python"
 category = "main"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "bokeh-3.3.4-py3-none-any.whl", hash = "sha256:ad7b6f89d0a7c2be01eff1db0ca24e2755ac41de14539db919a62e791809c309"},
-    {file = "bokeh-3.3.4.tar.gz", hash = "sha256:73b7982dc2b8df15bf660cdddc8d3825e829195c438015a5d09824f1a7028368"},
+    {file = "bokeh-3.4.1-py3-none-any.whl", hash = "sha256:1e3c502a0a8205338fc74dadbfa321f8a0965441b39501e36796a47b4017b642"},
+    {file = "bokeh-3.4.1.tar.gz", hash = "sha256:d824961e4265367b0750ce58b07e564ad0b83ca64b335521cd3421e9b9f10d89"},
 ]
 
 [package.dependencies]
-contourpy = ">=1"
+contourpy = ">=1.2"
 Jinja2 = ">=2.9"
 numpy = ">=1.16"
 packaging = ">=16.8"
 pandas = ">=1.2"
 pillow = ">=7.1.0"
 PyYAML = ">=3.10"
-tornado = ">=5.1"
+tornado = ">=6.2"
 xyzservices = ">=2021.09.1"
+
+[[package]]
+name = "bokeh-joystick-widget"
+version = "0.3.1"
+description = "A Bokeh on screen gesture/mouse drag based joystick widget for use in a dashboard with controls"
+category = "main"
+optional = false
+python-versions = "<4.0,>=3.9"
+files = [
+    {file = "bokeh_joystick_widget-0.3.1-py3-none-any.whl", hash = "sha256:21a4d556713f392cde185c12f907f29d03d741976fb4c8bc36b733b360a7429b"},
+    {file = "bokeh_joystick_widget-0.3.1.tar.gz", hash = "sha256:3dcfecc0be54c7514e2fd431352529b0fbd114df14fc67f403667d9728f73b5f"},
+]
+
+[package.dependencies]
+bokeh = ">=3.4.1,<4.0.0"
 
 [[package]]
 name = "certifi"
@@ -1423,4 +1438,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "d4f11bb6fee39ec6c1fc47e0f3401d070eb6cb715cfe21900cbad82307386f1a"
+content-hash = "a630deb079584fc55bbe5e27b6f10fbe7e536b5daad2c753e5b069a7a4905cab"
