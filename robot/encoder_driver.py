@@ -89,21 +89,32 @@ class StopMode:
         return 0, 0
     def apply_settings(self, settings):
         pass
+    def reset(self):
+        pass
 
 
 class DriveForeverMode:
     # Given settings, will transform encoder data into motor speeds.
-    def __init__(self, speed, logger: DataLogger):
-        self.speed = speed
+    def __init__(self, logger: DataLogger):
+        # Speed here is radians/s
+        self.speed = 3
         # Lower proportion = smoother, but more likely to steer into something.
         # Higher proportion, corrects away from a collision, but will have a characteristic proportional wobble.
 
         # A differential PID
-        self.diff_pid = PIController(0.2, 0.3)
+        # self.diff_pid = PIController(0.3, 0.1)
+        # self.diff_pid = PIController(0.2, 0)
+        self.diff_pid = PIController(0.0, 0)
         # Motor PIDs
-        self.left_pid = PIController(0.2, 0.3)
-        self.right_pid = PIController(0.2, 0.3)
+        # Tune these first, with the diff pid at 0.
+        self.left_pid = PIController(0.2, 0.6)
+        self.right_pid = PIController(0.2, 0.6)
         self.logger = logger
+
+    def reset(self):
+        self.diff_pid.reset()
+        self.left_pid.reset()
+        self.right_pid.reset()
 
     def apply_settings(self, settings):
         if "diff_proportion" in settings:
@@ -127,15 +138,24 @@ class DriveForeverMode:
         # Apply differential PID
         error = right - left
         diff = self.diff_pid.control(error, delta_time)
+
         left_motor_input = self.speed + diff
         right_motor_input = self.speed - diff
+
+        # Lets reason here - we expect the left and right to be encoder counts, where as the motor inputs are speeds.
+        # So I need to scale them a little before their differences make sense.
+
+        # Ok how would I do one motor:
+        # - A target speed in radians per cycle
+        # - Current speed in radians per cycle
+
         # Apply motor PIDS
         left_motor_error = left_motor_input - left
         right_motor_error = right_motor_input - right
         left_motor_speed = self.left_pid.control(left_motor_error, delta_time)
         right_motor_speed = self.right_pid.control(right_motor_error, delta_time)
-        left_motor_speed = np.clip(left_motor_speed, -1, 1)
-        right_motor_speed = np.clip(right_motor_speed, -1, 1)
+        left_motor_speed = 0 #np.clip(left_motor_speed, -1, 1)
+        right_motor_speed = np.clip(right_motor_speed, -1, 1) 
         
         self.logger.log({
             "left": left,
@@ -163,13 +183,14 @@ class DriveForTimeMode(DriveForeverMode):
         if sensor_data["time"] - self.start_time > self.time_s:
             return 0, 0
         return super().think(sensor_data)
-
+    def reset(self):
+        pass
 
 class DrivingBehavior:
     def __init__(self, logger) -> None:
         self.logger = logger
         self.stop_mode = StopMode()
-        self.drive_forever_mode = DriveForeverMode(0.6, self.logger)
+        self.drive_forever_mode = DriveForeverMode(self.logger)
         self.current_mode = self.stop_mode
     
     def on_connect(self, client, userdata, flags, rc):
@@ -201,6 +222,7 @@ class DrivingBehavior:
         #     self.current_mode = StopAction()
         # else:
         self.current_mode = self.drive_forever_mode
+        self.current_mode.reset()
 
     def stop_drive(self, client, userdata, msg):
         self.current_mode = self.stop_mode

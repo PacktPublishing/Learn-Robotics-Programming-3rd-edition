@@ -59,10 +59,10 @@ export default function Page() {
             <StatusBar style="auto" />
             <LogDisplay/>
             <DelayedWebView uri={"http://" + env.PI_HOSTNAME + ":5002/"}/>
-            <BehaviorSetting title="Speed" name="speed" minimum={0} maximum={1} step={0.1} start_value={0.6} />
-            <BehaviorSetting title="Diff Proportion" name="diff_proportion" minimum={0} maximum={3} step={0.1} start_value={0.2} />
+            <BehaviorSetting title="Speed" name="speed" minimum={0} maximum={10} step={0.5} start_value={6} />
+            <BehaviorSetting title="Diff Proportion" name="diff_proportion" minimum={0} maximum={3} step={0.1} start_value={1} />
             <BehaviorSetting title="Diff Integral" name="diff_integral" minimum={0} maximum={2} step={0.1} start_value={0.3} />
-            <BehaviorSetting title="Motor Proportion" name="motor_proportion" minimum={0} maximum={3} step={0.1} start_value={0.2} />
+            <BehaviorSetting title="Motor Proportion" name="motor_proportion" minimum={0} maximum={3} step={0.1} start_value={1} />
             <BehaviorSetting title="Motor Integral" name="motor_integral" minimum={0} maximum={2} step={0.1} start_value={0.3} />
         </View>
     );
