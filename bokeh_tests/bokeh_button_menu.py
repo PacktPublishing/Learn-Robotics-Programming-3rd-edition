@@ -11,34 +11,60 @@ from bokeh.application.handlers.handler import Handler
 from bokeh.events import Event
 
 from bokeh.layouts import column
-from bokeh.models import Button
+from bokeh.models import Button, CustomJS
+
+
+def make_button_with_url(url, **kwargs):
+    button = Button(**kwargs)
+    button.js_on_click(CustomJS(code=f"window.location.href = '{url}'"))
+    return button
+
+
+class ManualDrive(Handler):
+    def button_click(self, event: Event):
+        print(f"Button clicked {event.model.name}")
+
+    def modify_document(self, doc: Document) -> None:
+        button = Button(label="Drive", name="drive", button_type="primary", sizing_mode="stretch_width")
+        button.on_click(self.button_click)
+        back_button = make_button_with_url("/", label="Back", name="back", button_type="warning", sizing_mode="stretch_width")
+        # back_button.on_click(OpenURL(url="/", same_tab=True))
+
+        doc.add_root(
+            column(
+                button,
+                back_button
+            )
+        )
+#set_curdoc is a possible way to do this.
+#OpenURL only works with TapTool (documentation is a bit poor here)
 
 class ButtonPage(Handler):
     menu_items = [
-        { "name": 'manual_drive', "label": 'Manual drive' },
-        { "name": 'behavior_path', "label": 'Drive path'},
-        { "name": 'behavior_line', "label": 'Drive line'},
-        { "name": 'distance_plotter', "label": 'Distance plotter'},
-        { "name": 'bang_bang_obstacle_avoiding', "label": 'Bang Bang Obstacle Avoiding' },
-        { "name": 'proportional_obstacle_avoiding', "label": 'Proportional Obstacle Avoiding' },
-        { "name": 'encoder_driver', "label": 'Encoder driver' },
-        { "name": 'power_off', "label": 'Power off'},
+        { "url": '/manual_drive', "label": 'Manual drive' },
+        { "url": '/behavior_path', "label": 'Drive path'},
+        { "url": '/behavior_line', "label": 'Drive line'},
+        { "url": '/distance_plotter', "label": 'Distance plotter'},
+        { "url": '/bang_bang_obstacle_avoiding', "label": 'Bang Bang Obstacle Avoiding' },
+        { "url": '/proportional_obstacle_avoiding', "label": 'Proportional Obstacle Avoiding' },
+        { "url": '/encoder_driver', "label": 'Encoder driver' },
+        { "url": '/power_off', "label": 'Power off'},
     ]
-
-    def button_click(self, event: Event):
-        print(f"Button clicked {event.model.name}")
 
     def modify_document(self, doc: Document) -> None:
         buttons = []
 
         for item in self.menu_items:
-            button = Button(label=item['label'], name=item["name"], button_type="primary", sizing_mode="stretch_width")
-            button.on_click(self.button_click)
+            button = make_button_with_url(item['url'],label=item['label'], button_type="primary", sizing_mode="stretch_width")
+            # button.on_click(OpenURL(url=item['url'], same_tab=True).trigger)
             buttons.append(button)
         doc.add_root(column(*buttons))
 
 server = Server(
-    {"/": Application(ButtonPage())},
+    {
+        "/": Application(ButtonPage()),
+        "/manual_drive": Application(ManualDrive())
+    },
     port=5006,
     address="0.0.0.0",
     allow_websocket_origin=["*"],
