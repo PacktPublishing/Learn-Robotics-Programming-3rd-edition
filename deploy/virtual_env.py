@@ -29,3 +29,9 @@ files.put(
     mode="755",
     dest="/usr/local/bin/robotpython", _sudo=True,
 )
+
+pip.packages(
+    name="Install pip dependencies for services",
+    packages=["bokeh"],
+    virtualenv=robot_venv,
+)
