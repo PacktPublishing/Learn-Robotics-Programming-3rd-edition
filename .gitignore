@@ -4,3 +4,4 @@ robot_control/dist
 debug_data
 .DS_Store
 .vscode
+.env.js

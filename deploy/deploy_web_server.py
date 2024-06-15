@@ -2,6 +2,22 @@ from pyinfra.operations import files, systemd
 from pyinfra import host
 
 html = files.sync("robot_control", "robot_control")
+
+libs = files.directory(
+    name="Create robot_control/libs",
+    path="robot_control/libs"
+)
+files.download(
+    name="Download mqtt js",
+    src="https://unpkg.com/mqtt@5.7.0/dist/mqtt.esm.js",
+    dest="robot_control/libs/mqtt.js"
+)
+files.download(
+    name="Download joystick widget",
+    src="https://github.com/bobboteck/JoyStick/raw/master/joy.js",
+    dest="robot_control/libs/joy.js"
+)
+
 web_server_unit_file = files.template(
     name="Create web service",
     src="deploy/service_template.j2",
