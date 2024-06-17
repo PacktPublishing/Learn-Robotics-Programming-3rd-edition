@@ -12,16 +12,20 @@
         <script type="module">
             import { connect } from './mqtt_client.js';
             let mqttClient = connect();
-    
-            var joystick = new JoyStick('joydiv', {} , function(stickData) {
-              console.log(stickData.x, stickData.y);
-              let speed = stickData.y / 100;
-              let direction = stickData.x / 100;
-              console.log("Speed:", speed, "Direction:", direction);
-              mqttClient.publish("motors/wheels", JSON.stringify([
-                speed + direction, speed - direction
-              ]));
-            });
+              
+            var joystick = new JoyStick(
+              'joydiv', 
+              {} , 
+              function(stickData) {
+                console.log(stickData.x, stickData.y);
+                let speed = stickData.y / 100;
+                let direction = stickData.x / 100;
+                console.log("Speed:", speed, "Direction:", direction);
+                mqttClient.publish("motors/wheels", JSON.stringify(
+                  [speed + direction, speed - direction]
+                ));
+              }
+          );
         </script>
     </body>
 </html>
