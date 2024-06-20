@@ -24,7 +24,7 @@ client = connect(on_connect=on_connect, start_loop=False)
 
 client.message_callback_add("launcher/#", print_message)
 client.message_callback_add("launcher/start", start_systemd_unit)
-client.message_callback_add("launcher/stop", stop_systemd_unit)
+# client.message_callback_add("launcher/stop", stop_systemd_unit)
 client.message_callback_add("launcher/poweroff", poweroff)
 
 client.loop_forever()

@@ -1,22 +1,22 @@
 <html>
     <head>
-        <title>Robot control - Drive path</title>
+        <title>Robot control - Power off</title>
         <link rel="stylesheet" type="text/css" href="styles.css">
         <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
     <body>
-        <h1>Robot control - Drive path</h1>
+        <h1>Robot control - Power off</h1>
         <a href="index.html">Back to menu</a><br>
-        <button id="start">Start</button>
+        <button id="turn_off">Turn off</button>
         <script type="module">
             import { connect } from './mqtt_client.js';
             let mqttClient = connect();
 
-            document.getElementById("start")
+            document.getElementById("turn_off")
                 .addEventListener(
                 "click",
                 function() {
-                    mqttClient.publish("launcher/start", "behavior_path.service");
+                    mqttClient.publish("launcher/poweroff", "");
                 }
             );
         </script>
