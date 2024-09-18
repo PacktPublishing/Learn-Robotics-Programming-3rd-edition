@@ -48,9 +48,11 @@ client.message_callback_add("motors/#", all_messages)
 client.message_callback_add("motors/stop", stop_motors)
 client.message_callback_add("motors/wheels", set_motor_wheels)
 client.message_callback_add("all/stop", stop_motors)
+client.message_callback_add("all/#", all_messages)
 
 client.connect("localhost", 1883)
 board.leds.set_rgb(0, 0, 90, 0)
+
 client.loop_start()
 while True:
     if time.time() - last_message > 1:
