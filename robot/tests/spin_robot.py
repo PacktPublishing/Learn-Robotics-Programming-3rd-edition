@@ -13,7 +13,7 @@ def stop_motors():
 atexit.register(stop_motors)
 
 left_motor.enable()
-left_motor.speed(-0.8)
+left_motor.speed(0.8)
 right_motor.enable()
-right_motor.speed(0.8)
+right_motor.speed(-0.8)
 sleep(2)

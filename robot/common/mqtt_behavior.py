@@ -23,7 +23,3 @@ def connect(on_connect=default_on_connect, start_loop=True):
 
 def publish_json(client, topic, data):
     client.publish(topic, json.dumps(data))
-
-def subscribe(client, topic, callback):
-    client.subscribe(topic)
-    client.message_callback_add(topic, callback)

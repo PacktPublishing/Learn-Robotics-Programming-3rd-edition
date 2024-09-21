@@ -1,9 +1,10 @@
 from io import BytesIO
 
-from deploy import base_packages
 from pyinfra.facts.server import Home
 from pyinfra import host
 from pyinfra.operations import apt, pip, files
+
+from deploy import base_packages
 
 apt.packages(
     name="Install python venv tool",
