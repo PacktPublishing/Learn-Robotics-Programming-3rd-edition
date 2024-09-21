@@ -2,3 +2,6 @@ node_modules
 robot_control/dist
 .expo
 .vscode
+debug_data
+.DS_Store
+robot_control/.env.js
