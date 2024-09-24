@@ -10,7 +10,6 @@ python = "^3.10"
 pyinfra = "^2.8"
 ujson = "^5.9.0"
 isort = "^5.13.2"
-bokeh = "^3.4.1"
 
 
 [build-system]
