@@ -3,6 +3,7 @@ name = "learnrob3"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -10,7 +11,6 @@ pyinfra = "^2.8"
 ujson = "^5.9.0"
 isort = "^5.13.2"
 bokeh = "^3.4.1"
-bokeh-joystick-widget = "^0.3.1"
 
 
 [build-system]

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Robot control - Manual drive</title>
+        <link rel="stylesheet" type="text/css" href="styles.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="libs/joy.js"></script>
+    </head>
+    <body>
+        <h1>Robot control - Manual drive</h1>
+        <a href="index.html">Back to menu</a>
+        <div id="joydiv" style="width:50vh;height: 50vh;"></div>
+        <script type="module">
+            import { connect } from './mqtt_client.js';
+            let mqttClient = connect();
+              
+            var joystick = new JoyStick(
+              'joydiv', 
+              {} , 
+              function(stickData) {
+                console.log(stickData.x, stickData.y);
+                let speed = stickData.y / 100;
+                let direction = stickData.x / 100;
+                console.log("Speed:", speed, "Direction:", direction);
+                mqttClient.publish("motors/wheels", JSON.stringify(
+                  [speed + direction, speed - direction]
+                ));
+              }
+          );
+        </script>
+    </body>
+</html>

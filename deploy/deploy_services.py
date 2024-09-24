@@ -1,5 +1,7 @@
 from pyinfra.operations import files, systemd
 from pyinfra import host
+from deploy import deploy_web_server
+
 
 common = files.sync(
     src="robot/common", dest="robot/common")
@@ -18,11 +20,11 @@ services = [
     ["encoder_driver", "robot/encoder_driver.py", False],
 ]
 
-for service_name, service_file, auto_start in services:
+for service_name, python_file, auto_start in services:
     code = files.put(
         name=f"Update {service_name} code",
-        src=service_file,
-        dest=service_file,
+        src=python_file,
+        dest=python_file,
     )
 
     # Create the service unit file
@@ -31,21 +33,18 @@ for service_name, service_file, auto_start in services:
     else:
         restart="no"
 
-    service = files.template(
+    unit_file = files.template(
         name=f"Create {service_name} service",
         src="deploy/service_template.j2",
         dest=f"/etc/systemd/system/{service_name}.service",
-        mode="644",
-        user="root",
-        group="root",
         pi_user=host.data.get('ssh_user'),
         service_name=service_name,
-        service_file=service_file,
+        command=python_file,
         restart=restart,
         _sudo=True
     )
 
-    if ((code.changed or common.changed) and auto_start) or service.changed:
+    if code.changed or common.changed or unit_file.changed:
         # Restart the service
         systemd.service(
             name=f"Restart {service_name} service",
@@ -53,6 +52,6 @@ for service_name, service_file, auto_start in services:
             running=auto_start,
             enabled=auto_start,
             restarted=auto_start,
-            daemon_reload=service.changed,
+            daemon_reload=unit_file.changed,
             _sudo=True,
         )
