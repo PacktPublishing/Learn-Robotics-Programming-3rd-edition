@@ -146,10 +146,11 @@ client.message_callback_add("motors/servos", set_servos)
 client.message_callback_add("leds/#", all_messages)
 client.message_callback_add("leds/set", set_led)
 client.message_callback_add("all/stop", all_stop)
+client.message_callback_add("all/#", all_messages)
 client.message_callback_add("sensors/encoders/control", encoder_monitor.mqtt_control)
 
 client.connect("localhost", 1883)
-board.leds.set_rgb(0, 0, 90, 0)
+
 client.loop_start()
 while True:
     if time.time() - last_message > 1:
