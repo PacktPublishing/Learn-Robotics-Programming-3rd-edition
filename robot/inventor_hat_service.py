@@ -14,8 +14,11 @@ right_encoder = board.encoders[0]
 # Settings for FIT0450 motors
 # Gear ratio: 120:1
 # Counts per rev: 8
-left_encoder.counts_per_rev(8 * 120)
-right_encoder.counts_per_rev(8 * 120)
+gear_ratio = 120
+counts_per_rev = 8
+encoder_resolution = gear_ratio * counts_per_rev
+left_encoder.counts_per_rev(encoder_resolution)
+right_encoder.counts_per_rev(encoder_resolution)
 
 wheel_diameter_mm = 68 
 
@@ -78,21 +81,25 @@ class EncoderMonitor(Thread):
             if self.running:
                 # https://github.com/pimoroni/ioe-python/blob/master/docs/encoder.md
                 new_time = time.time()
-                l_capture = left_encoder.capture()
-                r_capture = right_encoder.capture()
-                l_distance = l_capture.radians * wheel_diameter_mm
-                r_distance = r_capture.radians * wheel_diameter_mm
-                l_distance_delta = l_capture.radians_delta * wheel_diameter_mm
-                r_distance_delta = r_capture.radians_delta * wheel_diameter_mm
+                # l_capture = left_encoder.capture()
+                # r_capture = right_encoder.capture()
+                # l_distance = l_capture.radians * wheel_diameter_mm
+                # r_distance = r_capture.radians * wheel_diameter_mm
+                # l_distance_delta = l_capture.radians_delta * wheel_diameter_mm
+                # r_distance_delta = r_capture.radians_delta * wheel_diameter_mm
+                l_count = left_encoder.count()
+                r_count = right_encoder.count()
                 data = {
-                    "left_delta": l_capture.radians_delta,
-                    "right_delta": r_capture.radians_delta,
-                    "left_radians": l_capture.radians,
-                    "right_radians": r_capture.radians,
-                    "left_distance": l_distance,
-                    "right_distance": r_distance,
-                    "left_distance_delta": l_distance_delta,
-                    "right_distance_delta": r_distance_delta,
+                    "left_count": l_count,
+                    "right_count": r_count,
+                    # "left_delta": l_capture.radians_delta,
+                    # "right_delta": r_capture.radians_delta,
+                    # "left_radians": l_capture.radians,
+                    # "right_radians": r_capture.radians,
+                    # "left_distance": l_distance,
+                    # "right_distance": r_distance,
+                    # "left_distance_delta": l_distance_delta,
+                    # "right_distance_delta": r_distance_delta,
                     "timestamp": new_time - self.start_time,
                     "delta_time": new_time - self.last_time,
                 }
