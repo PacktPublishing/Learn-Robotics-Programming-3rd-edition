@@ -10,14 +10,14 @@ services = [
     ["inventor_hat_service", "robot/inventor_hat_service.py", True],
     ["launcher_service", "robot/launcher_service.py", True],
     ["distance_sensor_service", "robot/distance_sensor_service.py", True],
-    ["distance_plotter_service", "robot/distance_plotter.py", True],
-    ["encoder_plotter_service", "robot/encoder_plotter.py", True],
-    ["jsonl_mqtt_logger", "robot/jsonl_mqtt_logger.py", True],
+    ["distance_plotter_service", "robot/distance_plotter.py", False],
+    # ["encoder_plotter_service", "robot/encoder_plotter.py", False],
+    ["jsonl_mqtt_logger", "robot/jsonl_mqtt_logger.py", False],
     ["behavior_path", "robot/behavior_path.py", False],
     ["behavior_line", "robot/behavior_line.py", False],
     ["bang_bang_obstacle_avoiding", "robot/bang_bang_obstacle_avoiding.py", False],
     ["proportional_obstacle_avoiding", "robot/proportional_obstacle_avoiding.py", False],
-    ["encoder_driver", "robot/encoder_driver.py", False],
+    ["encoder_drive_line", "robot/encoder_drive_line.py", False],
 ]
 
 for service_name, python_file, auto_start in services:
@@ -45,9 +45,9 @@ for service_name, python_file, auto_start in services:
     )
 
     if code.changed or common.changed or unit_file.changed:
-        # Restart the service
+        # Register the service
         systemd.service(
-            name=f"Restart {service_name} service",
+            name=f"Register or restart {service_name} service",
             service=service_name,
             running=auto_start,
             enabled=auto_start,

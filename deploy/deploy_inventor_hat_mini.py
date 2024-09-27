@@ -9,8 +9,9 @@ apt.packages(
 
 pip.packages(
     name="Install Inventor hat mini",
+    # https://github.com/pimoroni/inventorhatmini-python/issues/10
     packages=[
-        "inventorhatmini",
+        "inventorhatmini", "gpiodevice"
     ],
     virtualenv=virtual_env.robot_venv,
 )

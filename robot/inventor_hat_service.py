@@ -101,7 +101,7 @@ class EncoderMonitor(Thread):
                     # "left_distance_delta": l_distance_delta,
                     # "right_distance_delta": r_distance_delta,
                     "timestamp": new_time - self.start_time,
-                    "delta_time": new_time - self.last_time,
+                    "dt": new_time - self.last_time,
                 }
                 self.last_time = new_time
                 client.publish("sensors/encoders/data", json.dumps(data))
@@ -110,10 +110,13 @@ class EncoderMonitor(Thread):
     def mqtt_control(self, client, userdata, msg):
         data = json.loads(msg.payload)
         if 'running' in data:
+            print(f"Setting encoder running to {data['running']}")
             self.running = bool(data['running'])
         if 'frequency' in data:
+            print(f"Setting encoder frequency to {data['frequency']}")
             self.update_period = 1/data['frequency']
-        if data.get('reset') == True:
+        if data.get('reset') is True:
+            print("Resetting encoders")
             left_encoder.zero()
             right_encoder.zero()
             self.start_time = time.time()

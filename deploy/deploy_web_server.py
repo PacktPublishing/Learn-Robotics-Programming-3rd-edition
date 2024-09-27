@@ -25,7 +25,7 @@ web_server_unit_file = files.template(
     pi_user=host.data.get('ssh_user'),
     service_name="web_server",
     command="-m http.server --directory robot_control",
-    restart=True,
+    restart="always",
     _sudo=True
 )
 if web_server_unit_file.changed:
