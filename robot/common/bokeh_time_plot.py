@@ -38,7 +38,7 @@ class BokehTimePlot(Handler):
                 name: self.data[name] for name in self.column_names
             } | {'timestamps': self.timestamps}
         doc.add_periodic_callback(update, 50)
-        fig  = figure(title=self.title, x_axis_label="time", y_axis_label=self.y_axis_label)
+        fig  = figure(title=self.title, x_axis_label="time", y_axis_label=self.y_axis_label, y_mapper_type='log')
         for name, color in zip(self.column_names, self.color_names):
             fig.line('timestamps', name, legend_label=name, source=column_source, line_width=2, line_color=color)
 

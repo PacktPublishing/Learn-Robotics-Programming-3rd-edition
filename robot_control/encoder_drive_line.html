@@ -8,9 +8,10 @@
     <body>
         <h1>Robot control - Encoder drive line</h1>
         <a href="index.html">Back to menu</a><br>
-        <button id="launch">Launch</button>
-        <button id="start">Start</button>
+        <button id="launch" disabled="true">Launch</button>
+        <button id="start" disabled="true">Start</button>
         <button id="stop">Stop</button>
+        <button id="stop_service">Stop service</button>
         <script type="module">
             import { connect, publish_when_clicked } from './mqtt_client.js';
 
@@ -21,8 +22,8 @@
                 console.log("Received message: " + message.toString());
                 //https://stackoverflow.com/questions/6016120/relative-url-to-a-different-port-number-in-a-hyperlink
                 //https://www.w3schools.com/tags/tag_iframe.asp
-                // When we receive the encoder control message, load the plot
-                if(topic == "sensors/encoders/control" && !loaded_plot) {
+                // When we receive a subscribed encoder message, load the plot
+                if(!loaded_plot) {
                     loaded_plot = true;
                     let url = "http://" + window.location.hostname + ":5002";
                     plot_element.innerHTML =
@@ -33,14 +34,20 @@
             let mqttClient = connect(
                 () => {
                     console.log("Connected to MQTT broker");
-                    mqttClient.subscribe("sensors/encoders/control");
+                    mqttClient.subscribe("sensors/encoders/#");
                     mqttClient.on('message', handle_message);
-                },
+                    document.getElementById("launch").disabled = false;
+                    document.getElementById("start").disabled = false;
+                },                
             );
 
+            document.getElementById("stop_service").onclick = function() {
+                mqttClient.publish("launcher/stop", "encoder_drive_line.service");
+            };
+
             publish_when_clicked(mqttClient, "launch", "launcher/start", "encoder_drive_line.service");
-            publish_when_clicked(mqttClient, "start", "drive/start", "encoder_drive_line.service");
-            publish_when_clicked(mqttClient, "stop", "drive/stop", "encoder_drive_line.service");
+            publish_when_clicked(mqttClient, "start", "drive/start", "{}");
+            publish_when_clicked(mqttClient, "stop", "drive/stop", "{}");
         </script>
 
         <div id="plot"></div>
