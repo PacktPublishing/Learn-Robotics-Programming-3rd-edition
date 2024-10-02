@@ -10,6 +10,7 @@ services = [
     ["inventor_hat_service", "robot/inventor_hat_service.py", True],
     ["launcher_service", "robot/launcher_service.py", True],
     ["behavior_path", "robot/behavior_path.py", False],
+    ["image_server", "robot/image_server.py", True],
 ]
 
 for service_name, python_file, auto_start in services:

@@ -5,8 +5,9 @@ from pyinfra.operations import apt
 
 
 apt.packages(
-    name = "Install python3-picamera2",
-    packages = ["python3-picamera2"],
+    name = "Install Camera packages",
+    packages = ["python3-picamera2", "python3-opencv", "opencv-data", "python3-flask"],
+    no_recommends=True,
     _sudo = True
 )
 
