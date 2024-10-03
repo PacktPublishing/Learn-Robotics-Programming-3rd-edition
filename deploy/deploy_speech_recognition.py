@@ -41,3 +41,18 @@ if model_file.changed:
     )
 
 # TODO: Automate the asoundrc file creation.
+
+# TTS - text to speech
+apt.packages(
+    name="Install TTS Apt packages",
+    packages=["espeak", "ffmpeg", "libespeak1"],
+    _sudo=True,
+)
+
+pip.packages(
+    name="Install TTS Python packages",
+    packages=[
+        "pyttsx3",
+    ],
+    virtualenv=virtual_env.robot_venv,
+)
