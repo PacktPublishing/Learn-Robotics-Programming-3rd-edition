@@ -43,16 +43,31 @@ if model_file.changed:
 # TODO: Automate the asoundrc file creation.
 
 # TTS - text to speech
-apt.packages(
-    name="Install TTS Apt packages",
-    packages=["espeak", "ffmpeg", "libespeak1"],
-    _sudo=True,
-)
+# apt.packages(
+#     name="Install TTS Apt packages",
+#     packages=["espeak", "ffmpeg", "libespeak1"],
+#     _sudo=True,
+# )
 
 pip.packages(
     name="Install TTS Python packages",
     packages=[
-        "pyttsx3",
+        "piper-tts", "pyaudio",
     ],
     virtualenv=virtual_env.robot_venv,
+)
+
+# TODO: Should these be in a tidy folder?
+# set up a voice
+# Choose from https://github.com/rhasspy/piper/blob/master/VOICES.md, sample with https://rhasspy.github.io/piper-samples/
+voice_file = files.download(
+    name="Download TSS voice model",
+    src="https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_GB/alan/low/en_GB-alan-low.onnx?download=true",
+    dest="en_GB-alan-low.onnx",
+)
+
+voice_config_file = files.download(
+    name="Download TSS voice config",
+    src="https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_GB/alan/low/en_GB-alan-low.onnx.json?download=true.json",
+    dest="en_GB-alan-low.onnx.json",
 )
