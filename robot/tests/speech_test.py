@@ -1,7 +1,7 @@
 import speech_recognition as sr
 import json
 
-ec = sr.Recognizer()
+rec = sr.Recognizer()
 mic = sr.Microphone(device_index=4)
 
 try:
