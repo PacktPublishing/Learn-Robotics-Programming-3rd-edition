@@ -1,0 +1,13 @@
+[Unit]
+Description={{ service_name }}
+After=mosquitto.service
+
+[Service]
+Type=simple
+Restart={{ restart }}
+WorkingDirectory=/home/{{ pi_user }}/
+ExecStart=/usr/local/bin/robotpython -u {{ command }}
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
