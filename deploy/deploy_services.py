@@ -49,6 +49,12 @@ files.download(
     src="https://github.com/bobboteck/JoyStick/raw/master/joy.js",
     dest="robot_control/libs/joy.js"
 )
+files.download(
+    name="Download mqtt js",
+    src="https://unpkg.com/mqtt@5.7.0/dist/mqtt.esm.js",
+    dest="robot_control/libs/mqtt.js"
+)
+
 code = files.sync(
     name="Update web server code",
     src="robot_control", dest="robot_control")
