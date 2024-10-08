@@ -40,6 +40,20 @@ code = files.put(
 deploy_service("inventor_hat_service","robot/inventor_hat_service.py", 
                True, common.changed or code.changed)
 
+code = files.put(
+    name="Update launcher code",
+    src="robot/launcher_service.py",
+    dest="robot/launcher_service.py")
+deploy_service("launcher_service","robot/launcher_service.py",
+                True, common.changed or code.changed)
+
+code = files.put(
+    name="Update behavior_path code",
+    src="robot/behavior_path.py",
+    dest="robot/behavior_path.py")
+deploy_service("behavior_path","robot/behavior_path.py",
+                False, common.changed or code.changed)
+
 files.directory(
     name="Create robot_control/libs",
     path="robot_control/libs"
