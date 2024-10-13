@@ -1,6 +1,6 @@
 import paho.mqtt.client as mqtt
 import time
-import json
+import ujson as json
 
 def default_on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")

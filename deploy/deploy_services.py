@@ -17,7 +17,7 @@ def deploy_service(service_name, command, auto_start, changed):
         restart=restart,
         _sudo=True
     )
-        
+
     if changed or code.changed or unit_file.changed:
         systemd.service(
             name=f"Restart {service_name} service",
@@ -53,6 +53,14 @@ code = files.put(
     dest="robot/behavior_path.py")
 deploy_service("behavior_path","robot/behavior_path.py",
                 False, common.changed or code.changed)
+
+code = files.put(
+    name="Update distance sensor service",
+    src="robot/distance_sensor_service.py",
+    dest="robot/distance_sensor_service.py")
+deploy_service("distance_sensor_service",
+               "robot/distance_sensor_service.py",
+                True, common.changed or code.changed)
 
 files.directory(
     name="Create robot_control/libs",
