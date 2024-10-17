@@ -33,6 +33,6 @@ files.put(
 
 pip.packages(
     name="Install pip dependencies for services",
-    packages=["vl53l5cx-ctypes"],
+    packages=["vl53l5cx-ctypes", "bokeh"],
     virtualenv=robot_venv,
 )

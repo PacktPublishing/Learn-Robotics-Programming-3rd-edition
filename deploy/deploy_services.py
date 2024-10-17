@@ -62,6 +62,14 @@ deploy_service("distance_sensor_service",
                "robot/distance_sensor_service.py",
                 True, common.changed or code.changed)
 
+code = files.put(
+    name="Update distance plotter code",
+    src="robot/distance_plotter.py",
+    dest="robot/distance_plotter.py")
+deploy_service("distance_plotter",
+               "robot/distance_plotter.py",
+                True, common.changed or code.changed)
+
 files.directory(
     name="Create robot_control/libs",
     path="robot_control/libs"
