@@ -58,6 +58,8 @@ client.connect("localhost", 1883)
 board.leds.set_rgb(0, 0, 255, 0)
 client.loop_start()
 while True:
+    if board.switch_pressed():
+        client.publish("launcher/poweroff", "")
     if time.time() - last_message > 1:
         stop_motors()
     time.sleep(0.1)

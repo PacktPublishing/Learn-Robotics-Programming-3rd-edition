@@ -9,12 +9,15 @@ class DistanceSensorService:
         self.sensor = vl53l5cx_ctypes.VL53L5CX()
         self.sensor.set_resolution(8 * 8)
         self.sensor.set_ranging_frequency_hz(10)
+        self.is_ranging = False
 
     def start_ranging(self, *args):
         self.sensor.start_ranging()
+        self.is_ranging = True
 
     def stop_ranging(self, *args):
         self.sensor.stop_ranging()
+        self.is_ranging = False
 
     def update_data(self):
         data = self.sensor.get_data()
@@ -35,7 +38,7 @@ class DistanceSensorService:
         self.client.message_callback_add("all/stop", self.stop_ranging)
         print("Starting loop")
         while True:
-            if self.sensor.data_ready():
+            if self.is_ranging and self.sensor.data_ready():
                 self.update_data()
             time.sleep(0.01)
 
