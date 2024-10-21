@@ -29,12 +29,14 @@ class DistancePlotter(Handler):
         def update():
             clipped = np.maximum(self.data, 1)
             transformed = np.log(clipped)
-            grid = transformed.reshape((8, 8))
+            grid = np.fliplr(transformed.reshape((8, 8)))
             column_source.data['image'] = [grid]
 
         doc.add_periodic_callback(update, 50)
-        fig = figure(title="Distance sensor data")
-        fig.image(source=column_source, x=0, y=0, dw=8, dh=8, palette="Greys256")
+        fig = figure(title="Distance sensor data",
+                     max_width=350, max_height=350)
+        fig.image(source=column_source, x=0, y=0, dw=8, dh=8, 
+                  palette="Greys256")
         doc.add_root(fig)
 
 print("Starting plotter")
