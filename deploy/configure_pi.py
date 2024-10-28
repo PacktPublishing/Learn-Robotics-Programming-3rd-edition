@@ -1,4 +1,10 @@
-from pyinfra.operations import server
+from pyinfra.operations import files
 
-# Configure I2C
-server.shell("raspi-config nonint do_i2c 0", _sudo=True) # Option 0 - enabled
+files.line(
+    name="Enable I2C 1 at 400Khz",
+    line="[#]\?dtparam=i2c_arm=on.*",
+    path="/boot/firmware/config.txt",
+    present=True,
+    replace="dtparam=i2c_arm=on,i2c_arm_baudrate=400000",
+    _sudo=True,
+)

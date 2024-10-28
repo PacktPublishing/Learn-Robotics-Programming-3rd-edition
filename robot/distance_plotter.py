@@ -34,7 +34,7 @@ class DistancePlotter(Handler):
 
         doc.add_periodic_callback(update, 50)
         fig = figure(title="Distance sensor data",
-                     max_width=350, max_height=350)
+                     max_width=250, max_height=250)
         fig.image(source=column_source, x=0, y=0, dw=8, dh=8, 
                   palette="Greys256")
         doc.add_root(fig)
