@@ -33,8 +33,7 @@ class DistancePlotter(Handler):
             column_source.data['image'] = [grid]
 
         doc.add_periodic_callback(update, 50)
-        fig = figure(title="Distance sensor data",
-                     max_width=250, max_height=250)
+        fig = figure(max_width=250, max_height=250)
         fig.image(source=column_source, x=0, y=0, dw=8, dh=8, 
                   palette="Greys256")
         doc.add_root(fig)
@@ -44,8 +43,8 @@ distance_plotter = DistancePlotter()
 distance_plotter.start_mqtt()
 apps = {'/': Application(distance_plotter)}
 
-server = Server(apps, port=5000, 
+server = Server(apps, port=5000, prefix='/distance_plotter/',
                 address="0.0.0.0",
-                allow_websocket_origin=["learnrob3.local:5000"])
+                allow_websocket_origin=["learnrob3.local"])
 server.start()
 server.run_until_shutdown()

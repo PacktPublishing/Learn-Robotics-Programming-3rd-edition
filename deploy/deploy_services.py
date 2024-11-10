@@ -1,4 +1,4 @@
-from pyinfra.operations import files, systemd
+from pyinfra.operations import files, systemd, apt
 from pyinfra import host
 
 def deploy_service(service_name, command, auto_start, changed):
@@ -91,3 +91,24 @@ code = files.sync(
 
 deploy_service("web_server", "-m http.server --directory robot_control",
                 True, code.changed)
+
+nginx_packages = apt.packages(
+    name="Install nginx",
+    packages=["nginx"],
+    present=True, _sudo=True
+)
+nginx_files = files.put(
+    name="Configure nginx",
+    src="deploy/nginx.conf",
+    dest="/etc/nginx/sites-available/default",
+    _sudo=True
+)
+if nginx_packages.changed or nginx_files.changed:
+    systemd.service(
+        name="Restart/enable nginx",
+        service="nginx",
+        running=True,
+        restarted=True,
+        daemon_reload=True,
+        _sudo=True,
+    )
