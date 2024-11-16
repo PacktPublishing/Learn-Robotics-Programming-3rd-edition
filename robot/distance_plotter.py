@@ -1,6 +1,5 @@
 import numpy as np
 import ujson as json
-from bokeh.plotting import figure
 from bokeh.server.server import Server
 from bokeh.application import Application
 from bokeh.application.handlers.handler import Handler
@@ -34,9 +33,10 @@ class DistancePlotter(Handler):
 
         doc.add_periodic_callback(update, 50)
         fig = figure(max_width=250, max_height=250)
-        fig.image(source=column_source, x=0, y=0, dw=8, dh=8, 
+        fig.image(source=column_source, x=0, y=0, dw=8, dh=8,
                   palette="Greys256")
         doc.add_root(fig)
+
 
 print("Starting plotter")
 distance_plotter = DistancePlotter()

@@ -1,11 +1,12 @@
 from pyinfra.operations import files, systemd, apt
 from pyinfra import host
 
+
 def deploy_service(service_name, command, auto_start, changed):
     if auto_start:
-        restart="always"
+        restart = "always"
     else:
-        restart="no"
+        restart = "no"
 
     unit_file = files.template(
         name=f"Create {service_name} service",
@@ -29,6 +30,9 @@ def deploy_service(service_name, command, auto_start, changed):
             _sudo=True,
         )
 
+
+endpoints = []
+
 common = files.sync(
     name="Update common code",
     src="robot/common", dest="robot/common")
@@ -37,22 +41,22 @@ code = files.put(
     name="Update inventor hat code",
     src="robot/inventor_hat_service.py", dest="robot/inventor_hat_service.py")
 
-deploy_service("inventor_hat_service","robot/inventor_hat_service.py", 
+deploy_service("inventor_hat_service", "robot/inventor_hat_service.py",
                True, common.changed or code.changed)
 
 code = files.put(
     name="Update launcher code",
     src="robot/launcher_service.py",
     dest="robot/launcher_service.py")
-deploy_service("launcher_service","robot/launcher_service.py",
-                True, common.changed or code.changed)
+deploy_service("launcher_service", "robot/launcher_service.py",
+               True, common.changed or code.changed)
 
 code = files.put(
     name="Update behavior_path code",
     src="robot/behavior_path.py",
     dest="robot/behavior_path.py")
-deploy_service("behavior_path","robot/behavior_path.py",
-                False, common.changed or code.changed)
+deploy_service("behavior_path", "robot/behavior_path.py",
+               False, common.changed or code.changed)
 
 code = files.put(
     name="Update distance sensor service",
@@ -60,7 +64,7 @@ code = files.put(
     dest="robot/distance_sensor_service.py")
 deploy_service("distance_sensor_service",
                "robot/distance_sensor_service.py",
-                True, common.changed or code.changed)
+               True, common.changed or code.changed)
 
 code = files.put(
     name="Update distance plotter code",
@@ -68,7 +72,17 @@ code = files.put(
     dest="robot/distance_plotter.py")
 deploy_service("distance_plotter",
                "robot/distance_plotter.py",
-                True, common.changed or code.changed)
+               True, common.changed or code.changed)
+endpoints.append(("/distance_plotter", 5000))
+
+code = files.put(
+    name="Update bang bang obstacle avoider",
+    src="robot/bang_bang_obstacle_avoider.py",
+    dest="robot/bang_bang_obstacle_avoider.py")
+deploy_service("bang_bang_obstacle_avoider",
+               "robot/bang_bang_obstacle_avoider.py",
+               False, common.changed or code.changed)
+endpoints.append(("/bang_bang_obstacle_avoider_plot", 5001))
 
 files.directory(
     name="Create robot_control/libs",
@@ -90,17 +104,18 @@ code = files.sync(
     src="robot_control", dest="robot_control")
 
 deploy_service("web_server", "-m http.server --directory robot_control",
-                True, code.changed)
+               True, code.changed)
 
 nginx_packages = apt.packages(
     name="Install nginx",
     packages=["nginx"],
     present=True, _sudo=True
 )
-nginx_files = files.put(
+nginx_files = files.template(
     name="Configure nginx",
-    src="deploy/nginx.conf",
+    src="deploy/nginx.conf.j2",
     dest="/etc/nginx/sites-available/default",
+    endpoints=endpoints,
     _sudo=True
 )
 if nginx_packages.changed or nginx_files.changed:
