@@ -1,6 +1,7 @@
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
+    error_page 502 /loading.html;
 
     location / {
         proxy_pass http://localhost:8000;
