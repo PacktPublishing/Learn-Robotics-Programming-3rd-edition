@@ -10,7 +10,7 @@ from bokeh.models import Range1d
 from common.mqtt_behavior import connect, publish_json
 
 
-class BangBangObstacleAvoidingBehavior:
+class FixedDistanceAvoiderBehavior:
     def __init__(self):
         self.speed = 0.6
         self.left_distance = 0
@@ -44,11 +44,11 @@ class BangBangObstacleAvoidingBehavior:
         client.subscribe("sensors/distance_mm")
         client.message_callback_add("sensors/distance_mm", self.on_distance_message)
         client.publish("sensors/distance/control/start_ranging", "")
-        client.publish("behavior/bang_bang_obstacle_avoider", "ready")
+        client.publish("behavior/fixed_distance_avoider", "ready")
         client.loop_start()
 
 
-class BangBangMonitor(Handler):
+class FixedDistanceMonitor(Handler):
     def __init__(self, behavior):
         super().__init__()
         self.behavior = behavior
@@ -87,15 +87,15 @@ class BangBangMonitor(Handler):
         doc.add_root(fig)
 
 
-behavior = BangBangObstacleAvoidingBehavior()
+behavior = FixedDistanceAvoiderBehavior()
 behavior.start_mqtt()
-monitor = BangBangMonitor(behavior)
+monitor = FixedDistanceMonitor(behavior)
 apps = {"/": Application(monitor)}
 
 server = Server(
     apps,
     port=5001,
-    prefix="/bang_bang_obstacle_avoider_plot/",
+    prefix="/fixed_distance_avoider_plot/",
     address="0.0.0.0",
     allow_websocket_origin=["learnrob3.local"],
 )

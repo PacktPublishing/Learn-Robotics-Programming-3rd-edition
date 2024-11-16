@@ -76,13 +76,13 @@ deploy_service("distance_plotter",
 endpoints.append(("/distance_plotter", 5000))
 
 code = files.put(
-    name="Update bang bang obstacle avoider",
-    src="robot/bang_bang_obstacle_avoider.py",
-    dest="robot/bang_bang_obstacle_avoider.py")
-deploy_service("bang_bang_obstacle_avoider",
-               "robot/bang_bang_obstacle_avoider.py",
+    name="Update fixed distance avoider",
+    src="robot/fixed_distance_avoider.py",
+    dest="robot/fixed_distance_avoider.py")
+deploy_service("fixed_distance_avoider",
+               "robot/fixed_distance_avoider.py",
                False, common.changed or code.changed)
-endpoints.append(("/bang_bang_obstacle_avoider_plot", 5001))
+endpoints.append(("/fixed_distance_avoider_plot", 5001))
 
 files.directory(
     name="Create robot_control/libs",
