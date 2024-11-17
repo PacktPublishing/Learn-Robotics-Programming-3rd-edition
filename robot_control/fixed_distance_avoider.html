@@ -11,13 +11,10 @@
         <button id="start_avoider">Start avoider</button>
         <button id="stop_avoider">Stop avoider</button>
         <iframe src="/distance_plotter"></iframe>
-        <iframe id="avoider"></iframe>
+        <iframe src="/fixed_distance_avoider_plot"></iframe>
         <script type="module">
             import { connect, publish_when_clicked } from './mqtt_client.js';
             let mqttClient = connect();
-            mqttClient.subscribe("behavior/fixed_distance_avoider", (topic, message) => {
-                document.getElementById("avoider").setAttribute("src", "/fixed_distance_avoider_plot?random=" + Math.random());
-            });
 
             publish_when_clicked(mqttClient, "start_avoider", "launcher/start", "fixed_distance_avoider");
             publish_when_clicked(mqttClient, "stop_avoider", "launcher/stop", "fixed_distance_avoider");

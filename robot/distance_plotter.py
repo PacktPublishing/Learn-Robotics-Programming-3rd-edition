@@ -32,7 +32,7 @@ class DistancePlotter(Handler):
             column_source.data['image'] = [grid]
 
         doc.add_periodic_callback(update, 50)
-        fig = figure(max_width=250, max_height=250)
+        fig = figure(max_width=200, max_height=200)
         fig.image(source=column_source, x=0, y=0, dw=8, dh=8,
                   palette="Greys256")
         doc.add_root(fig)
