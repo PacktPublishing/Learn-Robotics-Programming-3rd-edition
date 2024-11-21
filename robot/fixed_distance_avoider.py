@@ -11,7 +11,7 @@ from common.mqtt_behavior import connect, publish_json
 
 class FixedDistanceAvoiderBehavior:
     def __init__(self):
-        self.speed = 0.6
+        self.speed = 0.8
         self.left_distance = 0
         self.right_distance = 0
         self.threshold = 300
@@ -38,7 +38,7 @@ class FixedDistanceAvoiderBehavior:
         # Act
         publish_json(client, "motors/wheels", [left_motor_speed, right_motor_speed])
 
-    def start_mqtt(self):
+    def start(self):
         client = connect(start_loop=False)
         client.subscribe("sensors/distance_mm")
         client.message_callback_add("sensors/distance_mm", self.on_distance_message)
@@ -55,9 +55,9 @@ class FixedDistanceMonitor(Handler):
         # Let's make a data source time series - time vs left and right distance
         column_source = ColumnDataSource(
             {
-                "time": np.zeros(100),
-                "left_distance": np.zeros(100),
-                "right_distance": np.zeros(100),
+                "time": [],
+                "left_distance": [],
+                "right_distance": [],
             }
         )
         start_time = time.time()
@@ -96,5 +96,5 @@ server = Server(
     allow_websocket_origin=["learnrob3.local"],
 )
 server.start()
-behavior.start_mqtt()
+behavior.start()
 server.run_until_shutdown()
