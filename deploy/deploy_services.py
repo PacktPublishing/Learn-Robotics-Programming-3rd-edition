@@ -73,7 +73,7 @@ code = files.put(
 deploy_service("distance_plotter",
                "robot/distance_plotter.py",
                True, common.changed or code.changed)
-endpoints.append(("/distance_plotter", 5000))
+endpoints.append(("distance_plotter", 5000))
 
 code = files.put(
     name="Update fixed distance avoider",
@@ -82,7 +82,16 @@ code = files.put(
 deploy_service("fixed_distance_avoider",
                "robot/fixed_distance_avoider.py",
                False, common.changed or code.changed)
-endpoints.append(("/fixed_distance_avoider_plot", 5001))
+endpoints.append(("fixed_distance_avoider_plot", 5001))
+
+code = files.put(
+    name="Update smooth distance avoider",
+    src="robot/smooth_distance_avoider.py",
+    dest="robot/smooth_distance_avoider.py")
+deploy_service("smooth_distance_avoider",
+               "robot/smooth_distance_avoider.py",
+               False, common.changed or code.changed)
+endpoints.append(("smooth_distance_avoider_plot", 5002))
 
 files.directory(
     name="Create robot_control/libs",
