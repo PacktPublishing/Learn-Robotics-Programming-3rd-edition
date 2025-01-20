@@ -20,9 +20,9 @@ def all_messages(client, userdata, msg):
     print(f"{msg.topic} {msg.payload}")
 
 
-def set_servo_position(servo, client, userdata, msg):
+def set_servo_position(servo, client, userdata, msg, fine_tune=0):
     try:
-        position = int(msg.payload)
+        position = int(msg.payload) + fine_tune
         servo.enable()
         servo.value(position)
     except OSError:
@@ -76,11 +76,13 @@ client.message_callback_add("motors/#", all_messages)
 client.message_callback_add("motors/stop", stop_motors)
 client.message_callback_add("motors/wheels", set_motor_wheels)
 client.message_callback_add("motors/servo/pan/position",
-                            partial(set_servo_position, pan))
+                            partial(set_servo_position, pan,
+                                    fine_tune=5))
 client.message_callback_add("motors/servo/pan/stop",
                             partial(stop_servo, pan))
 client.message_callback_add("motors/servo/tilt/position",
-                            partial(set_servo_position, tilt))
+                            partial(set_servo_position, tilt,
+                                    fine_tune=0))
 client.message_callback_add("motors/servo/tilt/stop",
                             partial(stop_servo, tilt))
 client.message_callback_add("all/stop", stop_motors)
