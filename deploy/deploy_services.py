@@ -59,6 +59,13 @@ deploy_service("behavior_path", "robot/behavior_path.py",
                False, common.changed or code.changed)
 
 code = files.put(
+    name="Update circle_head code",
+    src="robot/circle_head_behavior.py",
+    dest="robot/circle_head_behavior.py")
+deploy_service("circle_head", "robot/circle_head_behavior.py",
+               False, common.changed or code.changed)
+
+code = files.put(
     name="Update distance sensor service",
     src="robot/distance_sensor_service.py",
     dest="robot/distance_sensor_service.py")

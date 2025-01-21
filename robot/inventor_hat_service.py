@@ -22,8 +22,8 @@ def all_messages(client, userdata, msg):
 
 def set_servo_position(servo, client, userdata, msg, fine_tune=0):
     try:
-        position = int(msg.payload) + fine_tune
-        servo.enable()
+        position = float(msg.payload) + fine_tune
+        # servo.enable()
         servo.value(position)
     except OSError:
         print("Error: Failed to set servo position")
