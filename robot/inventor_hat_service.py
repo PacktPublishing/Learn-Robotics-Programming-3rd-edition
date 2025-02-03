@@ -5,11 +5,14 @@ from functools import partial
 
 import inventorhatmini
 import paho.mqtt.client as mqtt
+from common.mqtt_behavior import publish_json
 
 last_message = 0
 board = inventorhatmini.InventorHATMini()
 left_motor = board.motors[1]
 right_motor = board.motors[0]
+left_encoder = board.encoders[1]
+right_encoder = board.encoders[0]
 pan = board.servos[0]
 tilt = board.servos[1]
 
@@ -58,6 +61,17 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("all/#")
 
 
+def update_encoders(client):
+    publish_json(
+        client,
+        "sensors/encoders/data",
+        {
+            "left_count": left_encoder.count(),
+            "right_count": right_encoder.count()
+        }
+    )
+
+
 def exit_handler():
     stop_motors()
     board.leds.clear()
@@ -90,10 +104,12 @@ client.message_callback_add("all/#", all_messages)
 
 client.connect("localhost", 1883)
 board.leds.set_rgb(0, 0, 255, 0)
-client.loop_start()
+
 while True:
+    client.loop(0.05)
+    update_encoders(client)
     if board.switch_pressed():
         client.publish("launcher/poweroff", "")
     if time.time() - last_message > 1:
         stop_motors()
-    time.sleep(0.1)
+    time.sleep(0.05)
