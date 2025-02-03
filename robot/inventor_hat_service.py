@@ -59,6 +59,13 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("motors/#")
     client.subscribe("leds/#")
     client.subscribe("all/#")
+    client.subscribe("sensors/encoders/control/#")
+
+
+def reset_encoders(*_):
+    print("Reset called")
+    left_encoder.zero()
+    right_encoder.zero()
 
 
 def update_encoders(client):
@@ -101,6 +108,7 @@ client.message_callback_add("motors/servo/tilt/stop",
                             partial(stop_servo, tilt))
 client.message_callback_add("all/stop", stop_motors)
 client.message_callback_add("all/#", all_messages)
+client.message_callback_add("sensors/encoders/control/reset", reset_encoders)
 
 client.connect("localhost", 1883)
 board.leds.set_rgb(0, 0, 255, 0)
