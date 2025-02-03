@@ -12,7 +12,9 @@ board = inventorhatmini.InventorHATMini()
 left_motor = board.motors[1]
 right_motor = board.motors[0]
 left_encoder = board.encoders[1]
+left_encoder.counts_per_rev(32 * 120)
 right_encoder = board.encoders[0]
+right_encoder.counts_per_rev(32 * 120)
 pan = board.servos[0]
 tilt = board.servos[1]
 
@@ -74,7 +76,9 @@ def update_encoders(client):
         "sensors/encoders/data",
         {
             "left_count": left_encoder.count(),
-            "right_count": right_encoder.count()
+            "left_revolutions": left_encoder.revolutions(),
+            "right_count": right_encoder.count(),
+            "right_revolutions": right_encoder.revolutions(),
         }
     )
 
