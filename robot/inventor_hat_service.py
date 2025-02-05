@@ -15,6 +15,7 @@ left_encoder = board.encoders[1]
 left_encoder.counts_per_rev(32 * 120)
 right_encoder = board.encoders[0]
 right_encoder.counts_per_rev(32 * 120)
+wheel_radius = 67 / 2
 pan = board.servos[0]
 tilt = board.servos[1]
 
@@ -71,14 +72,14 @@ def reset_encoders(*_):
 
 
 def update_encoders(client):
+    left_data = left_encoder.capture()
+    right_data = right_encoder.capture()
     publish_json(
         client,
         "sensors/encoders/data",
         {
-            "left_count": left_encoder.count(),
-            "left_revolutions": left_encoder.revolutions(),
-            "right_count": right_encoder.count(),
-            "right_revolutions": right_encoder.revolutions(),
+            "left_distance": left_data.radians * wheel_radius,
+            "right_distance": right_data.radians * wheel_radius,
         }
     )
 
