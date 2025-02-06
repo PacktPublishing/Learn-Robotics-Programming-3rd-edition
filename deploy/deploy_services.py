@@ -1,5 +1,6 @@
 from pyinfra.operations import files, systemd, apt
 from pyinfra import host
+import os
 
 
 def deploy_service(service_name, command, auto_start, changed):
@@ -65,6 +66,15 @@ code = files.put(
 deploy_service("drive_known_distance", "robot/drive_known_distance.py",
                False, common.changed or code.changed)
 
+
+code = files.put(
+    name="Update drive_straight_line code",
+    src="robot/drive_straight_line.py",
+    dest="robot/drive_straight_line.py")
+deploy_service("drive_straight_line", "robot/drive_straight_line.py",
+               False, common.changed or code.changed)
+
+
 code = files.put(
     name="Update circle_head code",
     src="robot/circle_head_behavior.py",
@@ -122,12 +132,24 @@ files.download(
     dest="robot_control/libs/mqtt.js"
 )
 
-code = files.sync(
-    name="Update web server code",
-    src="robot_control", dest="robot_control")
+# Loop over all the files in the robot_control directory
+pages_folder = files.directory(
+    name="Create robot_control folder",
+    path="robot_control"
+)
+pages = [
+    files.template(
+        name=f"Deploy {file_name}",
+        src=f"robot_control/{file_name}",
+        dest=f"robot_control/{file_name}",
+    )
+    for file_name in os.listdir("robot_control")
+]
+
+pages_changed = pages_folder.changed or any(page.changed for page in pages)
 
 deploy_service("web_server", "-m http.server --directory robot_control",
-               True, code.changed)
+               True, pages_changed)
 
 nginx_packages = apt.packages(
     name="Install nginx",
