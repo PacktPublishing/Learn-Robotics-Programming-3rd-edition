@@ -15,12 +15,12 @@ class DriveStraightLineBehavior:
         encoder_data = json.loads(message.payload)
         left_encoder = encoder_data['left_distance']
         right_encoder = encoder_data['right_distance']
-        # Get the error
-        error = left_encoder - right_encoder
-        # Balance the motors
         new_time = time.time()
         time_difference = new_time - self.last_update
         self.last_update = new_time
+        # Get the error
+        error = left_encoder - right_encoder
+        # Balance the motors
         balance = self.balance_pid.control(error, time_difference)
         print(error, time_difference, balance)
         left_speed = self.speed - balance
