@@ -1,5 +1,5 @@
 {% extends "robot_control/page.html.j2" %}
-{% block title %} Manual drive with distance{% endblock %}
+{% block title %}Distance plotter{% endblock %}
 {% block content %}
     <button id="start">Start distance data</button>
     <button id="stop">Stop distance data</button>
@@ -7,8 +7,7 @@
     <div style="width: 400px; height: 400px;">
         <canvas id="distance_chart" width="400" height="400"></canvas>
     </div>
-    <div id="joydiv" style="width:35vh;height: 30vh;"></div>
-    <script src="libs/joy.js"></script>
+
     <script type="module">
         import 'https://cdn.jsdelivr.net/npm/chart.js';
         import { connect, publish_when_clicked } from './mqtt_client.js';
@@ -26,19 +25,5 @@
                 chart.update_data(distance_data);
             }
         });
-
-        var joystick = new JoyStick(
-              'joydiv',
-              {} ,
-              function(stickData) {
-                console.log(stickData.x, stickData.y);
-                let speed = stickData.y / 100;
-                let direction = stickData.x / 100;
-                console.log("Speed:", speed, "Direction:", direction);
-                mqttClient.publish("motors/wheels", JSON.stringify(
-                  [speed + direction, speed - direction]
-                ));
-              }
-            );
     </script>
 {% endblock %}
