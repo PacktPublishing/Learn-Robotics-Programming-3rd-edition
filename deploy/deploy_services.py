@@ -1,11 +1,13 @@
-from pyinfra.operations import files, systemd, apt
+from pyinfra.operations import files, systemd
 from pyinfra import host
+import os
+
 
 def deploy_service(service_name, command, auto_start, changed):
     if auto_start:
-        restart="always"
+        restart = "always"
     else:
-        restart="no"
+        restart = "no"
 
     unit_file = files.template(
         name=f"Create {service_name} service",
@@ -37,22 +39,22 @@ code = files.put(
     name="Update inventor hat code",
     src="robot/inventor_hat_service.py", dest="robot/inventor_hat_service.py")
 
-deploy_service("inventor_hat_service","robot/inventor_hat_service.py", 
+deploy_service("inventor_hat_service", "robot/inventor_hat_service.py",
                True, common.changed or code.changed)
 
 code = files.put(
     name="Update launcher code",
     src="robot/launcher_service.py",
     dest="robot/launcher_service.py")
-deploy_service("launcher_service","robot/launcher_service.py",
-                True, common.changed or code.changed)
+deploy_service("launcher_service", "robot/launcher_service.py",
+               True, common.changed or code.changed)
 
 code = files.put(
     name="Update behavior_path code",
     src="robot/behavior_path.py",
     dest="robot/behavior_path.py")
-deploy_service("behavior_path","robot/behavior_path.py",
-                False, common.changed or code.changed)
+deploy_service("behavior_path", "robot/behavior_path.py",
+               False, common.changed or code.changed)
 
 code = files.put(
     name="Update distance sensor service",
@@ -60,15 +62,8 @@ code = files.put(
     dest="robot/distance_sensor_service.py")
 deploy_service("distance_sensor_service",
                "robot/distance_sensor_service.py",
-                True, common.changed or code.changed)
+               True, common.changed or code.changed)
 
-code = files.put(
-    name="Update distance plotter code",
-    src="robot/distance_plotter.py",
-    dest="robot/distance_plotter.py")
-deploy_service("distance_plotter",
-               "robot/distance_plotter.py",
-                True, common.changed or code.changed)
 
 files.directory(
     name="Create robot_control/libs",
@@ -85,30 +80,21 @@ files.download(
     dest="robot_control/libs/mqtt.js"
 )
 
-code = files.sync(
-    name="Update web server code",
-    src="robot_control", dest="robot_control")
-
-deploy_service("web_server", "-m http.server --directory robot_control",
-                True, code.changed)
-
-nginx_packages = apt.packages(
-    name="Install nginx",
-    packages=["nginx"],
-    present=True, _sudo=True
+# Loop over all the files in the robot_control directory
+pages_folder = files.directory(
+    name="Create robot_control folder",
+    path="robot_control"
 )
-nginx_files = files.put(
-    name="Configure nginx",
-    src="deploy/nginx.conf",
-    dest="/etc/nginx/sites-available/default",
-    _sudo=True
-)
-if nginx_packages.changed or nginx_files.changed:
-    systemd.service(
-        name="Restart/enable nginx",
-        service="nginx",
-        running=True,
-        restarted=True,
-        daemon_reload=True,
-        _sudo=True,
+pages = [
+    files.template(
+        name=f"Deploy {file_name}",
+        src=f"robot_control/{file_name}",
+        dest=f"robot_control/{file_name}",
     )
+    for file_name in os.listdir("robot_control")
+]
+
+pages_changed = pages_folder.changed or any(page.changed for page in pages)
+
+deploy_service("web_server", "-m http.server --directory robot_control 80",
+               True, pages_changed)

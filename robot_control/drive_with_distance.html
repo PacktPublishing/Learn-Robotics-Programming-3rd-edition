@@ -7,22 +7,37 @@
         <script src="libs/joy.js"></script>
     </head>
     <body>
-        <h1>Robot control - Manual drive</h1>
+        <h1>Robot control - Manual drive with distance</h1>
         <a href="index.html">Back to menu</a>
         <button id="start_ranging">Start ranging</button>
         <button id="stop_ranging">Stop ranging</button>
-        <iframe src="/distance_plotter"></iframe>
+        <div style="width: 400px; height: 400px;">
+            <canvas id="distance_chart" width="400" height="400"></canvas>
+        </div>
+
         <div id="joydiv" style="width:35vh;height: 30vh;"></div>
         <script type="module">
+            import 'https://cdn.jsdelivr.net/npm/chart.js';
             import { connect, publish_when_clicked } from './mqtt_client.js';
+            import { make_distance_chart } from './distance_chart.js';
             let mqttClient = connect();
 
             publish_when_clicked(mqttClient, "start_ranging", "sensors/distance/control/start_ranging", " ");
             publish_when_clicked(mqttClient, "stop_ranging", "sensors/distance/control/stop_ranging", " ");
 
+            const chart = make_distance_chart(mqttClient);
+
+            mqttClient.subscribe('sensors/distance_mm');
+            mqttClient.on('message', (topic, message) => {
+                if (topic == 'sensors/distance_mm') {
+                    const distance_data = JSON.parse(message);
+                    chart.update_data(distance_data);
+                }
+            });
+
             var joystick = new JoyStick(
-              'joydiv', 
-              {} , 
+              'joydiv',
+              {} ,
               function(stickData) {
                 console.log(stickData.x, stickData.y);
                 let speed = stickData.y / 100;
