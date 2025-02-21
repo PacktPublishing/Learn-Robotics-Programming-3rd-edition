@@ -6,10 +6,3 @@ h1 {
     text-align: center;
     font-size: 2em;
 }
-
-iframe {
-    height: 250px;
-    width: 100%;
-    border-style: none;
-    overflow: hidden;
-}

@@ -1,6 +1,7 @@
 import atexit
 import json
 import time
+
 import inventorhatmini
 import paho.mqtt.client as mqtt
 
@@ -39,6 +40,7 @@ def exit_handler():
     stop_motors()
     board.leds.clear()
 
+
 atexit.register(exit_handler)
 
 mqtt_username = "robot"
@@ -56,6 +58,7 @@ client.message_callback_add("all/#", all_messages)
 
 client.connect("localhost", 1883)
 board.leds.set_rgb(0, 0, 255, 0)
+
 client.loop_start()
 while True:
     if board.switch_pressed():
