@@ -3,7 +3,6 @@ from pyinfra import host
 import os
 
 
-
 def deploy_service(service_name, command, auto_start, changed):
     if auto_start:
         restart = "always"
