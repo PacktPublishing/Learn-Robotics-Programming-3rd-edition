@@ -21,10 +21,7 @@
         publish_when_clicked(mqttClient, "stop_avoider", "launcher/stop", "smooth_distance_avoider");
 
         const distance_chart = make_distance_chart(mqttClient);
-        const avoider_data = [
-            {'left_distance': 0, 'right_distance': 0, 'time': new Date().getTime()},
-        ]
-        const smooth_distance_chart = create_timeseries_chart('plot', avoider_data);
+        const smooth_distance_chart = create_timeseries_chart('plot', ['left_distance', 'right_distance']);
 
         mqttClient.subscribe('sensors/distance_mm');
         mqttClient.subscribe('smooth_distance_avoider/plot');
