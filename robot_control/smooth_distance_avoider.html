@@ -1,95 +1,42 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Robot control - Smooth distance avoider</title>
-        <link rel="stylesheet" type="text/css" href="styles.css">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-    </head>
-    <body>
-        <h1>Robot control -Smooth distance avoider</h1>
-        <a href="index.html">Back to menu</a>
-        <button id="start_avoider">Start avoider</button>
-        <button id="stop_avoider">Stop avoider</button>
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Smooth distance avoider{% endblock %}
+{% block content %}
+    <button id="start_avoider">Start avoider</button>
+    <button id="stop_avoider">Stop avoider</button>
 
-        <div style="width: 400px; height: 400px;">
-            <canvas id="distance_chart" width="400" height="400"></canvas>
-        </div>
-        <div style="width: 800px; height: 400px;">
-            <canvas id="plot"></canvas>
-        </div>
-        <script type="module">
-            import 'https://cdn.jsdelivr.net/npm/chart.js';
-            import 'https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js';
-            import { connect, publish_when_clicked } from './mqtt_client.js';
-            import { make_distance_chart } from './distance_chart.js';
-            let mqttClient = connect();
+    <div style="width: 400px; height: 400px;">
+        <canvas id="distance_chart" width="400" height="400"></canvas>
+    </div>
+    <div class="line_chart">
+        <canvas id="plot"></canvas>
+    </div>
+    <script type="module">
+        import 'https://cdn.jsdelivr.net/npm/chart.js';
+        import { create_timeseries_chart } from './chart_helper.js';
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+        import { make_distance_chart } from './distance_chart.js';
+        let mqttClient = connect();
 
-            publish_when_clicked(mqttClient, "start_avoider", "launcher/start", "smooth_distance_avoider");
-            publish_when_clicked(mqttClient, "stop_avoider", "launcher/stop", "smooth_distance_avoider");
+        publish_when_clicked(mqttClient, "start_avoider", "launcher/start", "smooth_distance_avoider");
+        publish_when_clicked(mqttClient, "stop_avoider", "launcher/stop", "smooth_distance_avoider");
 
-            const distance_chart = make_distance_chart(mqttClient);
+        const distance_chart = make_distance_chart(mqttClient);
+        const avoider_data = [
+            {'left_distance': 0, 'right_distance': 0, 'time': new Date().getTime()},
+        ]
+        const smooth_distance_chart = create_timeseries_chart('plot', avoider_data);
 
-            const smooth_distance_avoider_ctx = document.getElementById('plot');
-            const avoider_data = [
-                {'left_distance': 0, 'right_distance': 0 ,  'time': new Date().getTime() },
-            ]
-
-            const smooth_distance_data = {
-                datasets: [
-                    {
-                        label: 'Left distance',
-                        data: avoider_data,
-                        parsing: {
-                            xAxisKey: 'time',
-                            yAxisKey: 'left_distance',
-                        },
-                    },
-                    {
-                        label: 'Right distance',
-                        data: avoider_data,
-                        parsing: {
-                            xAxisKey: 'time',
-                            yAxisKey: 'right_distance',
-                        },
-                    },
-                ],
+        mqttClient.subscribe('sensors/distance_mm');
+        mqttClient.subscribe('smooth_distance_avoider/plot');
+        mqttClient.on('message', (topic, message) => {
+            switch (topic) {
+                case 'sensors/distance_mm':
+                    distance_chart.update_data(JSON.parse(message));
+                    break;
+                case 'smooth_distance_avoider/plot':
+                    smooth_distance_chart.update_data(JSON.parse(message));
+                    break;
             }
-            const smooth_distance_options = {
-                scales: {
-                    x: {
-                        type: 'time',
-                    },
-                    y: {
-                        beginAtZero: true,
-                    },
-                },
-                adapters: {
-                    type: 'time',
-                },
-            };
-            const avoider_chart = new Chart(smooth_distance_avoider_ctx, {
-                type: 'line',
-                data: smooth_distance_data,
-                options: smooth_distance_options,
-            });
-
-
-            mqttClient.subscribe('sensors/distance_mm');
-            mqttClient.subscribe('smooth_distance_avoider/plot');
-            mqttClient.on('message', (topic, message) => {
-                switch (topic) {
-                    case 'sensors/distance_mm':
-                        const distance_data = JSON.parse(message);
-                        distance_chart.update_data(distance_data);
-                        break;
-                    case 'smooth_distance_avoider/plot':
-                        const avoider_data_item = JSON.parse(message);
-                        avoider_data_item.time = avoider_data_item.time * 1000;
-                        avoider_data.push(avoider_data_item);
-                        avoider_chart.update();
-                        break;
-                }
-            });
-        </script>
-    </body>
-</html>
+        });
+    </script>
+{% endblock %}
