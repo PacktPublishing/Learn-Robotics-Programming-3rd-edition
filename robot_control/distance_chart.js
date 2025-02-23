@@ -4,7 +4,7 @@
         return normalised_data.map(
             (data, index) => (
                 {
-                    x: index % 8 + 0.5,
+                    x: 8 - (index % 8 + 0.5),
                     y: Math.floor(index / 8) + 0.5,
                     distance: data
                 }
