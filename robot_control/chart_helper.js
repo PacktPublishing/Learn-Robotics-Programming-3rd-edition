@@ -31,7 +31,6 @@ function prepare_datasets(columns) {
 }
 
 export function create_timeseries_chart(element_name, columns) {
-    // Create a timeseries chart from an example
     const chart_data = prepare_datasets(columns);
     const ctx = document.getElementById(element_name);
     const chart=new Chart(ctx, {

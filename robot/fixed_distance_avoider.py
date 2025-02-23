@@ -12,8 +12,8 @@ class FixedDistanceAvoiderBehavior:
 
     def on_distance_message(self, client, userdata, message):
         # Sense
-        sensor_data = np.flip(np.array(json.loads(message.payload)))
-        grid = sensor_data.reshape((8, 8))
+        sensor_data = np.array(json.loads(message.payload))
+        grid = np.fliplr(sensor_data.reshape((8, 8)))
         top_lines = grid[4:, :]
         left_sensors = top_lines[:, :2]
         right_sensors = top_lines[:, -2:]
