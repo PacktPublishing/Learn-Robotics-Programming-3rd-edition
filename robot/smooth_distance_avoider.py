@@ -8,7 +8,7 @@ from common.mqtt_behavior import connect, publish_json
 class SmoothDistanceAvoiderBehavior:
     def __init__(self):
         self.speed = 0.6
-        self.curve_proportion = 30
+        self.curve_proportion = 40
 
     def on_distance_message(self, client, userdata, message):
         # Sense

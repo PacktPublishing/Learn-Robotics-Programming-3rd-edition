@@ -13,8 +13,8 @@
     <script type="module">
         import 'https://cdn.jsdelivr.net/npm/chart.js';
         import { connect, publish_when_clicked } from './mqtt_client.js';
-        import { make_distance_chart } from './distance_chart.js';
         import { create_timeseries_chart } from './chart_helper.js';
+        import { make_distance_chart } from './distance_chart.js';
         let mqttClient = connect();
 
         publish_when_clicked(mqttClient, "start_avoider", "launcher/start", "fixed_distance_avoider");
