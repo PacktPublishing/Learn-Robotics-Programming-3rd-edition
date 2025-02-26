@@ -113,8 +113,8 @@ client.message_callback_add("sensors/encoders/control/reset", reset_encoders)
 client.connect("localhost", 1883)
 board.leds.set_rgb(0, 0, 255, 0)
 
+client.loop_start()
 while True:
-    client.loop(0.05)
     update_encoders(client)
     if board.switch_pressed():
         client.publish("launcher/poweroff", "")
