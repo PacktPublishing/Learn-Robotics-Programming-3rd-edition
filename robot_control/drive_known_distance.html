@@ -1,25 +1,28 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title>Robot control - Drive known distance</title>
-        <link rel="stylesheet" type="text/css" href="styles.css">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-    </head>
-    <body>
-        <h1>Robot control - Drive known distance</h1>
-        <a href="index.html">Back to menu</a><br>
-        <button id="start">Start</button>
-        <script type="module">
-            import { connect } from './mqtt_client.js';
-            let mqttClient = connect();
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Drive known distance{% endblock %}
+{% block content %}
+    <button id="start">Start</button>
+    <div class="line_chart">
+        <canvas id="plot"></canvas>
+    </div>
 
-            document.getElementById("start")
-                .addEventListener(
-                "click",
-                function() {
-                    mqttClient.publish("launcher/start", "drive_known_distance.service");
-                }
-            );
-        </script>
-    </body>
-</html>
+    <script type="module">
+        import 'https://cdn.jsdelivr.net/npm/chart.js';
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+        import { create_timeseries_chart } from './chart_helper.js';
+        let mqttClient = connect();
+
+        publish_when_clicked(mqttClient, "start", "launcher/start", "drive_known_distance");
+
+        const behavior_chart = create_timeseries_chart('plot', ['left_error', 'right_error']);
+
+        mqttClient.subscribe('drive_known_distance/plot');
+        mqttClient.on('message', (topic, message) => {
+            switch (topic) {
+                case 'drive_known_distance/plot':
+                    behavior_chart.update_data(JSON.parse(message));
+                    break;
+            }
+        });
+    </script>
+{% endblock %}
