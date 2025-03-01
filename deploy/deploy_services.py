@@ -32,8 +32,6 @@ def deploy_service(service_name, command, auto_start, changed):
         )
 
 
-endpoints = []
-
 common = files.sync(
     name="Update common code",
     src="robot/common", dest="robot/common")
