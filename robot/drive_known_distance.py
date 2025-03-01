@@ -1,4 +1,5 @@
-import json
+import ujson as json
+import time
 from common.mqtt_behavior import connect, publish_json
 
 
@@ -9,8 +10,15 @@ class DriveKnownDistanceBehavior:
 
     def check_distance_reached(self, client, userdata, msg):
         distance_data = json.loads(msg.payload)
-        largest = max(distance_data['left_distance'], distance_data['right_distance'])
-        if largest < self.expected_distance:
+        left_error = self.expected_distance - distance_data['left_distance']
+        right_error = self.expected_distance - distance_data['right_distance']
+        publish_json(client, "drive_known_distance/plot", {
+            "left_error": left_error,
+            "right_error": right_error,
+            "time": time.time()
+        })
+        largest = max(right_error, left_error)
+        if largest > 0:
             publish_json(client, "motors/wheels", [self.speed, self.speed])
         else:
             client.publish("motors/stop")
