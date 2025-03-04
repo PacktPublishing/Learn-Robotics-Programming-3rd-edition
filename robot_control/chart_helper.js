@@ -39,10 +39,18 @@ export function create_timeseries_chart(element_name, columns) {
         options: options_for_timeseries
     });
 
+    let first_item = true;
+
     return {
         update_data: (data_item) => {
             data_item.time = data_item.time * 1000;
-            chart_data.datasets[0].data.push(data_item);
+            if (first_item) {
+                chart_data.datasets[0].data[0] = data_item;
+                first_item = false;
+            }
+            else {
+                chart_data.datasets[0].data.push(data_item);
+            }
             chart.update();
         }
     }
