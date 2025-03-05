@@ -72,6 +72,12 @@ code = files.put(
 deploy_service("drive_straight_line", "robot/drive_straight_line.py",
                False, common.changed or code.changed)
 
+code = files.put(
+    name="Update closed_loop_motor code",
+    src="robot/closed_loop_motor.py",
+    dest="robot/closed_loop_motor.py")
+deploy_service("closed_loop_motor", "robot/closed_loop_motor.py",
+                False, common.changed or code.changed)
 
 code = files.put(
     name="Update circle_head code",

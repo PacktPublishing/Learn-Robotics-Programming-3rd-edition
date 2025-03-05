@@ -8,3 +8,6 @@ class PIDController:
         self.integral += error * time_difference
         return self.proportional_constant * error \
             + self.integral_constant * self.integral
+
+    def reset(self):
+        self.integral = 0
