@@ -51,6 +51,13 @@ deploy_service("launcher_service", "robot/launcher_service.py",
                True, common.changed or code.changed)
 
 code = files.put(
+    name="Update config store code",
+    src="robot/config_store.py",
+    dest="robot/config_store.py")
+deploy_service("config_store", "robot/config_store.py",
+               True, common.changed or code.changed)
+
+code = files.put(
     name="Update behavior_path code",
     src="robot/behavior_path.py",
     dest="robot/behavior_path.py")

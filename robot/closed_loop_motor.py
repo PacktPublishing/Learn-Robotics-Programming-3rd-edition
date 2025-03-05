@@ -34,12 +34,32 @@ class ClosedLoopMotorBehavior:
         right_speed = right_control
         publish_json(client, "motors/wheels", [left_speed, right_speed])
 
+    def on_config_updated(self, client, userdata, message):
+        data = json.loads(message.payload)
+        if 'closed_loop_motor/mm_per_second' in data:
+            self.mm_per_second = data['closed_loop_motor/mm_per_second']
+        if 'closed_loop_motor/proportional' in data:
+            self.left_pid.proportional_constant = data['closed_loop_motor/proportional']
+            self.right_pid.proportional_constant = data['closed_loop_motor/proportional']
+        if 'closed_loop_motor/integral' in data:
+            self.left_pid.integral_constant = data['closed_loop_motor/integral']
+            self.left_pid.integral = 0
+            self.right_pid.integral_constant = data['closed_loop_motor/integral']
+            self.right_pid.integral = 0
+
     def start(self):
         client = connect(start_loop=False)
         client.publish("sensors/encoders/control/reset")
         client.subscribe("sensors/encoders/data")
         client.message_callback_add("sensors/encoders/data",
                                     self.on_encoders_data)
+        client.subscribe("config/updated")
+        client.message_callback_add("config/updated",
+                                    self.on_config_updated)
+        publish_json(client, "config/get",
+                       ["closed_loop_motor/mm_per_second",
+                        "closed_loop_motor/proportional",
+                        "closed_loop_motor/integral"])
         client.loop_forever()
 
 behavior = ClosedLoopMotorBehavior()
