@@ -1,7 +1,5 @@
-import json
+import ujson as json
 import time
-import numpy as np
-
 from common.mqtt_behavior import connect, publish_json
 from common.pid_controller import PIDController
 
@@ -15,11 +13,18 @@ class DriveKnownDistanceBehavior:
         self.last_update = time.time()
         self.distance_reached = False
 
-    def calculate_speed(self, left_encoder, right_encoder, time_difference):
-        left_gap = self.expected_distance - left_encoder
-        right_gap = self.expected_distance - right_encoder
-        if abs(left_gap) > abs(right_gap):
-            distance_error = left_gap
+    def check_distance_reached(self, client, userdata, msg):
+        distance_data = json.loads(msg.payload)
+        left_error = self.expected_distance - distance_data['left_distance']
+        right_error = self.expected_distance - distance_data['right_distance']
+        publish_json(client, "drive_known_distance/plot", {
+            "left_error": left_error,
+            "right_error": right_error,
+            "time": time.time()
+        })
+        largest = max(right_error, left_error)
+        if largest > 0:
+            publish_json(client, "motors/wheels", [self.speed, self.speed])
         else:
             distance_error = right_gap
 

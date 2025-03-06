@@ -80,6 +80,8 @@ def update_encoders(client):
         {
             "left_distance": left_data.radians * wheel_radius,
             "right_distance": right_data.radians * wheel_radius,
+            "left_mm_per_sec": left_data.radians_per_second * wheel_radius,
+            "right_mm_per_sec": right_data.radians_per_second * wheel_radius,
         }
     )
 
