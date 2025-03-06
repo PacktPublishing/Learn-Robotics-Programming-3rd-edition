@@ -31,10 +31,8 @@
         });
 
         const config_store = config_store_client(mqttClient);
-        // mqttClient.on("connect", () => {
-            create_numeric_input(config_store, 'closed_loop_motor/mm_per_second', 'mm per second', 'mm_per_second', 80);
-            create_numeric_input(config_store, 'closed_loop_motor/proportional', 'proportional', 'proportional', 0.004);
-            create_numeric_input(config_store, 'closed_loop_motor/integral', 'integral', 'integral', 0.008);
-        // });
+        create_numeric_input(config_store, 'closed_loop_motor/mm_per_second', 'mm per second', 'mm_per_second', 80);
+        create_numeric_input(config_store, 'closed_loop_motor/proportional', 'proportional', 'proportional', 0.004);
+        create_numeric_input(config_store, 'closed_loop_motor/integral', 'integral', 'integral', 0.008);
     </script>
 {% endblock %}
