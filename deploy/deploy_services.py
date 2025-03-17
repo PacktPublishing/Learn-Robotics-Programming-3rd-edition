@@ -43,6 +43,12 @@ code = files.put(
 deploy_service("inventor_hat_service", "robot/inventor_hat_service.py",
                True, common.changed or code.changed)
 
+code = files.put("Update wheel control code",
+                    src="robot/wheel_control_service.py",
+                    dest="robot/wheel_control_service.py")
+deploy_service("wheel_control_service", "robot/wheel_control_service.py",
+               True, common.changed or code.changed)
+
 code = files.put(
     name="Update launcher code",
     src="robot/launcher_service.py",
@@ -71,20 +77,12 @@ code = files.put(
 deploy_service("drive_known_distance", "robot/drive_known_distance.py",
                False, common.changed or code.changed)
 
-
 code = files.put(
     name="Update drive_straight_line code",
     src="robot/drive_straight_line.py",
     dest="robot/drive_straight_line.py")
 deploy_service("drive_straight_line", "robot/drive_straight_line.py",
                False, common.changed or code.changed)
-
-code = files.put(
-    name="Update closed_loop_motor code",
-    src="robot/closed_loop_motor.py",
-    dest="robot/closed_loop_motor.py")
-deploy_service("closed_loop_motor", "robot/closed_loop_motor.py",
-                False, common.changed or code.changed)
 
 code = files.put(
     name="Update circle_head code",
