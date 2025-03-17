@@ -1,19 +1,13 @@
 import ujson as json
 import time
 
-import numpy as np
-
 from common.mqtt_behavior import connect, publish_json
 from common.pid_controller import PIDController
 
-
 class DriveKnownDistanceBehavior:
     def __init__(self):
-        self.max_speed_mm = 200
         self.expected_distance = 1000
         self.distance_pid = PIDController(0.2, 0.01)
-        self.left_pid = PIDController(0.004, 0.008)
-        self.right_pid = PIDController(0.004, 0.008)
         self.last_update = time.time()
         self.distance_reached = False
 
@@ -33,10 +27,7 @@ class DriveKnownDistanceBehavior:
             self.distance_reached = True
             speed = 0
         else:
-            speed = np.clip(
-                self.distance_pid.control(distance_error, time_difference),
-                -self.max_speed_mm,
-                self.max_speed_mm)
+            speed = self.distance_pid.control(distance_error, time_difference),
         return speed
 
     def motor_speed_correction(self, speed, distance_data, time_difference):
@@ -62,21 +53,7 @@ class DriveKnownDistanceBehavior:
 
     def on_config_updated(self, client, userdata, message):
         data = json.loads(message.payload)
-        if 'drive_known_distance/max_mm_per_second' in data:
-            self.mm_per_second = data['closed_loop_motor/max_mm_per_second']
-        if 'drive_known_distance/proportional' in data:
-            self.distance_pid.proportional_constant = data['drive_known_distance/proportional']
-        if 'drive_known_distance/integral' in data:
-            self.distance_pid.integral_constant = data['drive_known_distance/integral']
-            self.distance_pid.integral = 0
-        if 'closed_loop_motor/proportional' in data:
-            self.left_pid.proportional_constant = data['closed_loop_motor/proportional']
-            self.right_pid.proportional_constant = data['closed_loop_motor/proportional']
-        if 'closed_loop_motor/integral' in data:
-            self.left_pid.integral_constant = data['closed_loop_motor/integral']
-            self.left_pid.integral = 0
-            self.right_pid.integral_constant = data['closed_loop_motor/integral']
-            self.right_pid.integral = 0
+        self.distance_pid.handle_config_messages(data, 'drive_known_distance')
 
     def start(self):
         client = connect(start_loop=False)
