@@ -6,31 +6,38 @@ from common.pid_controller import PIDController
 from common.time_stepper import TimeStepper
 
 
-class DriveStraightLineBehavior:
+class DriveKnownDistanceBehavior:
     def __init__(self):
-        self.speed = 0.6
-        self.balance_pid = PIDController(0.0001)
         self.time_stepper = TimeStepper()
+        self.distance_pid = PIDController(0.2, 0.01)
+        self.expected_distance = 1000
+        self.distance_reached = False
 
-    def on_encoders_data(self, client, userdata, message):
-        encoder_data = json.loads(message.payload)
-        left_encoder = encoder_data['left_mm_per_sec']
-        right_encoder = encoder_data['right_mm_per_sec']
+    def on_encoders_data(self, client, userdata, msg):
+        distance_data = json.loads(msg.payload)
         time_difference = self.time_stepper.step()
-
-        # Get the error
-        error = left_encoder - right_encoder
-
-        # Balance the motors
-        balance = self.balance_pid.control(error, time_difference)
-        publish_json(client, "drive_straight_line/plot", {
-            "error": error,
-            "integral": self.balance_pid.integral,
+        left_error = self.expected_distance - distance_data['left_distance']
+        right_error = self.expected_distance - distance_data['right_distance']
+        publish_json(client, "wheel_control/plot", {
+            "left_error": left_error,
+            "right_error": right_error,
             "time": time.time()})
+        if abs(left_error) > abs(right_error):
+            distance_error = left_error
+        else:
+            distance_error = right_error
+        if abs(distance_error) < 1:
+            speed = 0
+            self.distance_reached = True
+        else:
+            speed = self.distance_pid.control(distance_error, time_difference)
+        publish_json(client, "wheel_control/wheel_speed_mm", [speed, speed])
 
-        left_speed = self.speed - balance
-        right_speed = self.speed + balance
-        publish_json(client, "motors/wheels", [left_speed, right_speed])
+    def on_config_updated(self, client, userdata, message):
+        data = json.loads(message.payload)
+        if 'drive_known_distance/max_mm_per_second' in data:
+            self.mm_per_second = data['drive_known_distance/max_mm_per_second']
+        self.distance_pid.handle_config_messages(data, 'drive_known_distance')
 
     def start(self):
         client = connect(start_loop=False)
@@ -38,8 +45,12 @@ class DriveStraightLineBehavior:
         client.publish("sensors/encoders/control/reset")
         client.message_callback_add("sensors/encoders/data",
                                     self.on_encoders_data)
-        client.loop_forever()
+        client.subscribe("config/updated")
+        client.message_callback_add("config/updated",
+                                    self.on_config_updated)
+        while not self.distance_reached:
+            client.loop()
 
 
-behavior = DriveStraightLineBehavior()
+behavior = DriveKnownDistanceBehavior()
 behavior.start()

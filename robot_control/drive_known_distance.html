@@ -2,11 +2,11 @@
 {% block title %}Drive known distance{% endblock %}
 {% block content %}
     <button id="start">Start</button>
+    <div id="distance_proportional"></div>
+    <div id="distance_integral"></div>
     <div id="mm_per_second"></div>
     <div id="wheel_control_proportional"></div>
     <div id="wheel_control_integral"></div>
-    <div id="distance_proportional"></div>
-    <div id="distance_integral"></div>
     <div class="line_chart">
         <canvas id="plot"></canvas>
     </div>
@@ -19,11 +19,11 @@
         let mqttClient = connect();
 
         const config_store = config_store_client(mqttClient);
-        create_numeric_input(config_store, 'drive_known_distance/mm_per_second', 'mm per second', 'mm_per_second', 80);
-        create_numeric_input(config_store, 'wheel_control/proportional', 'closed loop proportional', 'wheel_control_proportional', 0.004);
-        create_numeric_input(config_store, 'wheel_control/integral', 'closed loop integral', 'wheel_control_integral', 0.008);
         create_numeric_input(config_store, 'drive_known_distance/distance_proportional', 'distance proportional', 'distance_proportional', 0.2);
         create_numeric_input(config_store, 'drive_known_distance/distance_integral', 'distance integral', 'distance_integral', 0.01);
+        create_numeric_input(config_store, 'wheel_control/max_mm_per_second', 'mm per second', 'mm_per_second', 80);
+        create_numeric_input(config_store, 'wheel_control/proportional', 'closed loop proportional', 'wheel_control_proportional', 0.004);
+        create_numeric_input(config_store, 'wheel_control/integral', 'closed loop integral', 'wheel_control_integral', 0.008);
 
         publish_when_clicked(mqttClient, "start", "launcher/start", "drive_known_distance");
 
