@@ -1,13 +1,11 @@
 import ujson as json
-import os
 import dbm.dumb
 from common.mqtt_behavior import connect, publish_json
 
 
 class RobotConfigStore:
     def __init__(self):
-        config_path = os.path.expanduser("~/robot_config.db")
-        self.db = dbm.dumb.open(config_path, 'c')
+        self.db = dbm.dumb.open("robot_config.db", 'c')
 
     def on_set(self, client, userdata, message):
         key, value = json.loads(message.payload)

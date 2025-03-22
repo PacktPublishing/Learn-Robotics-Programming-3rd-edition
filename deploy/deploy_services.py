@@ -43,9 +43,10 @@ code = files.put(
 deploy_service("inventor_hat_service", "robot/inventor_hat_service.py",
                True, common.changed or code.changed)
 
-code = files.put("Update wheel control code",
-                    src="robot/wheel_control_service.py",
-                    dest="robot/wheel_control_service.py")
+code = files.put(
+    name="Update wheel control code",
+    src="robot/wheel_control_service_basic.py",
+    dest="robot/wheel_control_service.py")
 deploy_service("wheel_control_service", "robot/wheel_control_service.py",
                True, common.changed or code.changed)
 
@@ -72,7 +73,9 @@ deploy_service("behavior_path", "robot/behavior_path.py",
 
 code = files.put(
     name="Update drive_known_distance code",
-    src="robot/drive_known_distance.py",
+    src="robot/drive_known_distance_1_basic.py",
+    # src="robot/drive_known_distance_2_cl.py",
+    # src="robot/drive_known_distance_wheel_control_pid_stop.py",
     dest="robot/drive_known_distance.py")
 deploy_service("drive_known_distance", "robot/drive_known_distance.py",
                False, common.changed or code.changed)

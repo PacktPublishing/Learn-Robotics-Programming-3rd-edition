@@ -2,38 +2,42 @@
 {% block title %}Drive known distance{% endblock %}
 {% block content %}
     <button id="start">Start</button>
-    <div id="distance_proportional"></div>
-    <div id="distance_integral"></div>
-    <div id="mm_per_second"></div>
-    <div id="wheel_control_proportional"></div>
-    <div id="wheel_control_integral"></div>
+    <button id="stop">Stop</button>
+    <div id="config"></div>
     <div class="line_chart">
         <canvas id="plot"></canvas>
+        <canvas id="wheel_control"></canvas>
     </div>
 
     <script type="module">
         import 'https://cdn.jsdelivr.net/npm/chart.js';
         import { connect, publish_when_clicked } from './mqtt_client.js';
         import { create_timeseries_chart } from './chart_helper.js';
-        import { config_store_client, create_numeric_input } from './config_store.js';
+        import { config_store_client } from './config_store.js';
         let mqttClient = connect();
 
         const config_store = config_store_client(mqttClient);
-        create_numeric_input(config_store, 'drive_known_distance/distance_proportional', 'distance proportional', 'distance_proportional', 0.2);
-        create_numeric_input(config_store, 'drive_known_distance/distance_integral', 'distance integral', 'distance_integral', 0.01);
-        create_numeric_input(config_store, 'wheel_control/max_mm_per_second', 'mm per second', 'mm_per_second', 80);
-        create_numeric_input(config_store, 'wheel_control/proportional', 'closed loop proportional', 'wheel_control_proportional', 0.004);
-        create_numeric_input(config_store, 'wheel_control/integral', 'closed loop integral', 'wheel_control_integral', 0.008);
+        config_store.add_numeric('drive_known_distance/proportional', 'distance proportional', 'config', 0.2);
+        config_store.add_numeric('drive_known_distance/integral', 'distance integral', 'config', 0.01);
+        config_store.add_numeric('wheel_control/proportional', 'closed loop proportional', 'config', 0.004);
+        config_store.add_numeric('wheel_control/integral', 'closed loop integral', 'config', 0.008);
+        config_store.start()
 
         publish_when_clicked(mqttClient, "start", "launcher/start", "drive_known_distance");
+        publish_when_clicked(mqttClient, "stop", "launcher/stop", "drive_known_distance");
 
-        const behavior_chart = create_timeseries_chart('plot', ['left_error', 'right_error']);
+        const behavior_chart = create_timeseries_chart('plot', ['left_error', 'right_error']); //, 'current_speed'
+        const wheel_chart = create_timeseries_chart('wheel_control', ['left_error', 'right_error']);
 
         mqttClient.subscribe('drive_known_distance/plot');
+        mqttClient.subscribe('wheel_control/plot');
         mqttClient.on('message', (topic, message) => {
             switch (topic) {
                 case 'drive_known_distance/plot':
                     behavior_chart.update_data(JSON.parse(message));
+                    break;
+                case 'wheel_control/plot':
+                    wheel_chart.update_data(JSON.parse(message));
                     break;
             }
         });
