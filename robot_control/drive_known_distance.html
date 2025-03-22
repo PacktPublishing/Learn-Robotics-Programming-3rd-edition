@@ -17,10 +17,10 @@
         let mqttClient = connect();
 
         const config_store = config_store_client(mqttClient);
-        config_store.add_numeric('drive_known_distance/proportional', 'distance proportional', 'config', 0.2);
-        config_store.add_numeric('drive_known_distance/integral', 'distance integral', 'config', 0.01);
-        config_store.add_numeric('wheel_control/proportional', 'closed loop proportional', 'config', 0.004);
-        config_store.add_numeric('wheel_control/integral', 'closed loop integral', 'config', 0.008);
+        // config_store.add_input('drive_known_distance/proportional', 'distance proportional', 'config', 0.2);
+        // config_store.add_input('drive_known_distance/integral', 'distance integral', 'config', 0.01);
+        config_store.add_input('wheel_control/proportional', 'wheel proportional', 'config', 0.004);
+        config_store.add_input('wheel_control/integral', 'wheel integral', 'config', 0.008);
         config_store.start()
 
         publish_when_clicked(mqttClient, "start", "launcher/start", "drive_known_distance");

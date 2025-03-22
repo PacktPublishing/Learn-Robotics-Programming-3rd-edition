@@ -1,7 +1,7 @@
 export function config_store_client(mqtt_client) {
-    mqtt_client.subscribe('config/updated');
     const keys = {};
 
+    mqtt_client.subscribe('config/updated');
     mqtt_client.on('message', (topic, message) => {
         if (topic === 'config/updated') {
             console.log("Received config update");
@@ -13,7 +13,7 @@ export function config_store_client(mqtt_client) {
     });
 
     return {
-        add_numeric: (key, label, container_id, starting_value) => {
+        add_input: (key, label, container_id, starting_value) => {
             const container = document.getElementById(container_id);
             const label_element = document.createElement('label');
             label_element.textContent = label;
