@@ -81,13 +81,6 @@ deploy_service("drive_known_distance", "robot/drive_known_distance.py",
                False, common.changed or code.changed)
 
 code = files.put(
-    name="Update drive_straight_line code",
-    src="robot/drive_straight_line.py",
-    dest="robot/drive_straight_line.py")
-deploy_service("drive_straight_line", "robot/drive_straight_line.py",
-               False, common.changed or code.changed)
-
-code = files.put(
     name="Update circle_head code",
     src="robot/circle_head_behavior.py",
     dest="robot/circle_head_behavior.py")

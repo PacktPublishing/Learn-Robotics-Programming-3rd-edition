@@ -43,7 +43,7 @@ class WheelControlService:
 
     def all_stop(self, client, userdata, message):
         self.enabled = False
-        self.publish_json(client, "motors/wheels", [0, 0])
+        publish_json(client, "motors/wheels", [0, 0])
 
     def on_wheel_speed_mm(self, client, userdata, message):
         self.left_speed, self.right_speed = json.loads(message.payload)

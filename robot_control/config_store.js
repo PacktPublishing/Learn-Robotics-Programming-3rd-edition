@@ -7,7 +7,9 @@ export function config_store_client(mqtt_client) {
             console.log("Received config update");
             const data = JSON.parse(message.toString());
             for (const key in data) {
-                keys[key].value = data[key].toString();
+                if (keys[key] !== undefined) {
+                    keys[key].value = data[key].toString();
+                }
             }
         }
     });
