@@ -21,7 +21,6 @@
         config_store.add_input('path/integral', 'distance integral', 'config', 0.1);
         config_store.add_input('path/speed', 'speed', 'config', 180);
         config_store.add_input('path/stopping_distance', 'stopping distance', 'config', 100);
-        config_store.add_input('path/turn_radius', 'turn_radius', 'config', 30);
         config_store.add_input('wheel_control/proportional', 'wheel proportional', 'config', 0.004);
         config_store.add_input('wheel_control/integral', 'wheel integral', 'config', 0.008);
         config_store.start()
@@ -29,17 +28,17 @@
         publish_when_clicked(mqttClient, "start", "launcher/start", "behavior_path");
         publish_when_clicked(mqttClient, "stop", "launcher/stop", "behavior_path");
 
-        const behavior_chart = create_timeseries_chart('plot', ['left_error', 'right_error']);
-        const wheel_chart = create_timeseries_chart('wheel_control', ['left_speed', 'right_speed']);
+        const behavior_chart = create_timeseries_chart('plot', ['error']);
+        const wheel_chart = create_timeseries_chart('wheel_control', ['left_error', 'right_error']);
 
         mqttClient.subscribe('path/plot');
-        // mqttClient.subscribe('path/plot');
+        mqttClient.subscribe('wheel_control/plot');
         mqttClient.on('message', (topic, message) => {
             switch (topic) {
                 case 'path/plot':
                     behavior_chart.update_data(JSON.parse(message));
-                //     break;
-                // case 'wheel_control/plot':
+                    break;
+                case 'wheel_control/plot':
                     wheel_chart.update_data(JSON.parse(message));
                     break;
             }
