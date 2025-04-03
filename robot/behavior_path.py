@@ -1,4 +1,3 @@
-from turtle import distance, right
 import ujson as json
 import time
 import math
