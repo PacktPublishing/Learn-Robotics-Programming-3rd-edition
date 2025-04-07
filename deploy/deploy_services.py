@@ -111,6 +111,14 @@ deploy_service("smooth_distance_avoider",
                "robot/smooth_distance_avoider.py",
                False, common.changed or code.changed)
 
+code = files.put(
+    name="Update localisation",
+    src="robot/localisation.py",
+    dest="robot/localisation.py")
+deploy_service("localisation",
+               "robot/localisation.py",
+               False, common.changed or code.changed)
+
 files.directory(
     name="Create robot_control/libs",
     path="robot_control/libs"
@@ -125,6 +133,16 @@ files.download(
     src="https://unpkg.com/mqtt@5.7.0/dist/mqtt.esm.js",
     dest="robot_control/libs/mqtt.js"
 )
+files.download(
+    name="Download chart js",
+    src="https://cdn.jsdelivr.net/npm/chart.js",
+    dest="robot_control/libs/chart.js"
+)
+files.download(
+    name="Download chartjs datalabels plugin",
+    src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2",
+    dest="robot_control/libs/chartjs-plugin-datalabels"
+) # https://v2_2_0--chartjs-plugin-datalabels.netlify.app/guide/
 
 # Loop over all the files in the robot_control directory
 pages_folder = files.directory(
