@@ -11,15 +11,27 @@ walls = [
     (1000, 0),
     (0, 0)
 ]
+population_size = 200
 
 class Localisation:
     def __init__(self):
-        self.poses = np.array([(500, 500, 0), (150, 100, np.pi / 3)])
-        self.poses = np.append(self.poses, rotated_poses(self.poses, np.pi/2), 0)
-        self.poses = translated_poses(self.poses, 100)
+        self.poses = np.column_stack((
+            np.random.uniform(0, 1500, population_size),
+            np.random.uniform(0, 1500, population_size),
+            np.random.uniform(0, 2 * np.pi, population_size)
+        ))
+        self.keep_points_in_boundary()
+
+    def keep_points_in_boundary(self):
+        poses_in_bounds = np.logical_not(
+            np.logical_and(
+                np.greater(self.poses[:, 0], 1000),
+                np.less(self.poses[:, 1], 500)
+            )
+        )
+        self.poses = self.poses[poses_in_bounds]
 
     def publish_poses(self, client):
-        # send_poses = rotate_poses(self.poses)
         publish_json(client, "localisation/poses", self.poses.tolist())
 
     def publish_map(self, client):
