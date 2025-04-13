@@ -3,6 +3,8 @@
 {% block content %}
     <button id="start">Start</button>
     <button id="stop">Stop</button>
+    <button id="start_moving">Start moving</button>
+    <button id="stop_moving">Stop moving</button>
     <div>
         <canvas id="poses"></canvas>
     </div>
@@ -15,6 +17,8 @@
 
         publish_when_clicked(mqttClient, "start", "launcher/start", "localisation");
         publish_when_clicked(mqttClient, "stop", "launcher/stop", "localisation");
+        publish_when_clicked(mqttClient, "start_moving", "launcher/start", "fixed_distance_avoider");
+        publish_when_clicked(mqttClient, "stop_moving", "launcher/stop", "fixed_distance_avoider");
 
         const data = {
             datasets: [{
