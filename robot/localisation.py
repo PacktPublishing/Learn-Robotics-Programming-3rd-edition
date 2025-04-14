@@ -24,6 +24,12 @@ class Localisation:
             np.random.uniform(0, 2 * np.pi, population_size)
         ))
         self.wheel_distance = 0
+
+        self.alpha_trans_trans = 1.2/100
+        self.alpha_trans_rot = 0.5/100
+        self.alpha_rot_rot = 2/100
+        self.alpha_rot_trans = 0.1/100
+
         self.config_ready = False
         self.previous_left_distance = 0
         self.previous_right_distance = 0
@@ -45,7 +51,7 @@ class Localisation:
                 np.less(self.poses[:, 1], 500)
             )
         )
-        self.poses = self.poses[np.logical_and(inside_walls, not_in_cutouts)]
+        self.poses = self.poses[np.logical_and(inside_walls, not_in_cutouts),:]
 
 
     def on_config_updated(self, client, userdata, message):
@@ -72,6 +78,20 @@ class Localisation:
 
         return mid_distance, theta
 
+    def randomise_motion(self, translation, rotation):
+        trans_scale = self.alpha_trans_trans * abs(translation) \
+            + self.alpha_trans_rot * abs(rotation)
+        rot_scale = self.alpha_rot_rot * abs(rotation) \
+            + self.alpha_rot_trans * abs(translation)
+        trans_samples = np.random.normal(translation, trans_scale, population_size)
+        rot_samples = np.random.normal(rotation, rot_scale, population_size)
+        return trans_samples, rot_samples
+
+    def move_poses(self, rotation, translation):
+        self.poses = rotated_poses(self.poses, rotation)
+        self.poses = translated_poses(self.poses, translation)
+        self.poses = rotated_poses(self.poses, rotation)
+
     def on_encoders_data(self, client, userdata, msg):
         # Sense
         distance_data = json.loads(msg.payload)
@@ -81,13 +101,12 @@ class Localisation:
         self.previous_right_distance = distance_data['right_distance']
 
         # Think
-        mid_distance, theta = self.convert_encoders_to_motion(left_distance_delta, right_distance_delta)
-        # Act
-        self.poses = rotated_poses(self.poses, theta / 2)
-        self.poses = translated_poses(self.poses, mid_distance)
-        self.poses = rotated_poses(self.poses, theta / 2)
-        self.keep_points_in_boundary()
+        translation, theta = self.convert_encoders_to_motion(left_distance_delta, right_distance_delta)
+        rotation = theta / 2
+        trans_samples, rot_samples = self.randomise_motion(translation, rotation)
+        self.move_poses(rot_samples, trans_samples)
 
+        # Act
         self.publish_poses(client)
 
     def start(self):
