@@ -29,13 +29,23 @@ class Localisation:
         self.previous_right_distance = 0
 
     def keep_points_in_boundary(self):
-        poses_in_bounds = np.logical_not(
+        inside_walls = np.logical_and(
+            np.logical_and(
+                np.greater(self.poses[:, 0], 0),
+                np.less(self.poses[:, 0], 1500)
+            ),
+            np.logical_and(
+                np.greater(self.poses[:, 1], 0),
+                np.less(self.poses[:, 1], 1500)
+            )
+        )
+        not_in_cutouts = np.logical_not(
             np.logical_and(
                 np.greater(self.poses[:, 0], 1000),
                 np.less(self.poses[:, 1], 500)
             )
         )
-        self.poses = self.poses[poses_in_bounds]
+        self.poses = self.poses[np.logical_and(inside_walls, not_in_cutouts)]
 
 
     def on_config_updated(self, client, userdata, message):
