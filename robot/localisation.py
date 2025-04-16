@@ -15,6 +15,7 @@ walls = [
     (0, 0)
 ]
 population_size = 200
+low_probability = 10 ** -10
 
 class Localisation:
     def __init__(self):
@@ -34,25 +35,20 @@ class Localisation:
         self.previous_left_distance = 0
         self.previous_right_distance = 0
 
-    def keep_points_in_boundary(self):
+    def in_boundary(self):
         inside_walls = np.logical_and(
-            np.logical_and(
-                np.greater(self.poses[:, 0], 0),
-                np.less(self.poses[:, 0], 1500)
-            ),
-            np.logical_and(
-                np.greater(self.poses[:, 1], 0),
-                np.less(self.poses[:, 1], 1500)
-            )
+            np.logical_and(self.poses[:, 0] > 0, self.poses[:, 0] < 1500),
+            np.logical_and(self.poses[:, 1] > 0, self.poses[:, 1] < 1500)
         )
         not_in_cutouts = np.logical_not(
-            np.logical_and(
-                np.greater(self.poses[:, 0], 1000),
-                np.less(self.poses[:, 1], 500)
-            )
+            np.logical_and(self.poses[:, 0] < 1000, self.poses[:, 1] > 500)
         )
-        self.poses = self.poses[np.logical_and(inside_walls, not_in_cutouts),:]
+        return np.logical_and(inside_walls, not_in_cutouts)
 
+    def observational_model(self):
+        weights = np.ones(population_size, dtype=np.float32)
+        weights = np.where(np.logical_not(self.in_boundary()), weights, low_probability)
+        return weights
 
     def on_config_updated(self, client, userdata, message):
         self.config_ready = True
@@ -105,7 +101,8 @@ class Localisation:
         rotation = theta / 2
         trans_samples, rot_samples = self.randomise_motion(translation, rotation)
         self.move_poses(rot_samples, trans_samples)
-
+        weights = self.observational_model()
+        print(weights)
         # Act
         self.publish_poses(client)
 
