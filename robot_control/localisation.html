@@ -19,7 +19,6 @@
         publish_when_clicked(mqttClient, "stop", "launcher/stop", "localisation");
         publish_when_clicked(mqttClient, "start_moving", "launcher/start", "fixed_distance_avoider");
         publish_when_clicked(mqttClient, "stop_moving", "launcher/stop", "fixed_distance_avoider");
-
         const data = {
             datasets: [{
                 label: 'poses',
@@ -93,11 +92,11 @@
                 scales: {
                     x: {
                         suggestedMin: 0,
-                        suggestedMax: 1500,
+                        suggestedMax: 1800,
                     },
                     y: {
                         suggestedMin: 0,
-                        suggestedMax: 1500,
+                        suggestedMax: 1800,
                     }
                 }
             },
@@ -106,8 +105,11 @@
         const pose_ctx = document.getElementById('poses').getContext('2d');
         let pose_chart = new Chart(pose_ctx, pose_chart_config);
 
-        function triggerChartUpdate() {
+        let awaiting_update = false;
+        function triggerChartUpdate()  {
+            awaiting_update = true;
             setTimeout(() => {
+                awaiting_update = false;
                 pose_chart.update();
             }, 0);
         }
@@ -116,6 +118,9 @@
         mqttClient.on('message', (topic, message) => {
             switch (topic) {
                 case 'localisation/poses':
+                    if (awaiting_update) {
+                        return;
+                    }
                     data.update_pose_data(message);
                     triggerChartUpdate();
                     break;
