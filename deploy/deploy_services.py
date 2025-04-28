@@ -96,6 +96,13 @@ deploy_service("distance_sensor_service",
                True, common.changed or code.changed)
 
 code = files.put(
+    name="Update IMU service",
+    src="robot/imu_service.py",
+    dest="robot/imu_service.py")
+deploy_service("imu_service", "robot/imu_service.py",
+                False, common.changed or code.changed)
+
+code = files.put(
     name="Update fixed distance avoider",
     src="robot/fixed_distance_avoider.py",
     dest="robot/fixed_distance_avoider.py")
