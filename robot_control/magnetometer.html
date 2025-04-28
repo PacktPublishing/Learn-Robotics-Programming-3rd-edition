@@ -1,5 +1,5 @@
 {% extends "robot_control/page.html.j2" %}
-{% block title %}Accelerometer visualization{% endblock %}
+{% block title %}Magnetometer visualization{% endblock %}
 {% block content %}
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <button id="start">Start</button>
@@ -40,7 +40,7 @@
         mqttClient.subscribe('sensors/imu/#');
         mqttClient.on('message', (topic, message) => {
             switch (topic) {
-                case 'sensors/imu/accelerometer':
+                case 'sensors/imu/magnetometer':
                     const { x, y, z } = JSON.parse(message);
                     arrow.alignWithNormal(new BABYLON.Vector3(x, z, y));
                     break;

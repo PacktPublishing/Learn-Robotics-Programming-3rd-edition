@@ -30,5 +30,17 @@ while True:
         "y": acc[1],
         "z": acc[2],
     })
+    magnetometer = bno055.magnetic
+    publish_json(client, "sensors/imu/magnetometer", {
+        "x": magnetometer[0],
+        "y": magnetometer[1],
+        "z": magnetometer[2],
+    })
+    euler = bno055.euler
+    publish_json(client, "sensors/imu/euler", {
+        "heading": euler[0],
+        "roll": euler[1],
+        "pitch": euler[2],
+    })
 
     time.sleep(0.1)
