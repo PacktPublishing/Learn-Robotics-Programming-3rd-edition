@@ -1,72 +1,57 @@
 {% extends "robot_control/page.html.j2" %}
 {% block title %}Accelerometer visualization{% endblock %}
 {% block content %}
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <button id="start">Start</button>
     <button id="stop">Stop</button>
-    <div id="config"></div>
-    <div style="width: 80%; height: 800%;">
-        <canvas id="accel_plot"></canvas>
+    <div>
+        <canvas id="accelerometer" style="width: 80%; height: 80%;"></canvas>
     </div>
     Status: <samp id="status"></samp>
 
     <script type="module">
-        import 'https://cdn.jsdelivr.net/npm/chart.js';
         import { connect, publish_when_clicked } from './mqtt_client.js';
-        import { PerspectivePlotter } from './perspective_plotter.js';
-        import { config_store_client } from './config_store.js';
 
         let mqttClient = connect();
         publish_when_clicked(mqttClient, "start", "launcher/start", "imu_service");
         publish_when_clicked(mqttClient, "stop", "launcher/stop", "imu_service");
 
-        const vectorPlotter = {
-            id: 'vectorPlotter',
-            __proto__: PerspectivePlotter,
-            origin: { x: 0, y: 0, z: 0 },
-            end: { x: 0, y: -1, z: 0 },
-            drawVector(ctx, scales, start, end, color) {
-                this.drawLine(ctx, scales, start, end, color);
-                // Small circle at the end
-                this.filledCircle(ctx, scales, end, 4, color);
-            },
-            beforeDraw(chart) {
-                const { ctx, scales } = chart;
-                ctx.save();
-                this.drawVector(ctx, scales, this.origin, this.end, "red");
-                ctx.restore();
+        const canvas = document.getElementById('accelerometer');
+        const engine = new BABYLON.Engine(canvas, true);
+        const scene = new BABYLON.Scene(engine);
+        const camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0, 20, 30));
+        camera.setTarget(BABYLON.Vector3.Zero());
+        const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0));
+        light.intensity = 0.7;
+        const arrow = BABYLON.MeshBuilder.CreateLathe(
+            "arrow",
+            {
+                shape: [
+                    new BABYLON.Vector3(0, 0, 0),
+                    new BABYLON.Vector3(2.5, 0, 0),
+                    new BABYLON.Vector3(2.5, 5, 0),
+                    new BABYLON.Vector3(5, 5, 0),
+                    new BABYLON.Vector3(0, 10, 0),
+                    new BABYLON.Vector3(0, 0, 0),
+                ]
             }
-        };
+        );
 
-        const accel_chart_config = {
-            type: 'scatter',
-            data: { datasets: [] },  // No real data points needed
-            options: {
-                animation: false,
-                responsive: true,
-                scales: {
-                    x: { suggestedMin: -11, suggestedMax: 11 },
-                    y: { suggestedMin: -11, suggestedMax: 11 }
-                }
-            },
-            plugins: [vectorPlotter]
-        };
-        const accel_ctx = document.getElementById('accel_plot').getContext('2d');
-        let accel_chart = new Chart(accel_ctx, accel_chart_config);
-
-        mqttClient.subscribe('sensors/imu/accelerometer');
-        mqttClient.subscribe('sensors/imu/status');
+        mqttClient.subscribe('sensors/imu/#');
         mqttClient.on('message', (topic, message) => {
             switch (topic) {
                 case 'sensors/imu/accelerometer':
-                    const accel_data = JSON.parse(message);
-                    const { x, y, z } = accel_data;
-                    vectorPlotter.end = { x: x, y: z, z: -y };
-                    accel_chart.update();
+                    const { x, y, z } = JSON.parse(message);
+                    arrow.alignWithNormal(new BABYLON.Vector3(x, z, y));
                     break;
                 case 'sensors/imu/status':
                     document.getElementById('status').innerText = message;
                     break;
             }
+        });
+
+        engine.runRenderLoop(() => {
+            scene.render();
         });
     </script>
 {% endblock %}
