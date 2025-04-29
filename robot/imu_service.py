@@ -1,5 +1,5 @@
-import json
 import time
+import numpy as np
 
 from adafruit_extended_bus import ExtendedI2C as I2C
 import adafruit_bno055
@@ -38,9 +38,9 @@ while True:
     })
     euler = bno055.euler
     publish_json(client, "sensors/imu/euler", {
-        "heading": euler[0],
-        "roll": euler[1],
-        "pitch": euler[2],
+        "yaw": np.radians(euler[0]),
+        "roll": np.radians(euler[1]),
+        "pitch": np.radians(euler[2]),
     })
 
-    time.sleep(0.1)
+    time.sleep(0.05)
