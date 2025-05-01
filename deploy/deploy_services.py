@@ -103,6 +103,13 @@ deploy_service("imu_service", "robot/imu_service.py",
                 False, common.changed or code.changed)
 
 code = files.put(
+    name="Update face direction code",
+    src="robot/face_direction.py",
+    dest="robot/face_direction.py")
+deploy_service("face_direction", "robot/face_direction.py",
+                False, common.changed or code.changed)
+
+code = files.put(
     name="Update fixed distance avoider",
     src="robot/fixed_distance_avoider.py",
     dest="robot/fixed_distance_avoider.py")
