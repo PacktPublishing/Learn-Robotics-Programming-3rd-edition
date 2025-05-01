@@ -9,7 +9,7 @@ from common.time_stepper import TimeStepper
 
 class FaceDirectionBehavior:
     def __init__(self):
-        self.pid = PIDController(0.3, 0.2)
+        self.pid = PIDController(0.4, 0.2, smart_reset=True)
         self.time_stepper = TimeStepper()
         self.target_yaw = 0
 
