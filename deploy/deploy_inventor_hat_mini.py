@@ -10,7 +10,7 @@ apt.packages(
 pip.packages(
     name="Install Inventor hat mini",
     packages=[
-        "inventorhatmini",
+        "inventorhatmini", "gpiodevice"
     ],
     virtualenv=virtual_env.robot_venv,
 )
