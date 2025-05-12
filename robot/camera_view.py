@@ -1,4 +1,5 @@
 from common.image_app_core import start
+from common.mqtt_behavior import connect, publish_json
 import cv2
 
 def processor(frame):
@@ -18,4 +19,6 @@ def processor(frame):
     return frame
 
 if __name__ == "__main__":
+    client = connect()
+    publish_json(client, "camera_view/ready", "")
     start(processor)
