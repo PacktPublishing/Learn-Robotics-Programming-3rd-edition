@@ -133,6 +133,13 @@ deploy_service("localisation",
                "robot/localisation.py",
                False, common.changed or code.changed)
 
+code = files.put(
+    name="Update camera view code",
+    src="robot/camera_view.py",
+    dest="robot/camera_view.py")
+deploy_service("camera_view", "robot/camera_view.py",
+                False, common.changed or code.changed)
+
 files.directory(
     name="Create robot_control/libs",
     path="robot_control/libs"

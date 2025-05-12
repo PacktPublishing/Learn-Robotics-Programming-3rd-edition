@@ -1,0 +1,32 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Camera view{% endblock %}
+{% block content %}
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+
+    <div><img src="http://learnrob3.local:5001/"/></div>
+    <div id="joydiv" style="width:50vh;height: 50vh;"></div>
+
+    <script src="libs/joy.js"></script>
+    <script type="module">
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+
+        let mqttClient = connect();
+        publish_when_clicked(mqttClient, "start", "launcher/start", "camera_view");
+        publish_when_clicked(mqttClient, "stop", "launcher/stop", "camera_view");
+
+        var joystick = new JoyStick(
+            'joydiv',
+            {} ,
+            function(stickData) {
+            console.log(stickData.x, stickData.y);
+            let speed = stickData.y / 100;
+            let direction = stickData.x / 100;
+            console.log("Speed:", speed, "Direction:", direction);
+            mqttClient.publish("motors/wheels", JSON.stringify(
+                [speed + direction, speed - direction]
+            ));
+            }
+        );
+    </script>
+{% endblock %}
