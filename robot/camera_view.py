@@ -18,7 +18,12 @@ def processor(frame):
 
     return frame
 
+def camera_app_location(client, userdata, message):
+    publish_json(client, "camera_view/location", "http://learnrob3.local:5001/")
+
 if __name__ == "__main__":
     client = connect()
-    publish_json(client, "camera_view/ready", "")
+    client.subscribe("camera_view/location/get")
+    client.message_callback_add("camera_view/location/get", camera_app_location)
+    camera_app_location(client, None, None)
     start(processor)

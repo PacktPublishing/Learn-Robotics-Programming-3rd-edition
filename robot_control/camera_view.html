@@ -17,11 +17,13 @@
 
         const camera_view = document.getElementById('camera_view');
 
-        mqttClient.subscribe('camera_view/ready');
+        mqttClient.subscribe('camera_view/location');
+        mqttClient.publish('camera_view/location/get', '')
         mqttClient.on('message', (topic, message) => {
             switch (topic) {
-                case 'camera_view/ready':
-                    camera_view.innerHTML = "<img src='http://learnrob3.local:5001/'/>";
+                case 'camera_view/location':
+                    const location = JSON.parse(message);
+                    camera_view.innerHTML = `<img src='${location}'/>`;
                     break;
             }
         });

@@ -4,6 +4,7 @@ from multiprocessing import Process, Queue
 from flask import Flask, Response
 from picamera2 import Picamera2
 import cv2
+import numpy as np
 
 app = Flask(__name__)
 encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
@@ -48,7 +49,11 @@ def start_server_process():
 
 def start(processor, size=(320, 240)):
     camera = Picamera2()
-    camera.configure(camera.create_video_configuration(main={"size": size}))
+    config = camera.create_video_configuration(
+            main={"format": 'XRGB8888', "size": size}
+        )
+
+    camera.configure(config)
     camera.start()
 
     server = start_server_process()
