@@ -1,6 +1,7 @@
-from common.image_app_core import start
-from common.mqtt_behavior import connect, publish_json
 import cv2
+
+from common.image_app_core import start, camera_app_location
+from common.mqtt_behavior import connect
 
 def processor(frame):
 
@@ -17,9 +18,6 @@ def processor(frame):
             green, 2)
 
     return frame
-
-def camera_app_location(client, userdata, message):
-    publish_json(client, "camera_view/location", "http://learnrob3.local:5001/")
 
 if __name__ == "__main__":
     client = connect()

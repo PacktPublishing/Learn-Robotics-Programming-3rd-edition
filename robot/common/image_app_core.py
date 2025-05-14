@@ -6,10 +6,11 @@ from picamera2 import Picamera2
 import cv2
 import numpy as np
 
+from common.mqtt_behavior import publish_json
+
 app = Flask(__name__)
 encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
 frame_buffer = Queue(maxsize=2)
-
 
 def buffer_frame(frame):
     if frame_buffer.empty():
@@ -47,11 +48,16 @@ def start_server_process():
     return server
 
 
+def camera_app_location(client, userdata, message):
+    publish_json(client, "camera_view/location", "http://learnrob3.local:5001/")
+
+
 def start(processor, size=(320, 240)):
     camera = Picamera2()
     config = camera.create_video_configuration(
-            main={"format": 'XRGB8888', "size": size}
+            main={"format": 'RGB888', "size": size}
         )
+    # 3 channel layers - no alpha needed.
 
     camera.configure(config)
     camera.start()

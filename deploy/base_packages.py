@@ -1,4 +1,3 @@
-from turtle import update
 from pyinfra.operations import apt
 
 base_packages = apt.packages(
