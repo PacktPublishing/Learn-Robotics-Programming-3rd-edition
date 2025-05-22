@@ -9,10 +9,29 @@
     <body>
         <h1>Robot control - Manual drive</h1>
         <a href="index.html">Back to menu</a>
+        <button id="start">Start</button>
+        <button id="stop">Stop</button>
+        <div id="camera_view"></div>
         <div id="joydiv" style="width:50vh;height: 50vh;"></div>
         <script type="module">
-            import { connect } from './mqtt_client.js';
+            import { connect, publish_when_clicked } from './mqtt_client.js';
             let mqttClient = connect();
+            publish_when_clicked(mqttClient, "start", "launcher/start", "camera_view");
+            publish_when_clicked(mqttClient, "stop", "launcher/stop", "camera_view");
+
+
+            const camera_view = document.getElementById('camera_view');
+
+            mqttClient.subscribe('camera_view/url');
+            mqttClient.publish('camera_view/url/get', '')
+            mqttClient.on('message', (topic, message) => {
+                switch (topic) {
+                    case 'camera_view/url':
+                        const location = JSON.parse(message);
+                        camera_view.innerHTML = `<img src='${location}'/>`;
+                        break;
+                }
+            });
 
             var joystick = new JoyStick(
               'joydiv',

@@ -4,12 +4,11 @@ from multiprocessing import Process, Queue
 from flask import Flask, Response
 from picamera2 import Picamera2
 import cv2
-import numpy as np
 
 from common.mqtt_behavior import publish_json
 
+ENCODE_PARAM = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
 app = Flask(__name__)
-encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
 frame_buffer = Queue(maxsize=2)
 
 def buffer_frame(frame):
@@ -18,7 +17,7 @@ def buffer_frame(frame):
 
 
 def encode_frame(frame):
-    _, jpeg = cv2.imencode(".jpg", frame, encode_param)
+    _, jpeg = cv2.imencode(".jpg", frame, ENCODE_PARAM)
     return jpeg.tobytes()
 
 
@@ -48,19 +47,21 @@ def start_server_process():
     return server
 
 
-def camera_app_location(client, userdata, message):
-    publish_json(client, "camera_view/location", "http://learnrob3.local:5001/")
+def camera_app_url(client, userdata, message):
+    publish_json(client, "camera_view/url", "http://learnrob3.local:5001/")
 
-
-def start(processor, size=(320, 240)):
+def setup_camera(size):
     camera = Picamera2()
     config = camera.create_video_configuration(
             main={"format": 'RGB888', "size": size}
         )
-    # 3 channel layers - no alpha needed.
 
     camera.configure(config)
     camera.start()
+    return camera
+
+def start(processor, size):
+    camera = setup_camera(size)
 
     server = start_server_process()
     try:

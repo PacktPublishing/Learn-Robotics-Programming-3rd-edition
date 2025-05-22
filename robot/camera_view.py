@@ -1,27 +1,28 @@
 import cv2
 
-from common.image_app_core import start, camera_app_location
+from common.camera_core import start, camera_app_url
 from common.mqtt_behavior import connect
 
-def processor(frame):
+SIZE = (640, 480)
+MIDDLE = (SIZE[0] // 2, SIZE[1] // 2)
+GREEN = (0, 255, 0)
+CROSS_SIZE = 10
 
-    middle = (frame.shape[1] // 2, frame.shape[0] // 2)
-    green = (0, 255, 0)
-    # Draw a cross hair in the middle of the frame
+def draw_crosshair(frame):
     cv2.line(frame,
-             (middle[0] - 10, middle[1]),
-             (middle[0] + 10, middle[1]),
-             green, 2)
+             (MIDDLE[0] - CROSS_SIZE, MIDDLE[1]),
+             (MIDDLE[0] + CROSS_SIZE, MIDDLE[1]),
+             GREEN, 2)
     cv2.line(frame,
-            (middle[0], middle[1] - 10),
-            (middle[0], middle[1] + 10),
-            green, 2)
+            (MIDDLE[0], MIDDLE[1] - CROSS_SIZE),
+            (MIDDLE[0], MIDDLE[1] + CROSS_SIZE),
+            GREEN, 2)
 
     return frame
 
 if __name__ == "__main__":
     client = connect()
-    client.subscribe("camera_view/location/get")
-    client.message_callback_add("camera_view/location/get", camera_app_location)
-    camera_app_location(client, None, None)
-    start(processor)
+    client.subscribe("camera_view/url/get")
+    client.message_callback_add("camera_view/url/get", camera_app_url)
+    camera_app_url(client, None, None)
+    start(draw_crosshair, SIZE)
