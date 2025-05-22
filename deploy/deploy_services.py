@@ -142,7 +142,7 @@ deploy_service("camera_view", "robot/camera_view.py",
 
 code = files.put(
     name="Update face detector code",
-    src="robot/opencv_dnn_ssd.py",
+    src="robot/face_detector.py",
     dest="robot/face_detector.py")
 deploy_service("face_detector", "robot/face_detector.py",
                 False, common.changed or code.changed)
