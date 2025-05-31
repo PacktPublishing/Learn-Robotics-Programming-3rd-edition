@@ -154,6 +154,20 @@ code = files.put(
 deploy_service("look_at_face", "robot/look_at_face.py",
                 False, common.changed or code.changed)
 
+code = files.put(
+    name="Update colored object detector code",
+    src="robot/colored_object_detector.py",
+    dest="robot/colored_object_detector.py")
+deploy_service("colored_object_detector",
+                "robot/colored_object_detector.py",
+                False, common.changed or code.changed)
+
+code = files.put(
+    name="Update object follower behavior code",
+    src="robot/object_follower.py",
+    dest="robot/object_follower.py")
+deploy_service("object_follower", "robot/object_follower.py",
+               False, common.changed or code.changed)
 
 files.directory(
     name="Create robot_control/libs",

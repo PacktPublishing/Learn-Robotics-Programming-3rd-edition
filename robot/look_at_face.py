@@ -10,8 +10,8 @@ from common.pid_controller import PIDController
 
 pan_range = 70
 tilt_range = 50
-center_x = 320
-center_y = 240
+center_x = 704/2
+center_y = 364/2
 
 class LookAtFaceBehavior:
     def __init__(self):
@@ -19,14 +19,14 @@ class LookAtFaceBehavior:
         self.face_y = center_y
 
     def look_at_face(self, client):
-        self.pan_pid = PIDController(0, 0.006)
-        self.tilt_pid = PIDController(0, -0.006)  # Inverted tilt
+        pan_pid = PIDController(0, 0.006)
+        tilt_pid = PIDController(0, -0.006)  # Inverted tilt
         while True:
             # Think
             pan_error = center_x - self.face_x
             tilt_error = center_y - self.face_y
-            pan_position = self.pan_pid.control(pan_error)
-            tilt_position = self.tilt_pid.control(tilt_error)
+            pan_position = pan_pid.control(pan_error)
+            tilt_position = tilt_pid.control(tilt_error)
             pan_position = np.clip(pan_position, -pan_range, pan_range)
             tilt_position = np.clip(tilt_position, -tilt_range, tilt_range)
             # Act

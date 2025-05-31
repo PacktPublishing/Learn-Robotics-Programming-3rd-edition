@@ -53,7 +53,7 @@ def camera_app_url(client, userdata, message):
 def setup_camera(size):
     camera = Picamera2()
     config = camera.create_video_configuration(
-            main={"format": 'RGB888', "size": size}
+        main={"format": 'RGB888', "size": size},  # 16/9
         )
 
     camera.configure(config)
