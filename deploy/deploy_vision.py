@@ -4,7 +4,6 @@ apt.packages(
     name="Install AI packages",
     packages=["python3-picamera2", "python3-opencv", "opencv-data",
               "python3-flask"],
-    update=True,
     no_recommends=True,
     _sudo=True,
 )
