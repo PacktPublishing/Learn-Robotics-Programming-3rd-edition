@@ -2,6 +2,7 @@ import atexit
 import json
 import time
 from functools import partial
+from threading import RLock
 
 import inventorhatmini
 import paho.mqtt.client as mqtt
@@ -19,13 +20,22 @@ wheel_radius = 67 / 2
 pan = board.servos[0]
 tilt = board.servos[1]
 
+hat_lock = RLock()
+
+def lock_hat_wrapper(handler):
+    """Wrapper to lock the Inventor HAT Mini."""
+    def wrapper(*args, **kwargs):
+        with hat_lock:
+            return handler(*args, **kwargs)
+    return wrapper
+
 
 def all_messages(client, userdata, msg):
     global last_message
     last_message = time.time()
     print(f"{msg.topic} {msg.payload}")
 
-
+@lock_hat_wrapper
 def set_servo_position(servo, client, userdata, msg, fine_tune=0):
     try:
         position = float(msg.payload) + fine_tune
@@ -35,12 +45,12 @@ def set_servo_position(servo, client, userdata, msg, fine_tune=0):
     except ValueError:
         print("Error: Invalid position value")
 
-
+@lock_hat_wrapper
 def stop_servo(servo, client=None, userdata=None, msg=None):
     if servo.is_enabled():
         servo.disable()
 
-
+@lock_hat_wrapper
 def set_motor_wheels(client, userdata, msg):
     left, right = json.loads(msg.payload)
     left_motor.enable()
@@ -48,7 +58,7 @@ def set_motor_wheels(client, userdata, msg):
     right_motor.enable()
     right_motor.speed(right)
 
-
+@lock_hat_wrapper
 def stop_motors(client=None, userdata=None, msg=None):
     left_motor.stop()
     right_motor.stop()
@@ -63,13 +73,13 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("all/#")
     client.subscribe("sensors/encoders/control/#")
 
-
+@lock_hat_wrapper
 def reset_encoders(*_):
     print("Reset called")
     left_encoder.zero()
     right_encoder.zero()
 
-
+@lock_hat_wrapper
 def update_encoders(client):
     left_data = left_encoder.capture()
     right_data = right_encoder.capture()
@@ -117,13 +127,16 @@ client.message_callback_add("all/#", all_messages)
 client.message_callback_add("sensors/encoders/control/reset", reset_encoders)
 
 client.connect("localhost", 1883)
-board.leds.set_rgb(0, 0, 255, 0)
+
+with hat_lock:
+    board.leds.set_rgb(0, 0, 255, 0)
 
 client.loop_start()
 while True:
     update_encoders(client)
-    if board.switch_pressed():
-        client.publish("launcher/poweroff", "")
+    with hat_lock:
+        if board.switch_pressed():
+            client.publish("launcher/poweroff", "")
     if time.time() - last_message > 1:
         stop_motors()
     time.sleep(0.1)
