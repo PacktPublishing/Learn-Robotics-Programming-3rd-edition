@@ -3,3 +3,4 @@ debug_data
 .vscode
 .env.js
 pyinfra-debug.log
+.ipynb_checkpoints
