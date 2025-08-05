@@ -3,6 +3,4 @@ debug_data
 .vscode
 .env.js
 pyinfra-debug.log
-experiments/.ipynb_checkpoints/empty_carpet-checkpoint.jpg
-experiments/.ipynb_checkpoints/line_2-checkpoint.jpg
-experiments/.ipynb_checkpoints/line-detection-checkpoint.ipynb
+.ipynb_checkpoints
