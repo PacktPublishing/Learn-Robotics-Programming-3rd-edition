@@ -48,6 +48,10 @@ class LineDetector:
         return resized
 
     def start(self):
+        # Look down
+        publish_json(self.client, "motors/servo/pan/position", 0)
+        publish_json(self.client, "motors/servo/tilt/position", 80)
+
         self.client.subscribe("camera_view/url/get")
         self.client.message_callback_add("camera_view/url/get", camera_app_url)
         camera_app_url(self.client, None, None)

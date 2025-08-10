@@ -3,7 +3,6 @@
 {% block content %}
     <button id="start_detection">Start detection</button>
     <button id="stop_detection">Stop detection</button>
-    <button id="position_camera">Position camera</button>
 
     <div id="camera_view"></div>
 
@@ -13,10 +12,7 @@
         let mqttClient = connect();
         publish_when_clicked(mqttClient, "start_detection", "launcher/start", "line_detector");
         publish_when_clicked(mqttClient, "stop_detection", "launcher/stop", "line_detector");
-        document.getElementById('position_camera').addEventListener('click', () => {
-            mqttClient.publish("motors/servo/pan/position", JSON.stringify(0));
-            mqttClient.publish("motors/servo/tilt/position", JSON.stringify(80));
-        });
+
         // publish_when_clicked(mqttClient, "start_driving", "launcher/start", "line_follower");
         // publish_when_clicked(mqttClient, "stop_driving", "launcher/stop", "line_follower");
 
