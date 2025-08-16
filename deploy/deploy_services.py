@@ -176,6 +176,13 @@ code = files.put(
 deploy_service("line_detector", "robot/line_detector.py",
                False, common.changed or code.changed)
 
+code = files.put(
+    name="Update line follower code",
+    src="robot/line_follower.py",
+    dest="robot/line_follower.py")
+deploy_service("line_follower", "robot/line_follower.py",
+               False, common.changed or code.changed)
+
 files.directory(
     name="Create robot_control/libs",
     path="robot_control/libs"
