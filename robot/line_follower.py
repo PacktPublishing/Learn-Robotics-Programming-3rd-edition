@@ -16,24 +16,17 @@ class FollowLineBehavior:
         self.line_error = data["line"]
 
     def follow_line(self, client):
-        line_pid = PIDController(0.001, 0.0001, 0.001,
+        line_pid = PIDController(0.001, 0.0001, #0.001,
                                  smart_reset=True)
         turn = 0
         while True:
             # Think
             if self.line_error is None:
-                # If no line is detected, continue the last turn
-                # but reset the PID
                 line_pid.reset()
                 print("No line")
-                # return
             else:
-                # Calculate errors
                 turn = -line_pid.control(self.line_error)
-                left = speed - turn
-                right = speed + turn
 
-                # Act
                 publish_json(
                     client,
                     "line_follower/log",
@@ -43,6 +36,9 @@ class FollowLineBehavior:
                         "time": time.time()
                     },
                 )
+            # Act
+            left = speed - turn
+            right = speed + turn
             publish_json(
                 client, "motors/wheels", [left, right]
             )
