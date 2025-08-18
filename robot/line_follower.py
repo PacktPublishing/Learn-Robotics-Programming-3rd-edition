@@ -3,6 +3,7 @@ import json
 
 from common.mqtt_behavior import connect, publish_json
 from common.pid_controller import PIDController
+from common.time_stepper import TimeStepper
 
 speed = 0.4
 
@@ -16,16 +17,18 @@ class FollowLineBehavior:
         self.line_error = data["line"]
 
     def follow_line(self, client):
-        line_pid = PIDController(0.001, 0.0001, #0.001,
+        line_pid = PIDController(0.001, 0.0001, 0.001,
                                  smart_reset=True)
         turn = 0
+        time_stepper = TimeStepper()
         while True:
+            time_difference = time_stepper.step()
             # Think
             if self.line_error is None:
                 line_pid.reset()
                 print("No line")
             else:
-                turn = -line_pid.control(self.line_error)
+                turn = -line_pid.control(self.line_error, time_difference)
 
                 publish_json(
                     client,
