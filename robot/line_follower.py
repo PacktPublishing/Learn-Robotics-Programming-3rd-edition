@@ -17,7 +17,7 @@ class FollowLineBehavior:
         self.line_error = data["line"]
 
     def follow_line(self, client):
-        line_pid = PIDController(0.001, 0.0001, 0.001,
+        line_pid = PIDController(0.001, 0.0001, 0.0005,
                                  smart_reset=True)
         turn = 0
         time_stepper = TimeStepper()
