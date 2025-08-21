@@ -1,6 +1,5 @@
 import atexit
 import json
-from threading import Thread
 import time
 from functools import partial
 
@@ -45,10 +44,10 @@ def stop_servo(servo, client=None, userdata=None, msg=None):
 
 def set_motor_wheels(client, userdata, msg):
     left, right = json.loads(msg.payload)
-    left_motor.speed(left)
-    right_motor.speed(right)
     left_motor.enable()
+    left_motor.speed(left)
     right_motor.enable()
+    right_motor.speed(right)
 
 
 def stop_motors(client=None, userdata=None, msg=None):
@@ -61,51 +60,6 @@ def stop_motors(client=None, userdata=None, msg=None):
 def set_led(client, userdata, msg):
     index, r, g, b = json.loads(msg.payload)
     board.leds.set_rgb(index, r, g, b)
-
-
-class EncoderMonitor(Thread):
-    update_period = 0.1
-    running: bool = False
-    start_time = time.time()
-    last_time = time.time()
-
-    def run(self):
-        while True:
-            if self.running:
-                # https://github.com/pimoroni/ioe-python/blob/master/docs/encoder.md
-                new_time = time.time()
-                l_capture = left_encoder.capture()
-                r_capture = right_encoder.capture()
-                l_distance = l_capture.radians * wheel_diameter_mm
-                r_distance = r_capture.radians * wheel_diameter_mm
-                l_distance_delta = l_capture.radians_delta * wheel_diameter_mm
-                r_distance_delta = r_capture.radians_delta * wheel_diameter_mm
-                data = {
-                    "left_delta": l_capture.radians_delta,
-                    "right_delta": r_capture.radians_delta,
-                    "left_radians": l_capture.radians,
-                    "right_radians": r_capture.radians,
-                    "left_distance": l_distance,
-                    "right_distance": r_distance,
-                    "left_distance_delta": l_distance_delta,
-                    "right_distance_delta": r_distance_delta,
-                    "timestamp": new_time - self.start_time,
-                    "delta_time": new_time - self.last_time,
-                }
-                self.last_time = new_time
-                client.publish("sensors/encoders/data", json.dumps(data))
-            time.sleep(self.update_period)
-
-    def mqtt_control(self, client, userdata, msg):
-        data = json.loads(msg.payload)
-        if 'running' in data:
-            self.running = bool(data['running'])
-        if 'frequency' in data:
-            self.update_period = 1/data['frequency']
-        if data.get('reset') == True:
-            left_encoder.zero()
-            right_encoder.zero()
-            self.start_time = time.time()
 
 
 def on_connect(client, userdata, flags, rc):
@@ -138,13 +92,10 @@ def update_encoders(client):
 
 
 def exit_handler():
-    all_stop()
+    stop_motors()
     board.leds.clear()
 
 atexit.register(exit_handler)
-
-encoder_monitor = EncoderMonitor()
-encoder_monitor.start()
 
 mqtt_username = "robot"
 mqtt_password = "robot"
@@ -156,7 +107,6 @@ client.on_connect = on_connect
 client.message_callback_add("motors/#", all_messages)
 client.message_callback_add("motors/stop", stop_motors)
 client.message_callback_add("motors/wheels", set_motor_wheels)
-client.message_callback_add("motors/servos", set_servos)
 client.message_callback_add("leds/#", all_messages)
 client.message_callback_add("leds/set", set_led)
 client.message_callback_add("motors/servo/pan/position",
