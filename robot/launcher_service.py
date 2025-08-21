@@ -5,6 +5,7 @@ from common.mqtt_behavior import connect, publish_json
 def print_message(client, userdata, msg):
     print(f"{msg.topic} {msg.payload}")
 
+
 def start_systemd_unit(client, userdata, msg):
     unit_name = msg.payload.decode()
     subprocess.run(["systemctl", "start", unit_name])
@@ -18,6 +19,7 @@ def stop_systemd_unit(client, userdata, msg):
 def poweroff(client, userdata, msg):
     print("Powering off")
     subprocess.run(["poweroff"])
+
 
 def on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")

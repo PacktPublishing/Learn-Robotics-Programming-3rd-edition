@@ -1,59 +1,55 @@
+import atexit
 import time
-import ujson as json
 import vl53l5cx_ctypes
-import numpy as np
+from common.mqtt_behavior import connect, publish_json
 
-from common.mqtt_behavior import connect
+VALID_STATUSES = (vl53l5cx_ctypes.STATUS_RANGE_VALID,
+                  vl53l5cx_ctypes.STATUS_RANGE_VALID_LARGE_PULSE)
 
 
 class DistanceSensorService:
-    def __init__(self) -> None:
+    def __init__(self):
         self.sensor = vl53l5cx_ctypes.VL53L5CX()
         self.sensor.set_resolution(8 * 8)
         self.sensor.set_ranging_frequency_hz(10)
         self.is_ranging = False
 
-    def sensor_control(self, client, userdata, msg):
-        if msg.payload == b"start_ranging":
-            if not self.is_ranging:
-                self.sensor.start_ranging()
-                self.is_ranging = True
-        elif msg.payload == b"stop_ranging":
-            self.stop_ranging()
-        else:
-            print(f"Unknown control message: {msg.payload}")
+    def start_ranging(self, *args):
+        self.sensor.start_ranging()
+        self.is_ranging = True
 
     def stop_ranging(self, *args):
-        if self.is_ranging:
-            self.sensor.stop_ranging()
-            self.is_ranging = False
+        self.sensor.stop_ranging()
+        self.is_ranging = False
 
     def update_data(self):
         data = self.sensor.get_data()
-        as_array = np.array(data.distance_mm[0])
+        as_list = list(data.distance_mm[0])
         # Skip low confidence data
-        for n, data in enumerate(np.array(data.target_status[0])):
-            if data not in (vl53l5cx_ctypes.STATUS_RANGE_VALID, vl53l5cx_ctypes.STATUS_RANGE_VALID_LARGE_PULSE):
-                as_array[n] = 3000 # max 3m.
-        flipped = np.flip(as_array).reshape((8, 8))
-        as_json = json.dumps(flipped.tolist())
-        self.client.publish("sensors/distance_mm", as_json)
+        for n, data in enumerate(list(data.target_status[0])):
+            if data not in VALID_STATUSES:
+                as_list[n] = 3000  # max 3m.
+        publish_json(self.client, "sensors/distance_mm", as_list)
 
     def loop_forever(self):
         print("Making connection")
         self.client = connect()
-        self.client.subscribe("sensors/distance/control")
+        self.client.subscribe("sensors/distance/control/#")
         self.client.subscribe("all/stop")
-        self.client.message_callback_add("sensors/distance/control", self.sensor_control)
-        self.client.message_callback_add("all/stop", self.stop_ranging)
+        self.client.message_callback_add(
+            "sensors/distance/control/start_ranging", self.start_ranging)
+        self.client.message_callback_add(
+            "sensors/distance/control/stop_ranging", self.stop_ranging)
         self.client.publish("sensors/distance/status", "ready")
+        self.client.message_callback_add("all/stop", self.stop_ranging)
         print("Starting loop")
         while True:
             if self.is_ranging and self.sensor.data_ready():
                 self.update_data()
             time.sleep(0.01)
 
+
 print("Initialising sensor")
 service = DistanceSensorService()
-print("Sensor ready, starting loop")
+atexit.register(service.stop_ranging)
 service.loop_forever()
