@@ -17,3 +17,9 @@ export function connect() {
     });
     return client;
 }
+
+export function publish_when_clicked(client, element_id,topic, data) {
+    document.getElementById(element_id).addEventListener("click", () => {
+        client.publish(topic, data);
+    });
+}

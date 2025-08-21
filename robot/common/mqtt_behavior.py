@@ -1,9 +1,15 @@
 import paho.mqtt.client as mqtt
 import time
-import json
+import ujson as json
 
 def default_on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
+
+def default_on_disconnect(client, userdata, rc):
+    print(f"Disconnected with result code {rc}")
+    if rc != 0:
+        print("Unexpected disconnection, attempting to reconnect...")
+        client.reconnect()
 
 def connect(on_connect=default_on_connect, start_loop=True):
     mqtt_username = "robot"
@@ -11,6 +17,7 @@ def connect(on_connect=default_on_connect, start_loop=True):
 
     client = mqtt.Client()
     client.on_connect = on_connect
+    client.on_disconnect = default_on_disconnect
     client.username_pw_set(mqtt_username, mqtt_password)
     client.will_set("all/stop", "")
     client.connect("localhost", 1883)

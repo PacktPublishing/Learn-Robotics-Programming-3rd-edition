@@ -33,6 +33,6 @@ files.put(
 
 pip.packages(
     name="Install pip dependencies for services",
-    packages=["bokeh"],
+    packages=["vl53l5cx-ctypes", "Adafruit-Blinka", "adafruit-extended-bus", "adafruit-circuitpython-bno055"],
     virtualenv=robot_venv,
 )

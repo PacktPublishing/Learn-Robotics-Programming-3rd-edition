@@ -2,3 +2,5 @@ debug_data
 .DS_Store
 .vscode
 .env.js
+pyinfra-debug.log
+.ipynb_checkpoints

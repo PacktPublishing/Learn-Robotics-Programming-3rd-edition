@@ -6,3 +6,9 @@ h1 {
     text-align: center;
     font-size: 2em;
 }
+
+.line_chart {
+    width: 100vw;
+    height: 40vh;
+    position: relative;
+}
