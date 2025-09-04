@@ -38,3 +38,4 @@ with sd.InputStream(samplerate=sample_rate, channels=1, dtype="int16") as stream
             partial = result.get('partial', '')
             if partial.startswith(wake_word):
                 print("Partial:", partial)
+

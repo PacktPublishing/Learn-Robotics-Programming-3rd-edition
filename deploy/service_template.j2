@@ -9,6 +9,8 @@ WorkingDirectory=/home/{{ pi_user }}/
 ExecStart=/usr/local/bin/robotpython -u {{ command }}
 KillSignal=SIGINT
 TimeoutStopSec=2
+User={{ service_user }}
+Environment="XDG_RUNTIME_DIR=/run/user/{{ service_uid }}"
 
 [Install]
 WantedBy=multi-user.target

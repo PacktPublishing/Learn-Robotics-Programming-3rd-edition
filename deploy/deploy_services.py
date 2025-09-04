@@ -1,9 +1,10 @@
 from pyinfra.operations import files, systemd
 from pyinfra import host
+from pyinfra.facts import server
 import os
 
 
-def deploy_service(service_name, command, auto_start, changed):
+def deploy_service(service_name, command, auto_start, changed, user="root"):
     if auto_start:
         restart = "always"
     else:
@@ -17,6 +18,8 @@ def deploy_service(service_name, command, auto_start, changed):
         service_name=service_name,
         command=command,
         restart=restart,
+        service_user=user,
+        service_uid=host.get_fact(server.Users).get(user).get('uid'),
         _sudo=True
     )
 
@@ -182,6 +185,15 @@ code = files.put(
     dest="robot/line_follower.py")
 deploy_service("line_follower", "robot/line_follower.py",
                False, common.changed or code.changed)
+
+code = files.put(
+    name="Update the voice agent code",
+    src="robot/voice_agent.py",
+    dest="robot/voice_agent.py"
+)
+deploy_service("voice_agent", "robot/voice_agent.py",
+               True, common.changed or code.changed,
+               user=host.data.get('ssh_user'))
 
 files.directory(
     name="Create robot_control/libs",
