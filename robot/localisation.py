@@ -5,15 +5,14 @@ import numpy as np
 
 from common.mqtt_behavior import connect, publish_json
 from common.poses import rotated_poses, translated_poses
+from .boundary_observation_model import BoundaryObservationModel
 
-width = 1200
-height = 1800
-cutout_left = 900
-cutout_top = 800
-# width = 1500
-# height = 1500
-# cutout_left = 1000
-# cutout_top = 500
+boundary_observation_model = BoundaryObservationModel()
+
+width = 1500
+height = 1500
+cutout_left = 1000
+cutout_top = 500
 
 walls = [
     (0, height),
@@ -26,7 +25,7 @@ walls = [
 
 population_size = 20000
 rng = np.random.default_rng()
-low_probability = 10 ** -10
+
 
 class Localisation:
     def __init__(self):
@@ -46,18 +45,8 @@ class Localisation:
         self.previous_left_distance = 0
         self.previous_right_distance = 0
 
-    def in_boundary(self):
-        inside_walls = np.logical_and(
-            np.logical_and(self.poses[:, 0] > 0, self.poses[:, 0] < width),
-            np.logical_and(self.poses[:, 1] > 0, self.poses[:, 1] < height)
-        )
-        not_in_cutouts = np.logical_not(
-            np.logical_and(self.poses[:, 0] > cutout_left, self.poses[:, 1] < cutout_top)
-        )
-        return np.logical_and(inside_walls, not_in_cutouts)
-
     def observational_model(self):
-        weights = np.where(self.in_boundary(), 1.0, low_probability)
+        weights = boundary_observation_model.observational_model(self.poses)
         return weights
 
     def resample_poses(self, weights, sample_count):
