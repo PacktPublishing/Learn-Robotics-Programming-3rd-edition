@@ -128,17 +128,17 @@ deploy_service("smooth_distance_avoider",
                "robot/smooth_distance_avoider.py",
                False, common.changed or code.changed)
 
-localiser_models_changed = files.put(
+files.put(
     name="Update boundary probabilities",
     src="robot/boundary_probabilities.npy",
     dest="robot/boundary_probabilities.npy"
 ).changed
 
-localiser_models_changed = files.put(
+files.put(
     name="Update boundary observation model",
     src="robot/boundary_observation_model.py",
     dest="robot/boundary_observation_model.py"
-).changed or localiser_models_changed
+).changed
 
 code = files.put(
     name="Update localisation",
@@ -146,8 +146,7 @@ code = files.put(
     dest="robot/localisation.py")
 deploy_service("localisation",
                "robot/localisation.py",
-               False, common.changed or code.changed
-               or localiser_models_changed)
+               False, common.changed or code.changed)
 
 code = files.put(
     name="Update camera view code",
