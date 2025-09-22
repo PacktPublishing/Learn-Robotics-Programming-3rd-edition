@@ -5,7 +5,7 @@ import numpy as np
 
 from common.mqtt_behavior import connect, publish_json
 from common.poses import rotated_poses, translated_poses
-from .boundary_observation_model import BoundaryObservationModel
+from boundary_observation_model import BoundaryObservationModel
 
 boundary_observation_model = BoundaryObservationModel()
 
@@ -66,7 +66,7 @@ class Localisation:
     def publish_poses(self, client, poses):
         publish_json(client, "localisation/poses", poses.tolist())
 
-    def publish_map(self, client):
+    def publish_map(self, client, *_):
         publish_json(client, "localisation/map", {
             "walls": walls
         })
@@ -131,6 +131,10 @@ class Localisation:
         client.publish("sensors/encoders/control/reset")
         client.message_callback_add("sensors/encoders/data",
                                     self.on_encoders_data)
+        client.subscribe("localisation/get_map")
+        client.message_callback_add("localisation/get_map",
+                                    self.on_get_map)
+
         while True:
             time.sleep(0.1)
 
