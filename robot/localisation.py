@@ -131,9 +131,6 @@ class Localisation:
         client.publish("sensors/encoders/control/reset")
         client.message_callback_add("sensors/encoders/data",
                                     self.on_encoders_data)
-        client.subscribe("localisation/get_map")
-        client.message_callback_add("localisation/get_map",
-                                    self.on_get_map)
 
         while True:
             time.sleep(0.1)
