@@ -2,6 +2,7 @@ import numpy as np
 
 class BoundaryObservationModel:
     def __init__(self):
+        print("Loading boundary probability field...")
         self.probability_field = np.load("robot/boundary_probabilities.npy")
         self.margin = 100
 

@@ -132,13 +132,13 @@ files.put(
     name="Update boundary probabilities",
     src="robot/boundary_probabilities.npy",
     dest="robot/boundary_probabilities.npy"
-).changed
+)
 
 files.put(
     name="Update boundary observation model",
     src="robot/boundary_observation_model.py",
     dest="robot/boundary_observation_model.py"
-).changed
+)
 
 code = files.put(
     name="Update localisation",
