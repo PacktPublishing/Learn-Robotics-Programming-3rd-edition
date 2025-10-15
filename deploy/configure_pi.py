@@ -1,6 +1,6 @@
-from pyinfra.operations import files
+from pyinfra.operations import files, server
 
-files.line(
+i2c_config = files.line(
     name="Enable I2C 1 at 400Khz",
     line="[#]\?dtparam=i2c_arm=on.*",
     path="/boot/firmware/config.txt",
@@ -9,7 +9,7 @@ files.line(
     _sudo=True,
 )
 # Implements https://learn.adafruit.com/raspberry-pi-i2c-clock-stretching-fixes/software-i2c
-files.line(
+sw_i2c_config = files.line(
     name="Enable software i2c-gpio controller for BNO055",
     line="^dtoverlay=i2c-gpio.*",
     path="/boot/firmware/config.txt",
@@ -17,3 +17,5 @@ files.line(
     replace="dtoverlay=i2c-gpio,bus=2,i2c_gpio_sda=23,i2c_gpio_scl=24,i2c_gpio_delay_us=2",
     _sudo=True,
 )
+if i2c_config.changed or sw_i2c_config.changed:
+    server.shell("reboot", _sudo=True)
