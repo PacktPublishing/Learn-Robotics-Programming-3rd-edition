@@ -1,16 +1,17 @@
 import numpy as np
 
+Pose = np.dtype([('x', np.float32), ('y', np.float32), ('theta', np.float32)])
 
 def rotated_poses(poses, rotation):
-    return np.column_stack((
-            poses[:, 0],
-            poses[:, 1],
-            poses[:, 2] + rotation
-    ))
+    result = np.empty(poses.shape, dtype=Pose)
+    result['x'] = poses['x']
+    result['y'] = poses['y']
+    result['theta'] = poses['theta'] + rotation
+    return result
 
 def translated_poses(poses, length):
-    return np.column_stack((
-            poses[:, 0] + np.cos(poses[:, 2]) * length,
-            poses[:, 1] + np.sin(poses[:, 2]) * length,
-            poses[:, 2]
-    ))
+    result = np.empty(poses.shape, dtype=Pose)
+    result['x'] = poses['x'] + np.cos(poses['theta']) * length
+    result['y'] = poses['y'] + np.sin(poses['theta']) * length
+    result['theta'] = poses['theta']
+    return result
