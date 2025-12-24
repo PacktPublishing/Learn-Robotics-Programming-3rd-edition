@@ -19,8 +19,9 @@ walls = [
     (0, 0)
 ]
 
-population_size = 200
+population_size = 2000
 rng = np.random.default_rng()
+low_probability = 10 ** -10
 
 class Localisation:
     def __init__(self):
@@ -38,6 +39,28 @@ class Localisation:
         self.alpha_trans_rot = 0.5/100
         self.alpha_rot_rot = 2/100
         self.alpha_rot_trans = 0.1/100
+
+    def in_boundary(self):
+        inside_walls = np.logical_and(
+            np.logical_and(self.poses['x'] > 0, self.poses['x'] < width),
+            np.logical_and(self.poses['y'] > 0, self.poses['y'] < height)
+        )
+        not_in_cutouts = np.logical_not(
+            np.logical_and(self.poses['x'] > cutout_left, self.poses['y'] < cutout_top)
+        )
+        return np.logical_and(inside_walls, not_in_cutouts)
+
+    def observational_model(self):
+        weights = np.where(self.in_boundary(), 1.0, low_probability)
+        return weights
+
+    def resample_poses(self, weights, sample_count):
+        normalised_weights = weights / np.sum(weights)
+        return rng.choice(
+            self.poses,
+            size=sample_count,
+            p=normalised_weights
+        )
 
     def convert_encoders_to_motion(self, left_distance_delta, right_distance_delta):
         # Special case, straight line
@@ -78,13 +101,16 @@ class Localisation:
         rotation = theta / 2
         trans_samples, rot_samples = self.randomise_motion(translation, rotation)
         self.move_poses(rot_samples, trans_samples)
-
+        weights = self.observational_model()
+        self.poses = self.resample_poses(weights, population_size)
         # Act
-        self.publish_poses(client, self.poses)
+        publish_sample = self.resample_poses(weights, 200)
+        self.publish_poses(client, publish_sample)
 
     def on_config_updated(self, client, userdata, message):
         self.config_ready = True
         data = json.loads(message.payload)
+        print(data)
         if 'robot/wheel_distance' in data:
             self.wheel_distance = data['robot/wheel_distance']
 
@@ -99,6 +125,8 @@ class Localisation:
     def start(self):
         client = connect()
         self.publish_map(client)
+        print("Published map. Getting wheel distance config...")
+        client.subscribe("config/updated")
         client.message_callback_add("config/updated",
                                     self.on_config_updated)
         publish_json(client, "config/get", [
@@ -106,6 +134,7 @@ class Localisation:
                         ])
         while not self.config_ready:
             time.sleep(0.1)
+        print("Configuration received. Starting localisation.")
 
         client.subscribe("sensors/encoders/data")
         client.publish("sensors/encoders/control/reset")
