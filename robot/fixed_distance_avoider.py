@@ -8,7 +8,7 @@ from common.mqtt_behavior import connect, publish_json
 class FixedDistanceAvoiderBehavior:
     def __init__(self):
         self.speed = 0.8
-        self.threshold = 300
+        self.threshold = 200
 
     def on_distance_message(self, client, userdata, message):
         # Sense
