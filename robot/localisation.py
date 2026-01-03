@@ -11,7 +11,6 @@ from boundary_observation_model import BoundaryObservationModel
 population_size = 20000
 rng = np.random.default_rng()
 low_probability = 10 ** -10
-resample_random_ratio = 0.02  # 2% random poses on resample
 
 class Localisation:
     def generate_random_poses(self, count):
@@ -40,37 +39,33 @@ class Localisation:
     def apply_observational_models(self):
         return self.boundary_model.calculate_weights(self.poses)
 
-    def resample_poses(self, weights, sample_count, random_ratio):
-        """Resample poses based on weights.
+    def resample_poses(self, weights, sample_count):
+        """Low variance resampling algorithm (systematic resampling).
+
+        This ensures better representation of the particle distribution
+        by using deterministic spacing with a single random offset.
 
         Args:
             weights: Weight for each pose
             sample_count: Number of poses to return
-            inject_random: If True, inject random poses to maintain diversity
-            random_ratio: Proportion of random poses to inject (e.g., 0.02 = 2%)
+
+        Returns:
+            Resampled poses array
         """
-        normalised_weights = weights / np.sum(weights)
+        cumulative_sum = np.cumsum(weights)
+        total_weight = cumulative_sum[-1]
+        interval = total_weight / sample_count
 
-        if random_ratio <= 0:
-            resample_count = sample_count
-        else:
-            # Resample most particles from existing population
-            resample_count = int(sample_count * (1.0 - random_ratio))
+        # Single random start point in [0, interval)
+        start = rng.uniform(0, interval)
 
-        resampled = rng.choice(
-            self.poses,
-            size=resample_count,
-            p=normalised_weights
-        )
+        # Generate systematic sample points
+        sample_points = start + np.arange(sample_count) * interval
 
-        random_count = sample_count - resample_count
-        if random_count == 0:
-            return resampled
+        # Find indices using searchsorted (efficient binary search)
+        indices = np.searchsorted(cumulative_sum, sample_points)
 
-        # Inject random valid poses to maintain diversity
-        random_poses = self.generate_random_poses(random_count)
-
-        return np.concatenate([resampled, random_poses])
+        return self.poses[indices]
 
     def convert_encoders_to_motion(self, left_distance_delta, right_distance_delta):
         # Special case, straight line
@@ -114,8 +109,8 @@ class Localisation:
         weights = self.apply_observational_models()
 
         # Act
-        self.poses = self.resample_poses(weights, population_size, random_ratio=resample_random_ratio)
-        publish_sample = self.resample_poses(weights, 200, random_ratio=0)
+        self.poses = self.resample_poses(weights, population_size)
+        publish_sample = self.resample_poses(weights, 200)
         self.publish_poses(client, publish_sample)
 
     def on_config_updated(self, client, userdata, message):
