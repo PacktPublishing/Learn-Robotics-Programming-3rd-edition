@@ -2,6 +2,11 @@ import paho.mqtt.client as mqtt
 import time
 import ujson as json
 
+def load_config():
+    """Load configuration from .env.json file"""
+    with open('robot_control/.env.json', 'r') as f:
+        return json.load(f)
+
 def default_on_connect(client, userdata, flags, rc):
     print(f"Connected with result code {rc}")
 
@@ -12,8 +17,10 @@ def default_on_disconnect(client, userdata, rc):
         client.reconnect()
 
 def connect(on_connect=default_on_connect, start_loop=True):
-    mqtt_username = "robot"
-    mqtt_password = "robot"
+    print("Using details from env config")
+    env_config = load_config()
+    mqtt_username = env_config["MQTT_USERNAME"]
+    mqtt_password = env_config["MQTT_PASSWORD"]
 
     client = mqtt.Client()
     client.on_connect = on_connect
