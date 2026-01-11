@@ -4,8 +4,7 @@ import time
 from functools import partial
 
 import inventorhatmini
-import paho.mqtt.client as mqtt
-from common.mqtt_behavior import publish_json
+from common.mqtt_behavior import publish_json, connect
 
 last_message = 0
 board = inventorhatmini.InventorHATMini()
@@ -97,13 +96,7 @@ def exit_handler():
 
 atexit.register(exit_handler)
 
-mqtt_username = "robot"
-mqtt_password = "robot"
-
-client = mqtt.Client()
-client.username_pw_set(mqtt_username, mqtt_password)
-client.on_connect = on_connect
-
+client = connect(on_connect=on_connect, start_loop=False)
 client.message_callback_add("motors/#", all_messages)
 client.message_callback_add("motors/stop", stop_motors)
 client.message_callback_add("motors/wheels", set_motor_wheels)

@@ -1,5 +1,8 @@
-import { env } from "./.env.js";
 import mqtt from "./libs/mqtt.js";
+
+// Load environment configuration from .env.json
+const response = await fetch('/.env.json?t=' + new Date().getTime());
+let env = await response.json();
 
 export function connect() {
     let client = mqtt.connect(`ws://${env.PI_HOSTNAME}:9001`, {
