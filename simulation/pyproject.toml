@@ -3,10 +3,22 @@ name = "robotics-simulation"
 version = "0.1.0"
 description = "Robot arena simulation using pygame and PyBullet"
 requires-python = ">=3.11"
+
+# Common dependencies needed by both external and internal environments
 dependencies = [
-    "pygame>=2.5.0",
-    "pybullet>=3.2.5",
     "paho-mqtt>=1.6.0",
     "ujson>=5.0.0",
+]
+
+[project.optional-dependencies]
+# External group: for running pygame simulation on host
+external = [
+    "pygame>=2.5.0",
+    "pybullet>=3.2.5",
+]
+
+# Internal group: for running robot services inside Docker simulation environment
+internal = [
+    "numpy>=1.26.0",
 ]
 

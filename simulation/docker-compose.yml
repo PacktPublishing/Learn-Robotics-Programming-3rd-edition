@@ -1,0 +1,32 @@
+services:
+  # MQTT broker (Mosquitto)
+  mqtt:
+    image: eclipse-mosquitto:2
+    container_name: simulation-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto.passwd:/etc/mosquitto/passwd
+    networks:
+      - simulation-network
+
+  # Robot behavior service (does not start by default)
+  robot-behavior:
+    build:
+      context: ..
+      dockerfile: simulation/internal.Dockerfile
+    container_name: simulation-robot-behavior
+    command: python3 robot/behavior_line.py
+    depends_on:
+      - mqtt
+    volumes:
+      - ./.env.json:/app/robot_control/.env.json
+    network_mode: "service:mqtt"
+    profiles:
+      - robot-services
+
+networks:
+  simulation-network:
+    driver: bridge
