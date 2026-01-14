@@ -9,22 +9,29 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "robot"))
 from arena_renderer import ArenaRenderer
 from robot import Robot
 from common import arena
+from common.mqtt_behavior import connect as mqtt_connect
 
 
 def main():
     """Run the simulation."""
+    # Connect to MQTT broker
+    print("Connecting to MQTT broker...")
+    config_path = Path(__file__).parent / ".env.json"
+    mqtt_client = mqtt_connect(config_path=str(config_path))
+
     # Initialize pygame
     pygame.init()
 
     # Create arena renderer
     arena_renderer = ArenaRenderer()
 
-    # Create robot at random position
+    # Create robot at random position with MQTT client
     robot = Robot.random_pose(
         arena.right,
         arena.top,
         arena.cutout_left,
-        arena.cutout_top
+        arena.cutout_top,
+        mqtt_client
     )
 
     # Create display window
@@ -58,6 +65,8 @@ def main():
         clock.tick(60)
 
     # Clean up
+    mqtt_client.loop_stop()
+    mqtt_client.disconnect()
     pygame.quit()
     sys.exit(0)
 

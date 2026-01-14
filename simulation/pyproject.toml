@@ -6,19 +6,19 @@ requires-python = ">=3.11"
 
 # Common dependencies needed by both external and internal environments
 dependencies = [
-    "paho-mqtt>=1.6.0",
-    "ujson>=5.0.0",
+    "paho-mqtt>=2.1.0",
+    "ujson>=5.11.0",
 ]
 
 [project.optional-dependencies]
 # External group: for running pygame simulation on host
 external = [
-    "pygame>=2.5.0",
-    "pybullet>=3.2.5",
+    "pygame>=2.6.1",
+    "pybullet>=3.2.7",
 ]
 
 # Internal group: for running robot services inside Docker simulation environment
 internal = [
-    "numpy>=1.26.0",
+    "numpy>=2.4.0",
 ]
 

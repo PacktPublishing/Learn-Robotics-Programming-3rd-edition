@@ -134,29 +134,27 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "paho-mqtt" },
-    { name = "pybullet" },
-    { name = "pygame" },
     { name = "ujson" },
 ]
 
 [package.optional-dependencies]
+external = [
+    { name = "pybullet" },
+    { name = "pygame" },
+]
 internal = [
     { name = "numpy" },
-    { name = "paho-mqtt" },
-    { name = "ujson" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "numpy", marker = "extra == 'internal'", specifier = ">=1.26.0" },
-    { name = "paho-mqtt", specifier = ">=1.6.0" },
-    { name = "paho-mqtt", marker = "extra == 'internal'", specifier = ">=1.6.0" },
-    { name = "pybullet", specifier = ">=3.2.5" },
-    { name = "pygame", specifier = ">=2.5.0" },
-    { name = "ujson", specifier = ">=5.0.0" },
-    { name = "ujson", marker = "extra == 'internal'", specifier = ">=5.0.0" },
+    { name = "numpy", marker = "extra == 'internal'", specifier = ">=2.4.0" },
+    { name = "paho-mqtt", specifier = ">=2.1.0" },
+    { name = "pybullet", marker = "extra == 'external'", specifier = ">=3.2.7" },
+    { name = "pygame", marker = "extra == 'external'", specifier = ">=2.6.1" },
+    { name = "ujson", specifier = ">=5.11.0" },
 ]
-provides-extras = ["internal"]
+provides-extras = ["external", "internal"]
 
 [[package]]
 name = "ujson"

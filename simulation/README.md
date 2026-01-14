@@ -63,7 +63,7 @@ Controls:
 Start robot behavior services (like behavior_line):
 ```bash
 cd simulation
-docker compose --profile robot-services up robot-behavior
+docker compose --profile robot-services up --build robot-behavior
 ```
 
 Or run in daemon mode:
@@ -81,3 +81,5 @@ docker compose --profile robot-services down
 
 ## Todo list
 
+- Add MQTT client to the simulation to send/receive messages
+- Implement the motor movement simulation

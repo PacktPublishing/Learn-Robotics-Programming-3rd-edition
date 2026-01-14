@@ -19,21 +19,23 @@ class Robot:
     ROBOT_COLOR = (50, 100, 200)  # Blue
     WHEEL_COLOR = (40, 40, 40)  # Dark gray
 
-    def __init__(self, x: float, y: float, angle: float = 0.0):
+    def __init__(self, x: float, y: float, angle: float = 0.0, mqtt_client=None):
         """Initialize the robot.
 
         Args:
             x: X position in mm
             y: Y position in mm
             angle: Orientation angle in radians (0 is facing right/east)
+            mqtt_client: Optional MQTT client for communication
         """
         self.x = x
         self.y = y
         self.angle = angle
+        self.mqtt_client = mqtt_client
 
     @classmethod
     def random_pose(cls, arena_width: float, arena_height: float,
-                   cutout_left: float, cutout_top: float) -> 'Robot':
+                   cutout_left: float, cutout_top: float, mqtt_client=None) -> 'Robot':
         """Create a robot at a random valid position in the arena.
 
         Args:
@@ -41,6 +43,7 @@ class Robot:
             arena_height: Height of the arena in mm
             cutout_left: X coordinate of the cutout
             cutout_top: Y coordinate of the cutout
+            mqtt_client: Optional MQTT client for communication
 
         Returns:
             Robot instance at a random valid position
@@ -58,7 +61,7 @@ class Robot:
             break
 
         angle = random.uniform(0, 2 * math.pi)
-        return cls(x, y, angle)
+        return cls(x, y, angle, mqtt_client)
 
     def draw(self, screen: pygame.Surface, world_to_screen_fn):
         """Draw the robot on the screen.
