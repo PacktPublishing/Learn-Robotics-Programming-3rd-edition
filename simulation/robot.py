@@ -7,28 +7,28 @@ import math
 
 class RobotWheel:
     """Simulates a robot wheel with motor characteristics."""
-    
+
     # Motor speed calibration
     BASE_SPEED_MM_PER_SEC = 195.0  # Mean speed at motor setting 1.0
     SPEED_VARIATION_STDDEV = 5.0   # Standard deviation for motor variation
-    
+
     def __init__(self):
         """Initialize wheel with random speed variation."""
         # Add random variation to simulate real motor/gear/wheel differences
         self.speed_factor = random.gauss(1.0, self.SPEED_VARIATION_STDDEV / self.BASE_SPEED_MM_PER_SEC)
         self.current_speed = 0.0  # Current motor speed setting (-1.0 to 1.0)
-    
+
     def set_speed(self, speed: float):
         """Set the wheel motor speed.
-        
+
         Args:
             speed: Motor speed from -1.0 (full reverse) to 1.0 (full forward)
         """
         self.current_speed = max(-1.0, min(1.0, speed))
-    
+
     def get_velocity(self) -> float:
         """Get the current wheel velocity in mm/s.
-        
+
         Returns:
             Velocity in mm/s
         """
@@ -65,7 +65,7 @@ class Robot:
             mqtt_client: Optional MQTT client for communication
         """
         self.mqtt_client = mqtt_client
-        
+
         # Create motor wheels with individual characteristics
         self.left_wheel = RobotWheel()
         self.right_wheel = RobotWheel()
@@ -92,15 +92,15 @@ class Robot:
         # Add to space if provided
         if space:
             space.add(self.body, self.shape)
-        
+
         # Subscribe to motor control messages if MQTT client available
         if self.mqtt_client:
             self.mqtt_client.subscribe("motors/wheels")
             self.mqtt_client.message_callback_add("motors/wheels", self._on_motor_command)
-    
+
     def _on_motor_command(self, client, userdata, message):
         """Handle motor/wheels MQTT messages.
-        
+
         Args:
             client: MQTT client
             userdata: User data
@@ -111,30 +111,30 @@ class Robot:
         if len(speeds) >= 2:
             self.left_wheel.set_speed(speeds[0])
             self.right_wheel.set_speed(speeds[1])
-    
+
     def update_motors(self, dt: float):
         """Apply motor forces to the robot body based on wheel speeds.
-        
+
         Args:
             dt: Time step in seconds
         """
         # Get wheel velocities in mm/s
         left_velocity = self.left_wheel.get_velocity()
         right_velocity = self.right_wheel.get_velocity()
-        
+
         # Calculate differential drive kinematics
         # Linear velocity (forward) is average of both wheels
         linear_velocity = (left_velocity + right_velocity) / 2.0
-        
+
         # Angular velocity from difference between wheels
         # omega = (v_right - v_left) / wheel_separation
         angular_velocity = (right_velocity - left_velocity) / self.WHEEL_SEPARATION
-        
+
         # Convert to robot's local frame and apply
         angle = self.body.angle
         vx = linear_velocity * math.cos(angle)
         vy = linear_velocity * math.sin(angle)
-        
+
         # Set velocities directly (simpler than forces for this use case)
         self.body.velocity = (vx, vy)
         self.body.angular_velocity = angular_velocity

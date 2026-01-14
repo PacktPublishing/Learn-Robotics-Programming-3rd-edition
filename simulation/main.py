@@ -56,7 +56,7 @@ def main():
 
         # Step physics simulation
         arena_sim.step(dt)
-        
+
         # Update robot motors
         robot.update_motors(dt)
 
