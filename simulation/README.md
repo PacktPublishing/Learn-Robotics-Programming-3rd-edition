@@ -83,9 +83,3 @@ docker compose --profile robot-services down
 ## Todo list
 
 - Implement the motor movement simulation
-
-## Agent notes
-
-- When adding dependencies, use the official ecosystem websites to verify they are the latest stable or compatible version.
-- Ensure code conforms to PEP 8 standards. Imports must not be added anywhere other than the top of the file.
-

@@ -6,19 +6,34 @@ import math
 import time
 import ujson as json
 
+from common.mqtt_behavior import publish_json
+
 
 class RobotWheel:
-    """Simulates a robot wheel with motor characteristics."""
+    """Simulates a robot wheel with motor and encoder characteristics."""
 
     # Motor speed calibration
     BASE_SPEED_MM_PER_SEC = 195.0  # Mean speed at motor setting 1.0
     SPEED_VARIATION_STDDEV = 5.0   # Standard deviation for motor variation
 
+    # Encoder settings (matching inventor_hat_service.py)
+    COUNTS_PER_REV = 32 * 120  # sensor poles * gear ratio
+    WHEEL_DIAMETER = 67  # mm
+    WHEEL_RADIUS = WHEEL_DIAMETER / 2  # mm
+
     def __init__(self):
-        """Initialize wheel with random speed variation."""
+        """Initialize wheel with random speed variation and encoder."""
         # Add random variation to simulate real motor/gear/wheel differences
-        self.speed_factor = random.gauss(1.0, self.SPEED_VARIATION_STDDEV / self.BASE_SPEED_MM_PER_SEC)
+        self.speed_factor = random.gauss(
+            1.0,
+            self.SPEED_VARIATION_STDDEV / self.BASE_SPEED_MM_PER_SEC
+        )
         self.current_speed = 0.0  # Current motor speed setting (-1.0 to 1.0)
+
+        # Encoder state
+        self.encoder_count = 0.0  # Accumulated encoder counts
+        self.encoder_radians = 0.0  # Accumulated radians
+        self.last_update_time = time.time()
 
     def set_speed(self, speed: float):
         """Set the wheel motor speed.
@@ -36,6 +51,43 @@ class RobotWheel:
         """
         return self.current_speed * self.BASE_SPEED_MM_PER_SEC * self.speed_factor
 
+    def update_encoder(self, dt: float):
+        """Update encoder counts based on wheel movement.
+
+        Args:
+            dt: Time step in seconds
+        """
+        # Calculate distance traveled in mm
+        velocity = self.get_velocity()
+        distance_mm = velocity * dt
+
+        # Convert to radians of wheel rotation
+        radians = distance_mm / self.WHEEL_RADIUS
+
+        # Update accumulated values
+        self.encoder_radians += radians
+
+        # Convert radians to encoder counts
+        counts_per_radian = self.COUNTS_PER_REV / (2 * math.pi)
+        self.encoder_count = self.encoder_radians * counts_per_radian
+
+    def reset_encoder(self):
+        """Reset encoder to zero."""
+        self.encoder_count = 0.0
+        self.encoder_radians = 0.0
+
+    def get_encoder_data(self):
+        """Get encoder data in the format expected by behaviors.
+
+        Returns:
+            dict: Dictionary with distance and velocity data
+        """
+        velocity = self.get_velocity()
+
+        return {
+            "distance": self.encoder_radians * self.WHEEL_RADIUS,  # mm
+            "mm_per_sec": velocity  # mm/s
+        }
 
 class Robot:
     """Represents the robot in the simulation."""
@@ -104,7 +156,28 @@ class Robot:
         # Subscribe to motor control messages if MQTT client available
         if self.mqtt_client:
             self.mqtt_client.subscribe("motors/wheels")
-            self.mqtt_client.message_callback_add("motors/wheels", self._on_motor_command)
+            self.mqtt_client.message_callback_add(
+                "motors/wheels", self._on_motor_command
+            )
+            self.mqtt_client.subscribe("sensors/encoders/control/reset")
+            self.mqtt_client.message_callback_add(
+                "sensors/encoders/control/reset", self._on_encoder_reset
+            )
+
+        # Encoder update timing
+        self.last_encoder_publish = time.time()
+        self.encoder_publish_interval = 0.1  # Publish at 10 Hz like real robot
+
+    def _on_encoder_reset(self, client, userdata, message):
+        """Handle encoder reset MQTT messages.
+
+        Args:
+            client: MQTT client
+            userdata: User data
+            message: MQTT message
+        """
+        self.left_wheel.reset_encoder()
+        self.right_wheel.reset_encoder()
 
     def _on_motor_command(self, client, userdata, message):
         """Handle motor/wheels MQTT messages.
@@ -134,6 +207,16 @@ class Robot:
                 self.left_wheel.set_speed(0.0)
                 self.right_wheel.set_speed(0.0)
 
+        # Update wheel encoders
+        self.left_wheel.update_encoder(dt)
+        self.right_wheel.update_encoder(dt)
+
+        # Publish encoder data at regular intervals
+        current_time = time.time()
+        if current_time - self.last_encoder_publish >= self.encoder_publish_interval:
+            self._publish_encoder_data()
+            self.last_encoder_publish = current_time
+
         # Get wheel velocities in mm/s
         left_velocity = self.left_wheel.get_velocity()
         right_velocity = self.right_wheel.get_velocity()
@@ -154,6 +237,25 @@ class Robot:
         # Set velocities directly (simpler than forces for this use case)
         self.body.velocity = (vx, vy)
         self.body.angular_velocity = angular_velocity
+
+    def _publish_encoder_data(self):
+        """Publish encoder data to MQTT."""
+        if not self.mqtt_client:
+            return
+
+        left_data = self.left_wheel.get_encoder_data()
+        right_data = self.right_wheel.get_encoder_data()
+
+        publish_json(
+            self.mqtt_client,
+            "sensors/encoders/data",
+            {
+                "left_distance": left_data["distance"],
+                "right_distance": right_data["distance"],
+                "left_mm_per_sec": left_data["mm_per_sec"],
+                "right_mm_per_sec": right_data["mm_per_sec"],
+            }
+        )
 
     @property
     def x(self) -> float:

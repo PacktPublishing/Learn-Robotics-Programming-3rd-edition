@@ -114,8 +114,8 @@ def main():
         # Update robot motors
         robot.update_motors(dt)
 
-        # Draw arena
-        arena_sim.draw(screen)
+        # Draw arena (including status panel)
+        arena_sim.draw(screen, robot)
 
         # Draw robot
         robot.draw(screen, arena_sim.world_to_screen)
