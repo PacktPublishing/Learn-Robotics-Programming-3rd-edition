@@ -3,6 +3,8 @@ import pygame
 import pymunk
 import random
 import math
+import time
+import ujson as json
 
 
 class RobotWheel:
@@ -50,6 +52,9 @@ class Robot:
     MASS = 1.0  # kg
     MOMENT_SCALE = 1.0  # Scale factor for moment of inertia
 
+    # Motor timeout
+    MOTOR_TIMEOUT = 1.0  # Stop motors after 1 second of no commands
+
     # Display settings
     ROBOT_COLOR = (50, 100, 200)  # Blue
     WHEEL_COLOR = (40, 40, 40)  # Dark gray
@@ -69,6 +74,9 @@ class Robot:
         # Create motor wheels with individual characteristics
         self.left_wheel = RobotWheel()
         self.right_wheel = RobotWheel()
+
+        # Track last motor command time for timeout
+        self.last_motor_command_time = 0.0
 
         # Create pymunk body
         moment = pymunk.moment_for_box(self.MASS, (self.LENGTH, self.WIDTH)) * self.MOMENT_SCALE
@@ -106,11 +114,11 @@ class Robot:
             userdata: User data
             message: MQTT message with [left_speed, right_speed] payload
         """
-        import ujson as json
         speeds = json.loads(message.payload)
         if len(speeds) >= 2:
             self.left_wheel.set_speed(speeds[0])
             self.right_wheel.set_speed(speeds[1])
+            self.last_motor_command_time = time.time()
 
     def update_motors(self, dt: float):
         """Apply motor forces to the robot body based on wheel speeds.
@@ -118,6 +126,14 @@ class Robot:
         Args:
             dt: Time step in seconds
         """
+        # Check for motor command timeout
+        if self.last_motor_command_time > 0:
+            time_since_last_command = time.time() - self.last_motor_command_time
+            if time_since_last_command > self.MOTOR_TIMEOUT:
+                # Stop motors after timeout
+                self.left_wheel.set_speed(0.0)
+                self.right_wheel.set_speed(0.0)
+
         # Get wheel velocities in mm/s
         left_velocity = self.left_wheel.get_velocity()
         right_velocity = self.right_wheel.get_velocity()

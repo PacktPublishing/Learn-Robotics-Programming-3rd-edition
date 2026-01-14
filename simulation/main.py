@@ -1,6 +1,8 @@
 """Robot arena simulation main entry point."""
+import logging
 import pygame
 import sys
+import math
 from pathlib import Path
 
 # Add robot directory to path
@@ -8,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "robot"))
 
 from arena_simulation import ArenaSimulation
 from robot import Robot
+from window_setup import create_display
 from common import arena
 from common.mqtt_behavior import connect as mqtt_connect
 
@@ -36,12 +39,20 @@ def main():
     )
 
     # Create display window
-    screen = pygame.display.set_mode((arena_sim.display_width, arena_sim.display_height))
-    pygame.display.set_caption("Robot Arena Simulation")
+    screen = create_display(
+        arena_sim.display_width,
+        arena_sim.display_height,
+        "Robot Arena Simulation"
+    )
 
     # Clock for controlling frame rate
     clock = pygame.time.Clock()
     dt = 1.0 / 60.0  # 60 FPS time step
+
+    # Mouse drag state
+    dragging = False
+    drag_offset_x = 0
+    drag_offset_y = 0
 
     # Main simulation loop
     running = True
@@ -53,6 +64,49 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
                     running = False
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  # Left click
+                    # Convert screen to world coordinates
+                    mouse_x = event.pos[0] / arena_sim.SCALE
+                    mouse_y = (arena_sim.display_height - event.pos[1]) / arena_sim.SCALE
+
+                    # Check if click is on robot
+                    dx = mouse_x - robot.x
+                    dy = mouse_y - robot.y
+                    distance = math.sqrt(dx*dx + dy*dy)
+
+                    # Use robot length as click radius
+                    if distance < robot.LENGTH:
+                        dragging = True
+                        drag_offset_x = dx
+                        drag_offset_y = dy
+
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:  # Left click release
+                    dragging = False
+
+            elif event.type == pygame.MOUSEWHEEL:
+                if dragging:
+                    # Rotate robot by 10 degrees (pi/18 radians)
+                    rotation_increment = math.pi / 18
+                    robot.body.angle += event.y * rotation_increment
+
+        # Handle mouse dragging
+        if dragging:
+            mouse_pos = pygame.mouse.get_pos()
+            # Convert screen to world coordinates
+            world_x = mouse_pos[0] / arena_sim.SCALE
+            world_y = (arena_sim.display_height - mouse_pos[1]) / arena_sim.SCALE
+
+            # Update robot position (subtract offset to maintain grab point)
+            robot.body.position = (
+                world_x - drag_offset_x,
+                world_y - drag_offset_y
+            )
+            # Reset velocity when manually positioning
+            robot.body.velocity = (0, 0)
+            robot.body.angular_velocity = 0
 
         # Step physics simulation
         arena_sim.step(dt)
