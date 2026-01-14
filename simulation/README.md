@@ -51,6 +51,7 @@ docker compose logs -f mqtt
 Run the visualization on your host machine:
 ```bash
 cd simulation
+uv pip install --system .[external]
 uv run ./simulation
 ```
 
@@ -81,5 +82,4 @@ docker compose --profile robot-services down
 
 ## Todo list
 
-- Add MQTT client to the simulation to send/receive messages
 - Implement the motor movement simulation

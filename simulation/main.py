@@ -6,7 +6,7 @@ from pathlib import Path
 # Add robot directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "robot"))
 
-from arena_renderer import ArenaRenderer
+from arena_simulation import ArenaSimulation
 from robot import Robot
 from common import arena
 from common.mqtt_behavior import connect as mqtt_connect
@@ -22,24 +22,26 @@ def main():
     # Initialize pygame
     pygame.init()
 
-    # Create arena renderer
-    arena_renderer = ArenaRenderer()
+    # Create arena simulation (includes physics space)
+    arena_sim = ArenaSimulation()
 
-    # Create robot at random position with MQTT client
+    # Create robot at random position with MQTT client and add to physics space
     robot = Robot.random_pose(
         arena.right,
         arena.top,
         arena.cutout_left,
         arena.cutout_top,
+        arena_sim.space,
         mqtt_client
     )
 
     # Create display window
-    screen = pygame.display.set_mode((arena_renderer.display_width, arena_renderer.display_height))
+    screen = pygame.display.set_mode((arena_sim.display_width, arena_sim.display_height))
     pygame.display.set_caption("Robot Arena Simulation")
 
     # Clock for controlling frame rate
     clock = pygame.time.Clock()
+    dt = 1.0 / 60.0  # 60 FPS time step
 
     # Main simulation loop
     running = True
@@ -52,11 +54,14 @@ def main():
                 if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
                     running = False
 
+        # Step physics simulation
+        arena_sim.step(dt)
+
         # Draw arena
-        arena_renderer.draw(screen)
+        arena_sim.draw(screen)
 
         # Draw robot
-        robot.draw(screen, arena_renderer.world_to_screen)
+        robot.draw(screen, arena_sim.world_to_screen)
 
         # Update display
         pygame.display.flip()
