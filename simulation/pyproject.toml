@@ -1,0 +1,12 @@
+[project]
+name = "robotics-simulation"
+version = "0.1.0"
+description = "Robot arena simulation using pygame and PyBullet"
+requires-python = ">=3.11"
+dependencies = [
+    "pygame>=2.5.0",
+    "pybullet>=3.2.5",
+    "paho-mqtt>=1.6.0",
+    "ujson>=5.0.0",
+]
+
