@@ -12,9 +12,12 @@ class Robot:
     WIDTH = 125
     LENGTH = 200
     WHEEL_DIAMETER = 67
+    WHEEL_POSITION_FROM_FRONT = 100
+    WHEEL_THICKNESS = 25
 
     # Display settings
     ROBOT_COLOR = (50, 100, 200)  # Blue
+    WHEEL_COLOR = (40, 40, 40)  # Dark gray
 
     def __init__(self, x: float, y: float, angle: float = 0.0):
         """Initialize the robot.
@@ -94,6 +97,9 @@ class Robot:
         # Draw the robot
         pygame.draw.polygon(screen, self.ROBOT_COLOR, screen_corners)
 
+        # Draw wheels
+        self._draw_wheels(screen, world_to_screen_fn, cos_a, sin_a)
+
         # Draw a line to indicate front direction
         front_x = self.x + (half_length + 20) * cos_a
         front_y = self.y + (half_length + 20) * sin_a
@@ -102,3 +108,46 @@ class Robot:
         front_screen = world_to_screen_fn(front_x, front_y)
 
         pygame.draw.line(screen, (255, 0, 0), center_screen, front_screen, 2)
+
+    def _draw_wheels(self, screen: pygame.Surface, world_to_screen_fn, cos_a: float, sin_a: float):
+        """Draw the left and right wheels.
+
+        Args:
+            screen: Pygame surface to draw on
+            world_to_screen_fn: Function to convert world coords to screen coords
+            cos_a: Cosine of robot angle
+            sin_a: Sine of robot angle
+        """
+        # Wheel position (distance from center to wheel centers)
+        wheel_offset_x = self.LENGTH / 2 - self.WHEEL_POSITION_FROM_FRONT
+        wheel_offset_y = self.WIDTH / 2 + self.WHEEL_THICKNESS / 2
+
+        half_wheel_diameter = self.WHEEL_DIAMETER / 2
+        half_wheel_thickness = self.WHEEL_THICKNESS / 2
+
+        # Left and right wheel positions in local coordinates
+        for side in [-1, 1]:  # -1 for left, 1 for right
+            # Wheel center in local coordinates
+            local_wheel_x = -wheel_offset_x
+            local_wheel_y = side * wheel_offset_y
+
+            # Wheel corners in local coordinates (relative to wheel center)
+            wheel_corners = [
+                (local_wheel_x - half_wheel_diameter, local_wheel_y - half_wheel_thickness),
+                (local_wheel_x + half_wheel_diameter, local_wheel_y - half_wheel_thickness),
+                (local_wheel_x + half_wheel_diameter, local_wheel_y + half_wheel_thickness),
+                (local_wheel_x - half_wheel_diameter, local_wheel_y + half_wheel_thickness),
+            ]
+
+            # Rotate and translate to world coordinates
+            world_wheel_corners = []
+            for lx, ly in wheel_corners:
+                wx = lx * cos_a - ly * sin_a + self.x
+                wy = lx * sin_a + ly * cos_a + self.y
+                world_wheel_corners.append((wx, wy))
+
+            # Convert to screen coordinates
+            screen_wheel_corners = [world_to_screen_fn(wx, wy) for wx, wy in world_wheel_corners]
+
+            # Draw the wheel
+            pygame.draw.polygon(screen, self.WHEEL_COLOR, screen_wheel_corners)
