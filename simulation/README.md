@@ -20,16 +20,64 @@ The simulations package setup is independent from the pyinfra setup, with python
 
 ## Running the Simulation
 
-UV will be used to manage dependencies.
-A container will be built, using the robot services, and robot control code as a base, with key services (close to hardware) removed, so the simulation can interact directly.
+The simulation consists of three components:
+1. MQTT broker (mosquitto) - runs in Docker
+2. Robot services (behavior_line, etc.) - run in Docker
+3. Pygame visualization - runs on host with uv
 
-The robot control environment will be in robot.Dockerfile.
-The simulation would be run with `uv run ./simulation` from the simulation directory. The simulation runs in foreground with pygame, so would not be daemonized.
+### Setup
+
+First, ensure you have the mosquitto password file created:
+```bash
+cd simulation
+docker run --rm -v $(pwd)/mosquitto.passwd:/mosquitto/config/passwd eclipse-mosquitto:2 mosquitto_passwd -b /mosquitto/config/passwd sim-user sim-password
+```
+
+### Start the MQTT Broker
+
+Start the broker in daemon mode (runs in background):
+```bash
+cd simulation
+docker compose up -d mqtt
+```
+
+To view broker logs:
+```bash
+docker compose logs -f mqtt
+```
+
+### Start the Pygame Simulation
+
+Run the visualization on your host machine:
+```bash
+cd simulation
+uv run ./simulation
+```
 
 Controls:
 - Press ESC or Q to quit
 - Close the window to exit
 
+### Start Robot Services
+
+Start robot behavior services (like behavior_line):
+```bash
+cd simulation
+docker compose --profile robot-services up robot-behavior
+```
+
+Or run in daemon mode:
+```bash
+docker compose --profile robot-services up -d robot-behavior
+```
+
+### Stop Everything
+
+Stop all services:
+```bash
+cd simulation
+docker compose --profile robot-services down
+```
+
 ## Todo list
 
-- Let's add a simple robot sprite - start with a rectangle for now - we can then add the wheel contact points relative to that rectangle. (parameters for width, length, wheelbase, etc, and the castor point too).
