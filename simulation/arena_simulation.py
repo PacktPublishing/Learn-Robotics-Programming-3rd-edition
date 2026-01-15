@@ -38,6 +38,8 @@ class ArenaSimulation:
         self.space = pymunk.Space()
         # No gravity for top-down 2D simulation
         self.space.gravity = (0, 0)
+        # Add damping to simulate friction and air resistance
+        self.space.damping = 0.95  # 0 = no damping, 1 = infinite damping
 
         # Add arena walls to physics space
         self._create_wall_bodies()

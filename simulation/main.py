@@ -108,11 +108,14 @@ def main():
             robot.body.velocity = (0, 0)
             robot.body.angular_velocity = 0
 
+        # Apply motor velocities (before physics step)
+        robot.apply_motor_velocities()
+
         # Step physics simulation
         arena_sim.step(dt)
 
-        # Update robot motors
-        robot.update_motors(dt)
+        # Update encoders based on actual motion (after physics step)
+        robot.update_encoders(dt)
 
         # Draw arena (including status panel)
         arena_sim.draw(screen, robot)

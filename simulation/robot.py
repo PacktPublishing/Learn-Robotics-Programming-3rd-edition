@@ -51,14 +51,24 @@ class RobotWheel:
         """
         return self.current_speed * self.BASE_SPEED_MM_PER_SEC * self.speed_factor
 
-    def update_encoder(self, dt: float):
+    def update_encoder(self, dt: float, actual_velocity: float = None):
         """Update encoder counts based on wheel movement.
 
         Args:
             dt: Time step in seconds
+            actual_velocity: Actual wheel velocity in mm/s (from physics).
+                           If None, uses commanded velocity.
         """
+        # Use actual velocity from physics if provided, otherwise use commanded
+        velocity = actual_velocity if actual_velocity is not None else self.get_velocity()
+
+        # Apply velocity threshold to simulate static friction and mechanical play
+        # Real encoders won't register movement below a minimum threshold
+        VELOCITY_THRESHOLD = 1.0  # mm/s - minimum velocity to register movement
+        if abs(velocity) < VELOCITY_THRESHOLD:
+            velocity = 0.0
+
         # Calculate distance traveled in mm
-        velocity = self.get_velocity()
         distance_mm = velocity * dt
 
         # Convert to radians of wheel rotation
@@ -147,7 +157,7 @@ class Robot:
         ]
         self.shape = pymunk.Poly(self.body, vertices)
         self.shape.friction = 0.7
-        self.shape.elasticity = 0.1
+        self.shape.elasticity = 0.0  # No bounce - robot shouldn't bounce off walls
 
         # Add to space if provided
         if space:
@@ -193,11 +203,10 @@ class Robot:
             self.right_wheel.set_speed(speeds[1])
             self.last_motor_command_time = time.time()
 
-    def update_motors(self, dt: float):
-        """Apply motor forces to the robot body based on wheel speeds.
+    def apply_motor_velocities(self):
+        """Apply commanded motor velocities to the robot body.
 
-        Args:
-            dt: Time step in seconds
+        Call this BEFORE the physics step so that physics can constrain the motion.
         """
         # Check for motor command timeout
         if self.last_motor_command_time > 0:
@@ -207,36 +216,74 @@ class Robot:
                 self.left_wheel.set_speed(0.0)
                 self.right_wheel.set_speed(0.0)
 
-        # Update wheel encoders
-        self.left_wheel.update_encoder(dt)
-        self.right_wheel.update_encoder(dt)
+        # Get commanded wheel velocities in mm/s
+        left_velocity = self.left_wheel.get_velocity()
+        right_velocity = self.right_wheel.get_velocity()
+
+        # Calculate differential drive kinematics from commanded velocities
+        # Linear velocity (forward) is average of both wheels
+        linear_velocity = (left_velocity + right_velocity) / 2.0
+
+        # Angular velocity from difference between wheels
+        # omega = (v_right - v_left) / wheel_separation
+        angular_velocity_target = (right_velocity - left_velocity) / self.WHEEL_SEPARATION
+
+        # Apply damped velocity control to achieve target velocities
+        # This allows pymunk physics to handle collisions and constraints properly
+        angle = self.body.angle
+        target_vx = linear_velocity * math.cos(angle)
+        target_vy = linear_velocity * math.sin(angle)
+
+        # Use exponential damping toward target velocity
+        # This provides smooth motion while allowing physics constraints to work
+        damping = 0.3  # Higher = faster response (0-1)
+        current_vx, current_vy = self.body.velocity
+        new_vx = current_vx + (target_vx - current_vx) * damping
+        new_vy = current_vy + (target_vy - current_vy) * damping
+        new_angular = self.body.angular_velocity + (angular_velocity_target - self.body.angular_velocity) * damping
+
+        self.body.velocity = (new_vx, new_vy)
+        self.body.angular_velocity = new_angular
+
+    def update_encoders(self, dt: float):
+        """Update encoders based on actual robot motion after physics.
+
+        Call this AFTER the physics step to measure actual constrained motion.
+
+        Args:
+            dt: Time step in seconds
+        """
+        # Calculate actual wheel velocities from body motion
+        # Project body velocity onto robot's forward direction
+        body_angle = self.body.angle
+        forward_x = math.cos(body_angle)
+        forward_y = math.sin(body_angle)
+
+        # Get body velocity in world coordinates (mm/s)
+        body_vx, body_vy = self.body.velocity
+
+        # Project onto forward direction to get linear velocity
+        forward_velocity = body_vx * forward_x + body_vy * forward_y
+
+        # Get angular velocity (rad/s)
+        angular_velocity = self.body.angular_velocity
+
+        # Calculate individual wheel velocities from differential drive kinematics
+        # v_left = v_forward - (ω * separation/2)
+        # v_right = v_forward + (ω * separation/2)
+        half_separation = self.WHEEL_SEPARATION / 2
+        actual_left_velocity = forward_velocity - (angular_velocity * half_separation)
+        actual_right_velocity = forward_velocity + (angular_velocity * half_separation)
+
+        # Update wheel encoders with actual velocities
+        self.left_wheel.update_encoder(dt, actual_left_velocity)
+        self.right_wheel.update_encoder(dt, actual_right_velocity)
 
         # Publish encoder data at regular intervals
         current_time = time.time()
         if current_time - self.last_encoder_publish >= self.encoder_publish_interval:
             self._publish_encoder_data()
             self.last_encoder_publish = current_time
-
-        # Get wheel velocities in mm/s
-        left_velocity = self.left_wheel.get_velocity()
-        right_velocity = self.right_wheel.get_velocity()
-
-        # Calculate differential drive kinematics
-        # Linear velocity (forward) is average of both wheels
-        linear_velocity = (left_velocity + right_velocity) / 2.0
-
-        # Angular velocity from difference between wheels
-        # omega = (v_right - v_left) / wheel_separation
-        angular_velocity = (right_velocity - left_velocity) / self.WHEEL_SEPARATION
-
-        # Convert to robot's local frame and apply
-        angle = self.body.angle
-        vx = linear_velocity * math.cos(angle)
-        vy = linear_velocity * math.sin(angle)
-
-        # Set velocities directly (simpler than forces for this use case)
-        self.body.velocity = (vx, vy)
-        self.body.angular_velocity = angular_velocity
 
     def _publish_encoder_data(self):
         """Publish encoder data to MQTT."""

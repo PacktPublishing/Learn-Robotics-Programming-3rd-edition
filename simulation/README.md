@@ -38,12 +38,7 @@ docker run --rm -v $(pwd)/mosquitto.passwd:/mosquitto/config/passwd eclipse-mosq
 Start the broker in daemon mode (runs in background):
 ```bash
 cd simulation
-docker compose up -d mqtt
-```
-
-To view broker logs:
-```bash
-docker compose logs -f mqtt
+docker compose up mqtt
 ```
 
 ### Start the Pygame Simulation
@@ -65,11 +60,6 @@ Start robot behavior services (like behavior_line):
 ```bash
 cd simulation
 docker compose --profile robot-services up --build robot-behavior
-```
-
-Or run in daemon mode:
-```bash
-docker compose --profile robot-services up -d robot-behavior
 ```
 
 ### Stop Everything
