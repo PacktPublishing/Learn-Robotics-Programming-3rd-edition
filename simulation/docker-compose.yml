@@ -27,6 +27,21 @@ services:
     profiles:
       - robot-services
 
+  # Fixed distance avoider behavior (does not start by default)
+  fixed-distance-avoider:
+    build:
+      context: ..
+      dockerfile: simulation/internal.Dockerfile
+    container_name: simulation-fixed-distance-avoider
+    command: python3 robot/fixed_distance_avoider.py
+    depends_on:
+      - mqtt
+    volumes:
+      - ./.env.json:/app/robot_control/.env.json
+    network_mode: "service:mqtt"
+    profiles:
+      - robot-services
+
 networks:
   simulation-network:
     driver: bridge

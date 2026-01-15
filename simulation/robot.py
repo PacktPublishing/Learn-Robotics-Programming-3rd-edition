@@ -7,6 +7,7 @@ import time
 import ujson as json
 
 from common.mqtt_behavior import publish_json
+from simulated_vl53l5cx import SimulatedVL53L5CX
 
 
 class RobotWheel:
@@ -117,11 +118,15 @@ class Robot:
     # Motor timeout
     MOTOR_TIMEOUT = 1.0  # Stop motors after 1 second of no commands
 
+    # Distance sensor mounting (VL53L5CX)
+    DISTANCE_SENSOR_OFFSET_FROM_FRONT = 5  # mm - sensor is 5mm from front edge
+    DISTANCE_SENSOR_HEIGHT = 45  # mm - sensor height above floor
+
     # Display settings
     ROBOT_COLOR = (50, 100, 200)  # Blue
     WHEEL_COLOR = (40, 40, 40)  # Dark gray
 
-    def __init__(self, x: float, y: float, angle: float = 0.0, space: pymunk.Space = None, mqtt_client=None):
+    def __init__(self, x: float, y: float, angle: float, space: pymunk.Space, mqtt_client=None):
         """Initialize the robot with a pymunk rigid body.
 
         Args:
@@ -159,9 +164,20 @@ class Robot:
         self.shape.friction = 0.7
         self.shape.elasticity = 0.0  # No bounce - robot shouldn't bounce off walls
 
-        # Add to space if provided
-        if space:
-            space.add(self.body, self.shape)
+        # Add to space
+        space.add(self.body, self.shape)
+        self.space = space
+
+        # Initialize distance sensor
+        # Sensor is mounted at front center: LENGTH/2 - DISTANCE_SENSOR_OFFSET_FROM_FRONT from center
+        sensor_local_x = self.LENGTH / 2 - self.DISTANCE_SENSOR_OFFSET_FROM_FRONT
+        sensor_local_y = 0.0  # Centered on robot width
+        self.distance_sensor = SimulatedVL53L5CX(
+            floor_distance=self.DISTANCE_SENSOR_HEIGHT,
+            sensor_offset_x=sensor_local_x,
+            sensor_offset_y=sensor_local_y,
+            glitch_rate=0.01
+        )
 
         # Subscribe to motor control messages if MQTT client available
         if self.mqtt_client:
@@ -173,10 +189,28 @@ class Robot:
             self.mqtt_client.message_callback_add(
                 "sensors/encoders/control/reset", self._on_encoder_reset
             )
+            # Distance sensor control
+            self.mqtt_client.subscribe("sensors/distance/control/#")
+            self.mqtt_client.message_callback_add(
+                "sensors/distance/control/start_ranging", self._on_start_ranging
+            )
+            self.mqtt_client.message_callback_add(
+                "sensors/distance/control/stop_ranging", self._on_stop_ranging
+            )
+            self.mqtt_client.subscribe("all/stop")
+            self.mqtt_client.message_callback_add(
+                "all/stop", self._on_stop_ranging
+            )
+            # Publish ready status
+            self.mqtt_client.publish("sensors/distance/status", "ready")
 
         # Encoder update timing
         self.last_encoder_publish = time.time()
         self.encoder_publish_interval = 0.1  # Publish at 10 Hz like real robot
+
+        # Distance sensor update timing
+        self.last_distance_publish = time.time()
+        self.distance_publish_interval = 0.1  # 10 Hz matching sensor frequency
 
     def _on_encoder_reset(self, client, userdata, message):
         """Handle encoder reset MQTT messages.
@@ -188,6 +222,26 @@ class Robot:
         """
         self.left_wheel.reset_encoder()
         self.right_wheel.reset_encoder()
+
+    def _on_start_ranging(self, client, userdata, message):
+        """Handle start ranging MQTT messages.
+
+        Args:
+            client: MQTT client
+            userdata: User data
+            message: MQTT message
+        """
+        self.distance_sensor.start_ranging()
+
+    def _on_stop_ranging(self, client, userdata, message):
+        """Handle stop ranging MQTT messages.
+
+        Args:
+            client: MQTT client
+            userdata: User data
+            message: MQTT message
+        """
+        self.distance_sensor.stop_ranging()
 
     def _on_motor_command(self, client, userdata, message):
         """Handle motor/wheels MQTT messages.
@@ -285,6 +339,38 @@ class Robot:
             self._publish_encoder_data()
             self.last_encoder_publish = current_time
 
+    def update_distance_sensor(self, arena_sim):
+        """Update distance sensor based on robot position and environment.
+
+        Args:
+            arena_sim: Arena simulation object for coordinate conversion
+        """
+        # Update sensor readings
+        self.distance_sensor.update(
+            self.x, self.y, self.angle,
+            self.space, arena_sim
+        )
+
+        # Publish distance data at regular intervals if ranging
+        if self.distance_sensor.is_ranging:
+            current_time = time.time()
+            if current_time - self.last_distance_publish >= self.distance_publish_interval:
+                if self.distance_sensor.data_ready():
+                    self._publish_distance_data()
+                    self.last_distance_publish = current_time
+
+    def _publish_distance_data(self):
+        """Publish distance sensor data to MQTT."""
+        if not self.mqtt_client:
+            return
+
+        distance_data = self.distance_sensor.get_data()
+        publish_json(
+            self.mqtt_client,
+            "sensors/distance_mm",
+            distance_data
+        )
+
     def _publish_encoder_data(self):
         """Publish encoder data to MQTT."""
         if not self.mqtt_client:
@@ -321,7 +407,7 @@ class Robot:
 
     @classmethod
     def random_pose(cls, arena_width: float, arena_height: float,
-                   cutout_left: float, cutout_top: float, space: pymunk.Space = None, mqtt_client=None) -> 'Robot':
+                   cutout_left: float, cutout_top: float, space: pymunk.Space, mqtt_client=None) -> 'Robot':
         """Create a robot at a random valid position in the arena.
 
         Args:

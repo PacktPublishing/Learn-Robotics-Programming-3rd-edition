@@ -117,6 +117,9 @@ def main():
         # Update encoders based on actual motion (after physics step)
         robot.update_encoders(dt)
 
+        # Update distance sensor based on current position
+        robot.update_distance_sensor(arena_sim)
+
         # Draw arena (including status panel)
         arena_sim.draw(screen, robot)
 

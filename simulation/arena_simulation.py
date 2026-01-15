@@ -16,6 +16,7 @@ class ArenaSimulation:
 
     # Display settings
     SCALE = 0.4  # Scale factor for display (mm to pixels)
+    MARGIN = 4  # Margin around arena in pixels
     STATUS_PANEL_WIDTH = 250  # Width of status panel in pixels
     BACKGROUND_COLOR = (240, 240, 240)
     WALL_COLOR = (0, 0, 0)
@@ -30,9 +31,9 @@ class ArenaSimulation:
         self.arena_height = arena.top
         self.walls = arena.walls
 
-        self.arena_display_width = int(self.arena_width * self.SCALE)
+        self.arena_display_width = int(self.arena_width * self.SCALE) + (self.MARGIN * 2)
         self.display_width = self.arena_display_width + self.STATUS_PANEL_WIDTH
-        self.display_height = int(self.arena_height * self.SCALE)
+        self.display_height = int(self.arena_height * self.SCALE) + (self.MARGIN * 2)
 
         # Create pymunk physics space
         self.space = pymunk.Space()
@@ -73,9 +74,9 @@ class ArenaSimulation:
         Returns:
             Tuple of (screen_x, screen_y) in pixels
         """
-        screen_x = int(x * self.SCALE)
+        screen_x = int(x * self.SCALE) + self.MARGIN
         # Flip Y axis (screen Y=0 is at top, world Y=0 is at bottom)
-        screen_y = int(self.display_height - (y * self.SCALE))
+        screen_y = int(self.display_height - (y * self.SCALE)) - self.MARGIN
         return (screen_x, screen_y)
 
     def step(self, dt: float):
@@ -136,6 +137,9 @@ class ArenaSimulation:
         left_data = robot.left_wheel.get_encoder_data()
         right_data = robot.right_wheel.get_encoder_data()
 
+        # Distance sensor status
+        sensor_status = "ACTIVE" if robot.distance_sensor.is_ranging else "INACTIVE"
+
         status_lines = [
             "ENCODER STATUS",
             "",
@@ -152,6 +156,10 @@ class ArenaSimulation:
             f"Motor Speeds:",
             f"  L: {robot.left_wheel.current_speed:.2f}",
             f"  R: {robot.right_wheel.current_speed:.2f}",
+            "",
+            "DISTANCE SENSOR",
+            "",
+            f"Status: {sensor_status}",
         ]
 
         for i, line in enumerate(status_lines):
