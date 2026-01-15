@@ -185,7 +185,6 @@ deploy_service("voice_agent", "robot/voice_agent.py",
                True, common_changed or code.changed,
                user=host.data.get('ssh_user'))
 
->>>>>>> 740ba5b (Password in env files)
 files.directory(
     name="Create robot_control/libs",
     path="robot_control/libs"

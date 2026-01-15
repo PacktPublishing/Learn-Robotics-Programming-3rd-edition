@@ -16,7 +16,8 @@ services:
   robot-behavior:
     build:
       context: ..
-      dockerfile: simulation/internal.Dockerfile
+      dockerfile: simulation/Dockerfile
+      target: internal
     container_name: simulation-robot-behavior
     command: python3 robot/behavior_line.py
     depends_on:
@@ -31,7 +32,8 @@ services:
   fixed-distance-avoider:
     build:
       context: ..
-      dockerfile: simulation/internal.Dockerfile
+      dockerfile: simulation/Dockerfile
+      target: internal
     container_name: simulation-fixed-distance-avoider
     command: python3 robot/fixed_distance_avoider.py
     depends_on:
@@ -41,6 +43,22 @@ services:
     network_mode: "service:mqtt"
     profiles:
       - robot-services
+
+  # Web control interface (does not start by default)
+  web-control:
+    build:
+      context: ..
+      dockerfile: simulation/Dockerfile
+      target: web
+    container_name: simulation-web-control
+    depends_on:
+      - mqtt
+    volumes:
+      - ./.env.json:/app/robot_control/.env.json
+    ports:
+      - "8080:8080"
+    profiles:
+      - web-interface
 
 networks:
   simulation-network:
