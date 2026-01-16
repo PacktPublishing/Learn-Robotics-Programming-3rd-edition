@@ -88,25 +88,6 @@ docker compose --profile robot-services down
 
 ## Todo list
 
-- We don't need the "space" for a robot to be optional, I think we always will have one in the simulation. - done
-- The next sensor I want to add is a distance sensor. - done
-- The robot has an VL53l5cx in the 8x8 array mode. Please check datasheets - done
-- This probably belongs in its own simulated vl53l5cx class and python module, imported and used by the main robot class. - done
-- The sensor is mounted on the front of the robot, in the middle, approximatly 5mm in from the front. This should be constants in the robot class. - done
-- Use the sensor datasheet to determine the field of view, and range. - done
-- Note that there are occasional glitches - the "3000's" for incorrect readings. Have an adjustable rate for setting this so we can test the robot code's handling of glitches. - done
-- 4 rows detecting a floor (A constant for now in the sensor object), the other rows would be detecting what is in front of the robot. - done
-- The top 4 rows can use raycasting to determine the distance to obstacles in front of them. - done
-- I think we may need a bit of threading or multiprocessing here - the simulation is taking a while to launch, and tear down. Mainly to decouple the pygame event/rendering loop from the physics simulation loop. - done
-- We can store the height in a robot constant for now, since the simulation is 2d, however, if this is passed in when initialising the sensor object, we cna use that to calculate (using the field of view) how many floor rows it should register - or what they should look like. It is mounted so the sensor element is about 45 mm above the floor. - done
-- Consult robot/distance_sensor_service.py for the MQTT topics, data format and behavior (start/stop ranging) - done
-- The sensors don't yet seem right - I'm not seeing the right data for the top rows
-  - We want some debug, probably in the status panel. - done
-- When the robot is updated, it should pass in its current position and orientation to the distance sensor object for it to calculate the distances. - done
-- The floor detection - if it's 45 mm above the floor, then based on the field of view and the projection angle from each sensor, we can calculate the distance to the floor for each of the bottom 4 rows - this sounds like pythagoras theorem. We only need to do this once as the simulation starts up since it won't change.- done
-- It might be nice to have 3 or 4 pixels of margin around the rendered map and robot in pygame, so we can see the boundaries better. - done
-- We need a docker compose entry point to run one of the distance sensor demonstration scripts, to show the sensor working in the simulation. - done
-
 - The glitch rate, is this a constant of the simulation or the sensor? It probably makes sense for the sensor to have a glitch rate parameter, so we can test different rates. Light conditions in the real world could affect this.
 
 
