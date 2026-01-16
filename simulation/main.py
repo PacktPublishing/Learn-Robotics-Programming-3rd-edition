@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "robot"))
 
 from arena_simulation import ArenaSimulation
 from robot import Robot
+from status_panel import StatusPanel
 from window_setup import create_display
 from common import arena
 from common.mqtt_behavior import connect as mqtt_connect
@@ -23,7 +24,7 @@ class SimulationState:
         self.lock = threading.Lock()
         self.running = True
         self.dt = 1.0 / 60.0  # Physics time step
-        
+
         # Mouse drag state
         self.dragging = False
         self.drag_offset_x = 0
@@ -34,7 +35,7 @@ class SimulationState:
 
 def physics_loop(state: SimulationState, robot: Robot, arena_sim: ArenaSimulation):
     """Run physics simulation in separate thread at consistent rate.
-    
+
     Args:
         state: Shared simulation state
         robot: Robot instance
@@ -42,14 +43,14 @@ def physics_loop(state: SimulationState, robot: Robot, arena_sim: ArenaSimulatio
     """
     physics_rate = 60  # Hz
     physics_dt = 1.0 / physics_rate
-    
+
     while True:
         start_time = time.time()
-        
+
         with state.lock:
             if not state.running:
                 break
-            
+
             # Handle mouse dragging
             if state.dragging:
                 robot.body.position = (
@@ -58,19 +59,19 @@ def physics_loop(state: SimulationState, robot: Robot, arena_sim: ArenaSimulatio
                 )
                 robot.body.velocity = (0, 0)
                 robot.body.angular_velocity = 0
-            
+
             # Apply motor velocities (before physics step)
             robot.apply_motor_velocities()
-            
+
             # Step physics simulation
             arena_sim.step(physics_dt)
-            
+
             # Update encoders based on actual motion (after physics step)
             robot.update_encoders(physics_dt)
-            
+
             # Update distance sensor based on current position
             robot.update_distance_sensor(arena_sim)
-        
+
         # Sleep to maintain consistent physics rate
         elapsed = time.time() - start_time
         sleep_time = physics_dt - elapsed
@@ -91,19 +92,16 @@ def main():
     # Create arena simulation (includes physics space)
     arena_sim = ArenaSimulation()
 
-    # Create robot at random position with MQTT client and add to physics space
-    robot = Robot.random_pose(
-        arena.right,
-        arena.top,
-        arena.cutout_left,
-        arena.cutout_top,
-        arena_sim.space,
-        mqtt_client
-    )
+    # Create robot at random position with MQTT client
+    robot = arena_sim.random_pose(Robot, mqtt_client)
 
-    # Create display window
+    # Create status panel
+    status_panel = StatusPanel(arena_sim.display_width, arena_sim.display_height)
+
+    # Create display window (arena + status panel)
+    total_width = arena_sim.display_width + StatusPanel.WIDTH
     screen = create_display(
-        arena_sim.display_width,
+        total_width,
         arena_sim.display_height,
         "Robot Arena Simulation"
     )
@@ -163,6 +161,8 @@ def main():
                         # Rotate robot by 10 degrees (pi/18 radians)
                         rotation_increment = math.pi / 18
                         robot.body.angle += event.y * rotation_increment
+                        # Normalize angle to 0-2π range
+                        robot.body.angle = robot.body.angle % (2 * math.pi)
 
         # Update mouse position for physics thread
         if state.dragging:
@@ -174,11 +174,14 @@ def main():
 
         # Render (with lock to ensure consistent state)
         with state.lock:
-            # Draw arena (including status panel)
-            arena_sim.draw(screen, robot)
+            # Draw arena (walls only)
+            arena_sim.draw(screen)
 
             # Draw robot
             robot.draw(screen, arena_sim.world_to_screen)
+
+            # Draw status panel
+            status_panel.draw(screen, robot)
 
         # Update display
         pygame.display.flip()

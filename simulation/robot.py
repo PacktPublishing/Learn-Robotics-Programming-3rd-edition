@@ -405,37 +405,6 @@ class Robot:
         """Get robot angle from body."""
         return self.body.angle
 
-    @classmethod
-    def random_pose(cls, arena_width: float, arena_height: float,
-                   cutout_left: float, cutout_top: float, space: pymunk.Space, mqtt_client=None) -> 'Robot':
-        """Create a robot at a random valid position in the arena.
-
-        Args:
-            arena_width: Width of the arena in mm
-            arena_height: Height of the arena in mm
-            cutout_left: X coordinate of the cutout
-            cutout_top: Y coordinate of the cutout
-            space: Pymunk space to add the robot body to
-            mqtt_client: Optional MQTT client for communication
-
-        Returns:
-            Robot instance at a random valid position
-        """
-        margin = max(cls.WIDTH, cls.LENGTH)
-
-        # Choose a random position, avoiding the cutout area
-        while True:
-            x = random.uniform(margin, arena_width - margin)
-            y = random.uniform(margin, arena_height - margin)
-
-            # Check if position is in the valid arena (not in cutout)
-            if x >= cutout_left and y < cutout_top:
-                continue  # In the cutout area, try again
-            break
-
-        angle = random.uniform(0, 2 * math.pi)
-        return cls(x, y, angle, space, mqtt_client)
-
     def draw(self, screen: pygame.Surface, world_to_screen_fn):
         """Draw the robot on the screen using body state.
 
