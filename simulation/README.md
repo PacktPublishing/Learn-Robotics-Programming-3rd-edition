@@ -56,17 +56,34 @@ Controls:
 
 ### Start Robot Services
 
-Start robot behavior services (like behavior_line):
+Start the robot services container which runs supervisord with:
+- launcher_service: Allows MQTT control of behaviors
+- wheel_control_service: PID speed controller (same as real robot)
+- config_store: Configuration storage service
+
+Note: Hardware services (inventor_hat, distance_sensor) are replaced by the pygame simulation.
+
 ```bash
 cd simulation
-docker compose --profile robot-services up --build robot-behavior
+docker compose --profile robot-services up --build robot-services
 ```
 
-Or run the fixed distance avoider demonstration:
+Now you can use the launcher service via MQTT to start/stop behaviors:
 ```bash
-cd simulation
-docker compose --profile robot-services up --build fixed-distance-avoider
+# Start the fixed distance avoider
+mosquitto_pub -h localhost -t launcher/start -m "fixed_distance_avoider"
+
+# Stop it
+mosquitto_pub -h localhost -t launcher/stop -m "fixed_distance_avoider"
 ```
+
+Available behaviors:
+- `behavior_line`
+- `behavior_path`
+- `fixed_distance_avoider`
+- `smooth_distance_avoider`
+- `drive_known_distance`
+- `circle_head_behavior`
 
 ### Start Web Control Interface
 

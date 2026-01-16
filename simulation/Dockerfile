@@ -14,15 +14,25 @@ COPY robot/ /app/robot/
 # ===== Internal target: Robot services =====
 FROM base AS internal
 
+# Install supervisor for process management
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends supervisor && \
+    rm -rf /var/lib/apt/lists/* && \
+    mkdir -p /var/log/supervisor
+
 # Install dependencies from the internal group
 # This includes paho-mqtt, ujson, and numpy for robot services
 RUN cd /app && uv pip install --system ".[internal]"
 
+# Copy supervisord configuration and simulation-specific launcher service
+COPY simulation/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY simulation/launcher_service_supervisor.py /app/robot/launcher_service.py
+
 # Set PYTHONPATH so robot modules can be imported
 ENV PYTHONPATH=/app/robot
 
-# Default command (can be overridden to run specific robot services)
-CMD ["python3"]
+# Default command runs supervisord
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
 
 # ===== Web target: Web control interface =====
 FROM base AS web

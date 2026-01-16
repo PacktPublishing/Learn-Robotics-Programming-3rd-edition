@@ -12,30 +12,13 @@ services:
     networks:
       - simulation-network
 
-  # Robot behavior service (does not start by default)
-  robot-behavior:
+  # Robot services container - runs launcher and simulation services via supervisord
+  robot-services:
     build:
       context: ..
       dockerfile: simulation/Dockerfile
       target: internal
-    container_name: simulation-robot-behavior
-    command: python3 robot/behavior_line.py
-    depends_on:
-      - mqtt
-    volumes:
-      - ./.env.json:/app/robot_control/.env.json
-    network_mode: "service:mqtt"
-    profiles:
-      - robot-services
-
-  # Fixed distance avoider behavior (does not start by default)
-  fixed-distance-avoider:
-    build:
-      context: ..
-      dockerfile: simulation/Dockerfile
-      target: internal
-    container_name: simulation-fixed-distance-avoider
-    command: python3 robot/fixed_distance_avoider.py
+    container_name: simulation-robot-services
     depends_on:
       - mqtt
     volumes:
