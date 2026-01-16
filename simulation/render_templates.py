@@ -11,17 +11,9 @@ def render_templates():
 
     # Load environment config
     env_json_path = robot_control_dir / ".env.json"
-    if env_json_path.exists():
-        with open(env_json_path) as f:
-            env_config = json.load(f)
-    else:
-        # Default configuration for simulation
-        # Browser needs localhost (not mqtt) since WebSocket connects from host
-        env_config = {
-            "PI_HOSTNAME": "localhost",
-            "MQTT_USERNAME": "robot",
-            "MQTT_PASSWORD": "robot"
-        }
+    with open(env_json_path) as f:
+        env_config = json.load(f)
+
 
     # Create Jinja2 environment with /app as root so "robot_control/page.html.j2" resolves
     env = Environment(
