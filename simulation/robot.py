@@ -151,14 +151,32 @@ class Robot:
         self.body.position = (x, y)
         self.body.angle = angle
 
-        # Create shape for the robot body
+        # Create shape for the robot body including wheel protrusions
+        # Wheels extend WHEEL_THICKNESS/2 beyond the body on each side
         half_length = self.LENGTH / 2
         half_width = self.WIDTH / 2
+        wheel_protrusion = self.WHEEL_THICKNESS / 2
+        wheel_front = half_length - self.WHEEL_POSITION_FROM_FRONT
+        wheel_back = wheel_front - self.WHEEL_DIAMETER
+
+        # Create polygon that includes wheel volumes
         vertices = [
+            # Front of robot
             (-half_length, -half_width),
-            (half_length, -half_width),
+            (-half_length, half_width),
+            # Front left wheel starts
+            (wheel_front, half_width),
+            (wheel_front, half_width + wheel_protrusion),
+            (wheel_back, half_width + wheel_protrusion),
+            (wheel_back, half_width),
+            # Back left to back right
             (half_length, half_width),
-            (-half_length, half_width)
+            (half_length, -half_width),
+            # Back right wheel starts
+            (wheel_back, -half_width),
+            (wheel_back, -half_width - wheel_protrusion),
+            (wheel_front, -half_width - wheel_protrusion),
+            (wheel_front, -half_width),
         ]
         self.shape = pymunk.Poly(self.body, vertices)
         self.shape.friction = 0.7
