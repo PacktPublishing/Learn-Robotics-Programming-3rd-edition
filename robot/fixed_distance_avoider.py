@@ -1,4 +1,5 @@
 import time
+import random
 import numpy as np
 import ujson as json
 
@@ -29,9 +30,11 @@ class FixedDistanceAvoiderBehavior:
         left_motor_speed = self.speed
         right_motor_speed = self.speed
         if left_distance < self.threshold:
-            right_motor_speed = -self.speed
+            # Turn right with slight randomness to avoid oscillation
+            right_motor_speed = -self.speed * random.uniform(0, 0.3)
         elif right_distance < self.threshold:
-            left_motor_speed = -self.speed
+            # Turn left with slight randomness to avoid oscillation
+            left_motor_speed = -self.speed * random.uniform(0, 0.3)
 
         # Act
         publish_json(client, "motors/wheels", [left_motor_speed, right_motor_speed])
