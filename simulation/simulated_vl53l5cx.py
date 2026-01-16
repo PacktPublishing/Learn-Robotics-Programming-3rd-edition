@@ -23,17 +23,17 @@ class SimulatedVL53L5CX:
     GLITCH_VALUE = 3000  # mm - value for invalid readings
     DEFAULT_GLITCH_RATE = 0.01  # 1% of readings are glitches
 
-    def __init__(self, floor_distance: float, sensor_offset_x: float, sensor_offset_y: float,
+    def __init__(self, sensor_height: float, sensor_offset_x: float, sensor_offset_y: float,
                  glitch_rate: float = DEFAULT_GLITCH_RATE):
         """Initialize the simulated distance sensor.
 
         Args:
-            floor_distance: Distance to floor in mm (sensor height above floor)
+            sensor_height: Height of sensor above floor in mm
             sensor_offset_x: X offset from robot center in mm (local coordinates)
             sensor_offset_y: Y offset from robot center in mm (local coordinates)
             glitch_rate: Probability (0.0-1.0) of generating glitch readings
         """
-        self.floor_distance = floor_distance
+        self.sensor_height = sensor_height
         self.sensor_offset_x = sensor_offset_x
         self.sensor_offset_y = sensor_offset_y
         self.glitch_rate = glitch_rate
@@ -44,6 +44,10 @@ class SimulatedVL53L5CX:
         # Calculate angular spacing between zones
         # 8 zones span the full FOV
         self.zone_angular_width = self.FIELD_OF_VIEW / self.RESOLUTION
+
+        # Calculate floor distances for each row using trigonometry
+        # Bottom 4 rows can see the floor at different angles
+        self.floor_distances = self._calculate_floor_distances()
 
     def start_ranging(self):
         """Start ranging mode."""
@@ -61,6 +65,43 @@ class SimulatedVL53L5CX:
             True if data is ready to be read
         """
         return self.data_ready_flag
+
+    def _calculate_floor_distances(self) -> list[float]:
+        """Calculate floor distances for each row based on sensor geometry.
+
+        Uses trigonometry to calculate what distance the sensor should measure
+        to the floor based on sensor height and the vertical angle each row observes.
+
+        Returns:
+            List of 8 floor distances (one per row) in mm
+        """
+        floor_distances = []
+
+        # Each row looks at a different vertical angle within the FOV
+        # Row 0 (bottom) looks at -FOV/2 + half_row_angle
+        # Row 7 (top) looks at +FOV/2 - half_row_angle
+        half_fov = self.FIELD_OF_VIEW / 2.0
+        half_row = self.zone_angular_width / 2.0
+
+        for row in range(self.RESOLUTION):
+            # Calculate vertical angle for this row (negative = looking down)
+            # Row 0 is at bottom: -half_fov + half_row
+            # Row 7 is at top: +half_fov - half_row
+            row_angle = -half_fov + (row + 0.5) * self.zone_angular_width
+
+            # Only bottom rows can see the floor (negative angles)
+            if row_angle < 0:
+                # Distance = height / sin(angle_magnitude)
+                # Using Pythagoras: if sensor is h above floor looking down at angle θ,
+                # the measured distance along the ray is h / sin(|θ|)
+                angle_rad = math.radians(abs(row_angle))
+                floor_dist = self.sensor_height / math.sin(angle_rad)
+                floor_distances.append(min(floor_dist, self.MAX_RANGE))
+            else:
+                # Upper rows can't see floor
+                floor_distances.append(self.MAX_RANGE)
+
+        return floor_distances
 
     def update(self, robot_x: float, robot_y: float, robot_angle: float,
                space: pymunk.Space, arena_sim, robot_shape: pymunk.Shape,
@@ -107,13 +148,9 @@ class SimulatedVL53L5CX:
                 # Get obstacle distance for this column
                 obstacle_distance = column_distances[col]
 
-                # Bottom 4 rows (0-3) detect floor unless obstacle is closer
-                if row < 4:
-                    # Use floor distance, but if obstacle is closer, use that instead
-                    distance = min(obstacle_distance, self.floor_distance)
-                else:
-                    # Top 4 rows (4-7) detect obstacles only
-                    distance = obstacle_distance
+                # Use floor distance for this row if closer than obstacle
+                floor_distance = self.floor_distances[row]
+                distance = min(obstacle_distance, floor_distance)
 
                 # Apply glitches randomly
                 if random.random() < self.glitch_rate:
@@ -162,36 +199,36 @@ class SimulatedVL53L5CX:
             0,  # radius
             pymunk.ShapeFilter()  # detect all shapes
         )
-        
+
         if debug:
             print(f"    Found {len(queries)} hit(s)")
-        
+
         # Filter out hits to the robot's own shape and find closest valid hit
         min_distance = self.MAX_RANGE
         closest_hit = None
-        
+
         for query in queries:
             if query.shape == robot_shape:
                 if debug:
                     print(f"    Ignoring hit on robot body at ({query.point.x:.1f}, {query.point.y:.1f})")
                 continue
-            
+
             # Calculate distance to this hit point
             hit_point = query.point
             distance = math.sqrt(
                 (hit_point.x - sensor_x) ** 2 +
                 (hit_point.y - sensor_y) ** 2
             )
-            
+
             if distance < min_distance:
                 min_distance = distance
                 closest_hit = query
-        
+
         if closest_hit is not None:
             if debug:
                 print(f"    Closest valid hit at ({closest_hit.point.x:.1f}, {closest_hit.point.y:.1f}), distance={min_distance:.1f}mm")
             return min(min_distance, self.MAX_RANGE)
-        
+
         if debug:
             print(f"    No valid hits detected")
         return self.MAX_RANGE

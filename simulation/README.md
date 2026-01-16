@@ -101,21 +101,14 @@ docker compose --profile robot-services down
 - We can store the height in a robot constant for now, since the simulation is 2d, however, if this is passed in when initialising the sensor object, we cna use that to calculate (using the field of view) how many floor rows it should register - or what they should look like. It is mounted so the sensor element is about 45 mm above the floor. - done
 - Consult robot/distance_sensor_service.py for the MQTT topics, data format and behavior (start/stop ranging) - done
 - The sensors don't yet seem right - I'm not seeing the right data for the top rows
-  - We want some debug, probably in the status panel.
+  - We want some debug, probably in the status panel. - done
+- When the robot is updated, it should pass in its current position and orientation to the distance sensor object for it to calculate the distances. - done
+- The floor detection - if it's 45 mm above the floor, then based on the field of view and the projection angle from each sensor, we can calculate the distance to the floor for each of the bottom 4 rows - this sounds like pythagoras theorem. We only need to do this once as the simulation starts up since it won't change.- done
+- It might be nice to have 3 or 4 pixels of margin around the rendered map and robot in pygame, so we can see the boundaries better. - done
+- We need a docker compose entry point to run one of the distance sensor demonstration scripts, to show the sensor working in the simulation. - done
 
-
-
-Since we are in 2d, the simulation can provide the following data:
-- When the robot is updated, it should pass in its current position and orientation to the distance sensor object for it to calculate the distances.
-- The floor detection - if it's 45 mm above the floor, then based on the field of view, therefor the projection angle from each sensor, we can calculate the distance to the floor for each of the bottom 4 rows - this sounds like pythagoras theorem.
 - The glitch rate, is this a constant of the simulation or the sensor? It probably makes sense for the sensor to have a glitch rate parameter, so we can test different rates. Light conditions in the real world could affect this.
-- It might be nice to have 3 or 4 pixels of margin around the rendered map and robot in pygame, so we can see the boundaries better.
-- We need a docker compose entry point to run one of the distance sensor demonstration scripts, to show the sensor working in the simulation.
 
-## Debug
-
-So I used the page distance plotter, and it looks like we are getting the four lower rows, but I was expecting the upper rows to show something. Perhaps we can start the simulation, run an mqtt sub in a terminal, and see what values we are getting? I can move the robot to a few positions so we can see the result.
-It might be good to have the robot position displayed in the status too.
 
 ## Styleing todo
 

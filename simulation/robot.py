@@ -173,7 +173,7 @@ class Robot:
         sensor_local_x = self.LENGTH / 2 - self.DISTANCE_SENSOR_OFFSET_FROM_FRONT
         sensor_local_y = 0.0  # Centered on robot width
         self.distance_sensor = SimulatedVL53L5CX(
-            floor_distance=self.DISTANCE_SENSOR_HEIGHT,
+            sensor_height=self.DISTANCE_SENSOR_HEIGHT,
             sensor_offset_x=sensor_local_x,
             sensor_offset_y=sensor_local_y,
             glitch_rate=0.01
