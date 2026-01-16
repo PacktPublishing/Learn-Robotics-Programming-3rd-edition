@@ -207,7 +207,7 @@ files.download(
 files.download(
     name="Download chartjs datalabels plugin",
     src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2",
-    dest="robot_control/libs/chartjs-plugin-datalabels"
+    dest="robot_control/libs/chartjs-plugin-datalabels.js"
 ) # https://v2_2_0--chartjs-plugin-datalabels.netlify.app/guide/
 
 # Loop over all the files in the robot_control directory
