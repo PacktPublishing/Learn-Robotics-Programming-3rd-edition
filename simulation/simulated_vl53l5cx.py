@@ -81,12 +81,11 @@ class SimulatedVL53L5CX:
         # Row 0 (bottom) looks at -FOV/2 + half_row_angle
         # Row 7 (top) looks at +FOV/2 - half_row_angle
         half_fov = self.FIELD_OF_VIEW / 2.0
-        half_row = self.zone_angular_width / 2.0
 
         for row in range(self.RESOLUTION):
             # Calculate vertical angle for this row (negative = looking down)
-            # Row 0 is at bottom: -half_fov + half_row
-            # Row 7 is at top: +half_fov - half_row
+            # Row 0 is at bottom: -half_fov + (row + 0.5) * zone_angular_width
+            # Row 7 is at top: +half_fov - (7 - row + 0.5) * zone_angular_width
             row_angle = -half_fov + (row + 0.5) * self.zone_angular_width
 
             # Only bottom rows can see the floor (negative angles)
@@ -230,7 +229,7 @@ class SimulatedVL53L5CX:
             return min(min_distance, self.MAX_RANGE)
 
         if debug:
-            print(f"    No valid hits detected")
+            print("    No valid hits detected")
         return self.MAX_RANGE
 
     def get_data(self):

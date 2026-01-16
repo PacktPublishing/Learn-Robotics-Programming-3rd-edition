@@ -1,5 +1,4 @@
 """Robot arena simulation main entry point."""
-import logging
 import pygame
 import sys
 import math
@@ -14,7 +13,6 @@ from arena_simulation import ArenaSimulation
 from robot import Robot
 from status_panel import StatusPanel
 from window_setup import create_display
-from common import arena
 from common.mqtt_behavior import connect as mqtt_connect
 
 

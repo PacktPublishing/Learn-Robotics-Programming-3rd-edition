@@ -151,7 +151,7 @@ class StatusPanel:
         angle_rad = robot.body.angle
         angle_deg = angle_rad * 180 / math.pi
 
-        print(f"\nROBOT POSITION:")
+        print("\nROBOT POSITION:")
         print(f"  X: {pos_x:.1f} mm")
         print(f"  Y: {pos_y:.1f} mm")
         print(f"  Angle: {angle_deg:.1f}° ({angle_rad:.3f} rad)")
@@ -160,7 +160,7 @@ class StatusPanel:
         left_data = robot.left_wheel.get_encoder_data()
         right_data = robot.right_wheel.get_encoder_data()
 
-        print(f"\nENCODER STATUS:")
+        print("\nENCODER STATUS:")
         print(f"  {'':12s} {'Left':>10s} {'Right':>10s}")
         print(f"  {'Speed':12s} {robot.left_wheel.current_speed:>10.1f} {robot.right_wheel.current_speed:>10.1f}")
         print(f"  {'Count':12s} {robot.left_wheel.encoder_count:>10.0f} {robot.right_wheel.encoder_count:>10.0f}")
@@ -168,12 +168,12 @@ class StatusPanel:
 
         # Distance sensor
         sensor_status = "ACTIVE" if robot.distance_sensor.is_ranging else "INACTIVE"
-        print(f"\nDISTANCE SENSOR:")
+        print("\nDISTANCE SENSOR:")
         print(f"  Status: {sensor_status}")
         print(f"  Sensor position: ({robot.distance_sensor.sensor_offset_x:.1f}, {robot.distance_sensor.sensor_offset_y:.1f}) mm from robot center")
 
         if robot.distance_sensor.is_ranging:
-            print(f"  Debug raycast (middle column):")
+            print("  Debug raycast (middle column):")
             # Calculate sensor world position
             cos_angle = math.cos(angle_rad)
             sin_angle = math.sin(angle_rad)
@@ -184,12 +184,12 @@ class StatusPanel:
             print(f"    Sensor world pos: ({sensor_x:.1f}, {sensor_y:.1f})")
 
             # Show arena boundaries
-            print(f"    Arena boundaries: x=[0, 1500], y=[0, 1500]")
+            print("    Arena boundaries: x=[0, 1500], y=[0, 1500]")
             print(f"    Distance to walls: left={sensor_x:.1f}mm, right={1500-sensor_x:.1f}mm, bottom={sensor_y:.1f}mm, top={1500-sensor_y:.1f}mm")
             print(f"    Shapes in space: {len(robot.space.shapes)}")
 
             # Trigger one debug update to see raycast details
-            print(f"    Calling sensor update with debug=True...")
+            print("    Calling sensor update with debug=True...")
             robot.distance_sensor.update(
                 pos_x, pos_y, angle_rad,
                 robot.space, arena_sim, robot.shape,
@@ -199,7 +199,7 @@ class StatusPanel:
             # Get sensor data and display all 8 rows
             sensor_data = robot.distance_sensor.get_data()
 
-            print(f"\n  All Rows (8x8 array):")
+            print("\n  All Rows (8x8 array):")
             print(f"  {'Row':>4s}  Zone:  ", end="")
             for i in range(8):
                 print(f"{i:>6d}", end="")
