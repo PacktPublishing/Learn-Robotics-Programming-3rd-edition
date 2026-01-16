@@ -1,5 +1,6 @@
 """Robot sprite for the simulation."""
 import pygame
+import pygame.gfxdraw
 import pymunk
 import random
 import math
@@ -463,8 +464,9 @@ class Robot:
         # Convert to screen coordinates
         screen_corners = [world_to_screen_fn(wx, wy) for wx, wy in world_corners]
 
-        # Draw the robot
-        pygame.draw.polygon(screen, self.ROBOT_COLOR, screen_corners)
+        # Draw the robot with anti-aliasing
+        pygame.gfxdraw.filled_polygon(screen, screen_corners, self.ROBOT_COLOR)
+        pygame.gfxdraw.aapolygon(screen, screen_corners, self.ROBOT_COLOR)
 
         # Draw wheels
         self._draw_wheels(screen, world_to_screen_fn, x, y, cos_a, sin_a)
@@ -476,7 +478,7 @@ class Robot:
         center_screen = world_to_screen_fn(x, y)
         front_screen = world_to_screen_fn(front_x, front_y)
 
-        pygame.draw.line(screen, (255, 0, 0), center_screen, front_screen, 2)
+        pygame.draw.aaline(screen, (255, 0, 0), center_screen, front_screen, 1)
 
     def _draw_wheels(self, screen: pygame.Surface, world_to_screen_fn, x: float, y: float, cos_a: float, sin_a: float):
         """Draw the left and right wheels.
@@ -520,5 +522,6 @@ class Robot:
             # Convert to screen coordinates
             screen_wheel_corners = [world_to_screen_fn(wx, wy) for wx, wy in world_wheel_corners]
 
-            # Draw the wheel
-            pygame.draw.polygon(screen, self.WHEEL_COLOR, screen_wheel_corners)
+            # Draw the wheel with anti-aliasing
+            pygame.gfxdraw.filled_polygon(screen, screen_wheel_corners, self.WHEEL_COLOR)
+            pygame.gfxdraw.aapolygon(screen, screen_wheel_corners, self.WHEEL_COLOR)
