@@ -153,10 +153,11 @@ class Robot:
         self.body.angle = angle
 
         # Create shape for the robot body including wheel protrusions
-        # Wheels extend WHEEL_THICKNESS/2 beyond the body on each side
+        # Wheels extend WHEEL_THICKNESS beyond the body on each side
+        # (wheel center is at WIDTH/2 + WHEEL_THICKNESS/2, plus WHEEL_THICKNESS/2 for wheel radius)
         half_length = self.LENGTH / 2
         half_width = self.WIDTH / 2
-        wheel_protrusion = self.WHEEL_THICKNESS / 2
+        wheel_protrusion = self.WHEEL_THICKNESS  # Full wheel thickness
         wheel_front = half_length - self.WHEEL_POSITION_FROM_FRONT
         wheel_back = wheel_front - self.WHEEL_DIAMETER
 
@@ -479,6 +480,15 @@ class Robot:
         front_screen = world_to_screen_fn(front_x, front_y)
 
         pygame.draw.aaline(screen, (255, 0, 0), center_screen, front_screen, 1)
+
+        # Debug: Draw collision shape outline in green
+        if pygame.key.get_pressed()[pygame.K_d]:
+            collision_vertices = []
+            for vertex in self.shape.get_vertices():
+                world_vertex = self.body.local_to_world(vertex)
+                collision_vertices.append(world_to_screen_fn(world_vertex.x, world_vertex.y))
+            if len(collision_vertices) > 2:
+                pygame.draw.aalines(screen, (0, 255, 0), True, collision_vertices, 1)
 
     def _draw_wheels(self, screen: pygame.Surface, world_to_screen_fn, x: float, y: float, cos_a: float, sin_a: float):
         """Draw the left and right wheels.
