@@ -131,6 +131,10 @@ def main():
                 if event.key == pygame.K_ESCAPE or event.key == pygame.K_q:
                     with state.lock:
                         state.running = False
+                elif event.key == pygame.K_l:
+                    # Log status snapshot to terminal
+                    with state.lock:
+                        status_panel.log_status_snapshot(robot, arena_sim)
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  # Left click

@@ -63,7 +63,8 @@ class SimulatedVL53L5CX:
         return self.data_ready_flag
 
     def update(self, robot_x: float, robot_y: float, robot_angle: float,
-               space: pymunk.Space, arena_sim):
+               space: pymunk.Space, arena_sim, robot_shape: pymunk.Shape,
+               debug: bool = False):
         """Update sensor readings based on robot position and environment.
 
         Args:
@@ -72,6 +73,8 @@ class SimulatedVL53L5CX:
             robot_angle: Robot orientation in radians
             space: Pymunk space containing obstacles
             arena_sim: Arena simulation object for coordinate conversion
+            robot_shape: Robot's pymunk shape to exclude from raycasts
+            debug: If True, print debug information for middle column
         """
         if not self.is_ranging:
             return
@@ -92,7 +95,7 @@ class SimulatedVL53L5CX:
         for col in range(self.RESOLUTION):
             obstacle_distance = self._raycast_zone(
                 sensor_x, sensor_y, robot_angle,
-                col, space
+                col, space, robot_shape, debug=(debug and col == 4)  # Debug middle column only if debug=True
             )
             column_distances.append(obstacle_distance)
 
@@ -122,7 +125,7 @@ class SimulatedVL53L5CX:
 
     def _raycast_zone(self, sensor_x: float, sensor_y: float,
                       robot_angle: float, col: int,
-                      space: pymunk.Space) -> float:
+                      space: pymunk.Space, robot_shape: pymunk.Shape, debug: bool = False) -> float:
         """Perform raycast for a specific column to detect obstacles.
 
         Args:
@@ -131,6 +134,8 @@ class SimulatedVL53L5CX:
             robot_angle: Robot orientation in radians
             col: Zone column (0-7)
             space: Pymunk space containing obstacles
+            robot_shape: Robot's shape to exclude from raycast
+            debug: If True, print debug information
 
         Returns:
             Distance to obstacle in mm, or MAX_RANGE if nothing detected
@@ -148,22 +153,47 @@ class SimulatedVL53L5CX:
         )
         ray_end = ray_start + ray_direction * self.MAX_RANGE
 
-        # Perform raycast
-        query = space.segment_query_first(
+        if debug:
+            print(f"    Raycast col {col}: start=({sensor_x:.1f}, {sensor_y:.1f}), angle={math.degrees(ray_angle):.1f}°, end=({ray_end.x:.1f}, {ray_end.y:.1f})")
+
+        # Perform raycast to get ALL hits
+        queries = space.segment_query(
             ray_start, ray_end,
             0,  # radius
             pymunk.ShapeFilter()  # detect all shapes
         )
-
-        if query is not None:
-            # Calculate distance to hit point
+        
+        if debug:
+            print(f"    Found {len(queries)} hit(s)")
+        
+        # Filter out hits to the robot's own shape and find closest valid hit
+        min_distance = self.MAX_RANGE
+        closest_hit = None
+        
+        for query in queries:
+            if query.shape == robot_shape:
+                if debug:
+                    print(f"    Ignoring hit on robot body at ({query.point.x:.1f}, {query.point.y:.1f})")
+                continue
+            
+            # Calculate distance to this hit point
             hit_point = query.point
             distance = math.sqrt(
                 (hit_point.x - sensor_x) ** 2 +
                 (hit_point.y - sensor_y) ** 2
             )
-            return min(distance, self.MAX_RANGE)
-
+            
+            if distance < min_distance:
+                min_distance = distance
+                closest_hit = query
+        
+        if closest_hit is not None:
+            if debug:
+                print(f"    Closest valid hit at ({closest_hit.point.x:.1f}, {closest_hit.point.y:.1f}), distance={min_distance:.1f}mm")
+            return min(min_distance, self.MAX_RANGE)
+        
+        if debug:
+            print(f"    No valid hits detected")
         return self.MAX_RANGE
 
     def get_data(self):

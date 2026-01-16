@@ -348,7 +348,8 @@ class Robot:
         # Update sensor readings
         self.distance_sensor.update(
             self.x, self.y, self.angle,
-            self.space, arena_sim
+            self.space, arena_sim, self.shape,
+            debug=False  # Only debug when explicitly requested
         )
 
         # Publish distance data at regular intervals if ranging
