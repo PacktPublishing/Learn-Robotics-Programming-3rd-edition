@@ -191,12 +191,19 @@ def main():
         # Control rendering frame rate (can be different from physics rate)
         clock.tick(60)
 
+    # Clean up MQTT first (non-blocking)
+    try:
+        mqtt_client.loop_stop()
+        mqtt_client.disconnect()
+    except Exception as e:
+        print(f"MQTT cleanup error: {e}")
+
     # Wait for physics thread to finish
     physics_thread.join(timeout=2.0)
+    if physics_thread.is_alive():
+        print("Warning: Physics thread did not terminate cleanly")
 
-    # Clean up
-    mqtt_client.loop_stop()
-    mqtt_client.disconnect()
+    # Clean up pygame
     pygame.quit()
     sys.exit(0)
 
