@@ -105,12 +105,12 @@ class Robot:
     """Represents the robot in the simulation."""
 
     # Robot dimensions (in mm) - approximate size of the robot
-    WIDTH = 125
+    WIDTH = 125  # Chassis width
     LENGTH = 200
     WHEEL_DIAMETER = 67
     WHEEL_POSITION_FROM_FRONT = 100
     WHEEL_THICKNESS = 25
-    WHEEL_SEPARATION = WIDTH  # Distance between left and right wheels
+    WHEEL_SEPARATION = 157  # Center-to-center distance between wheels (measured on real robot)
 
     # Physics properties
     MASS = 1.0  # kg
