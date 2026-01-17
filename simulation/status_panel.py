@@ -64,7 +64,7 @@ class StatusPanel:
         section_start_y = y_pos
         # Draw header background with chamfered corners
         header_height = line_height + 5
-        self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5, 
+        self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5,
                                    self.WIDTH - 20, header_height, fill_color=(0, 80, 60))
         title_surface = self.font.render("ROBOT POSITION", True, self.TITLE_COLOR)
         screen.blit(title_surface, (x_pos + self.BOX_PADDING, y_pos))
@@ -79,9 +79,9 @@ class StatusPanel:
             text_surface = self.font.render(line, True, self.TEXT_COLOR)
             screen.blit(text_surface, (x_pos + self.BOX_PADDING, y_pos))
             y_pos += line_height
-        
+
         # Draw chamfered border around Robot Position section
-        self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5, 
+        self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5,
                                    self.WIDTH - 20, y_pos - section_start_y + 5)
 
         y_pos += line_height // 2  # Small gap
@@ -90,7 +90,7 @@ class StatusPanel:
         section_start_y = y_pos
         # Draw header background with chamfered corners
         header_height = line_height + 5
-        self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5, 
+        self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5,
                                    self.WIDTH - 20, header_height, fill_color=(0, 80, 60))
         title_surface = self.font.render("ENCODER STATUS", True, self.TITLE_COLOR)
         screen.blit(title_surface, (x_pos + self.BOX_PADDING, y_pos))
@@ -132,7 +132,7 @@ class StatusPanel:
             screen.blit(right_text, (col2_x, y_pos))
 
             y_pos += line_height
-        
+
         # Draw chamfered border around Encoder Status section
         self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5,
                                    self.WIDTH - 20, y_pos - section_start_y + 5)
@@ -143,7 +143,7 @@ class StatusPanel:
         section_start_y = y_pos
         # Draw header background with chamfered corners
         header_height = line_height + 5
-        self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5, 
+        self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5,
                                    self.WIDTH - 20, header_height, fill_color=(0, 80, 60))
         title_surface = self.font.render("DISTANCE SENSOR", True, self.TITLE_COLOR)
         screen.blit(title_surface, (x_pos + self.BOX_PADDING, y_pos))
@@ -152,14 +152,14 @@ class StatusPanel:
         status_text = self.font.render(f"Status: {sensor_status}", True, self.TEXT_COLOR)
         screen.blit(status_text, (x_pos + self.BOX_PADDING, y_pos))
         y_pos += line_height
-        
+
         # Draw chamfered border around Distance Sensor section
         self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5,
                                    self.WIDTH - 20, y_pos - section_start_y + 5)
 
     def _draw_chamfered_rect(self, screen, x, y, width, height, chamfer=8, fill_color=None):
         """Draw a rectangle with chamfered (cut) corners.
-        
+
         Args:
             screen: Pygame surface to draw on
             x: Top-left X coordinate
@@ -170,7 +170,7 @@ class StatusPanel:
             fill_color: Optional RGB tuple for fill color
         """
         border_color = (0, 80, 60)  # Faint greenish
-        
+
         # Draw filled polygon if fill_color is provided
         if fill_color:
             points = [
@@ -184,10 +184,10 @@ class StatusPanel:
                 (x, y + chamfer),
             ]
             pygame.draw.polygon(screen, fill_color, points)
-        
+
         # Draw the four sides as lines, avoiding corners
         # Top
-        pygame.draw.line(screen, border_color, 
+        pygame.draw.line(screen, border_color,
                         (x + chamfer, y), (x + width - chamfer, y), 1)
         # Right
         pygame.draw.line(screen, border_color,
@@ -198,7 +198,7 @@ class StatusPanel:
         # Left
         pygame.draw.line(screen, border_color,
                         (x, y + height - chamfer), (x, y + chamfer), 1)
-        
+
         # Draw chamfered corners
         # Top-left
         pygame.draw.line(screen, border_color, (x, y + chamfer), (x + chamfer, y), 1)

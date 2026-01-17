@@ -19,6 +19,7 @@ class ArenaSimulation:
     # Display settings
     SCALE = 0.4  # Scale factor for display (mm to pixels)
     MARGIN = 4  # Margin around arena in pixels
+    ARENA_PADDING = 8  # Padding inside the arena border (pixels)
     BACKGROUND_COLOR = (240, 240, 240)
     WALL_COLOR = (0, 0, 0)
     WALL_THICKNESS = 3
@@ -30,8 +31,8 @@ class ArenaSimulation:
         self.arena_height = arena.top
         self.walls = arena.walls
 
-        self.display_width = int(self.arena_width * self.SCALE) + (self.MARGIN * 2)
-        self.display_height = int(self.arena_height * self.SCALE) + (self.MARGIN * 2)
+        self.display_width = int(self.arena_width * self.SCALE) + (self.MARGIN * 2) + (self.ARENA_PADDING * 2)
+        self.display_height = int(self.arena_height * self.SCALE) + (self.MARGIN * 2) + (self.ARENA_PADDING * 2)
 
         # Create pymunk physics space
         self.space = pymunk.Space()
@@ -98,9 +99,9 @@ class ArenaSimulation:
         Returns:
             Tuple of (screen_x, screen_y) in pixels
         """
-        screen_x = int(x * self.SCALE) + self.MARGIN
+        screen_x = int(x * self.SCALE) + self.MARGIN + self.ARENA_PADDING
         # Flip Y axis (screen Y=0 is at top, world Y=0 is at bottom)
-        screen_y = int(self.display_height - (y * self.SCALE)) - self.MARGIN
+        screen_y = int(self.display_height - (y * self.SCALE)) - self.MARGIN - self.ARENA_PADDING
         return (screen_x, screen_y)
 
     def step(self, dt: float):
