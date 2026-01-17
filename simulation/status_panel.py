@@ -7,7 +7,9 @@ class StatusPanel:
     """Displays robot and simulation status information."""
 
     # Panel settings
-    WIDTH = 250  # Width of status panel in pixels
+    WIDTH = 300  # Width of status panel in pixels
+    BOX_PADDING = 4  # Left padding inside bordered boxes (pixels)
+    CONTENT_PADDING = 8  # Vertical padding between header and content (pixels)
     BACKGROUND_COLOR = (0, 0, 0)  # Black background
     TEXT_COLOR = (0, 191, 255)  # Electric blue (deep sky blue)
     TITLE_COLOR = (135, 206, 250)  # Lighter blue for titles (light sky blue)
@@ -24,7 +26,7 @@ class StatusPanel:
         self.height = height
 
         pygame.font.init()
-        self.font = pygame.font.Font(None, 24)
+        self.font = pygame.font.SysFont("courier", 20)
 
     def draw(self, screen: pygame.Surface, robot):
         """Draw status information panel.
@@ -59,9 +61,14 @@ class StatusPanel:
         angle_deg = angle_rad * 180 / math.pi
 
         # Robot Position Section
+        section_start_y = y_pos
+        # Draw header background with chamfered corners
+        header_height = line_height + 5
+        self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5, 
+                                   self.WIDTH - 20, header_height, fill_color=(0, 80, 60))
         title_surface = self.font.render("ROBOT POSITION", True, self.TITLE_COLOR)
-        screen.blit(title_surface, (x_pos, y_pos))
-        y_pos += line_height
+        screen.blit(title_surface, (x_pos + self.BOX_PADDING, y_pos))
+        y_pos += line_height + self.CONTENT_PADDING
 
         pos_lines = [
             f"X: {pos_x:.1f} mm",
@@ -70,24 +77,28 @@ class StatusPanel:
         ]
         for line in pos_lines:
             text_surface = self.font.render(line, True, self.TEXT_COLOR)
-            screen.blit(text_surface, (x_pos, y_pos))
+            screen.blit(text_surface, (x_pos + self.BOX_PADDING, y_pos))
             y_pos += line_height
+        
+        # Draw chamfered border around Robot Position section
+        self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5, 
+                                   self.WIDTH - 20, y_pos - section_start_y + 5)
 
         y_pos += line_height // 2  # Small gap
 
         # Encoder Status Section - Table Format
+        section_start_y = y_pos
+        # Draw header background with chamfered corners
+        header_height = line_height + 5
+        self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5, 
+                                   self.WIDTH - 20, header_height, fill_color=(0, 80, 60))
         title_surface = self.font.render("ENCODER STATUS", True, self.TITLE_COLOR)
-        screen.blit(title_surface, (x_pos, y_pos))
-        y_pos += line_height
+        screen.blit(title_surface, (x_pos + self.BOX_PADDING, y_pos))
+        y_pos += line_height + self.CONTENT_PADDING
 
-        # Table header with background shading
-        header_y = y_pos
-        col1_x = x_pos + 80  # Left column
-        col2_x = x_pos + 150  # Right column
-
-        # Draw header background
-        header_rect = pygame.Rect(x_pos, header_y, self.WIDTH - 20, line_height - 5)
-        pygame.draw.rect(screen, (0, 0, 0), header_rect)
+        # Table columns
+        col1_x = x_pos + self.BOX_PADDING + 120  # Left column (moved right to accommodate longer labels)
+        col2_x = col1_x + 70  # Right column
 
         # Draw header text
         header_text = self.font.render("Left", True, self.TITLE_COLOR)
@@ -106,15 +117,12 @@ class StatusPanel:
         for i, (label, left_val, right_val) in enumerate(rows):
             # Green background for count row
             if label == "Count":
-                row_rect = pygame.Rect(x_pos, y_pos - 2, self.WIDTH - 20, line_height - 5)
+                row_rect = pygame.Rect(x_pos - 5, y_pos - 2, self.WIDTH - 20, line_height - 5)
                 pygame.draw.rect(screen, (20, 40, 20), row_rect)  # Faint green
 
-            # Row label with background shading
-            label_rect = pygame.Rect(x_pos, y_pos, 75, line_height - 5)
-            pygame.draw.rect(screen, (0, 0, 0), label_rect)
-
+            # Row label
             label_text = self.font.render(label, True, self.TITLE_COLOR)
-            screen.blit(label_text, (x_pos + 5, y_pos))
+            screen.blit(label_text, (x_pos + self.BOX_PADDING + 5, y_pos))
 
             # Values
             left_text = self.font.render(left_val, True, self.TEXT_COLOR)
@@ -124,16 +132,82 @@ class StatusPanel:
             screen.blit(right_text, (col2_x, y_pos))
 
             y_pos += line_height
+        
+        # Draw chamfered border around Encoder Status section
+        self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5,
+                                   self.WIDTH - 20, y_pos - section_start_y + 5)
 
         y_pos += line_height // 2  # Small gap
 
         # Distance Sensor Section
+        section_start_y = y_pos
+        # Draw header background with chamfered corners
+        header_height = line_height + 5
+        self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5, 
+                                   self.WIDTH - 20, header_height, fill_color=(0, 80, 60))
         title_surface = self.font.render("DISTANCE SENSOR", True, self.TITLE_COLOR)
-        screen.blit(title_surface, (x_pos, y_pos))
-        y_pos += line_height
+        screen.blit(title_surface, (x_pos + self.BOX_PADDING, y_pos))
+        y_pos += line_height + self.CONTENT_PADDING
 
         status_text = self.font.render(f"Status: {sensor_status}", True, self.TEXT_COLOR)
-        screen.blit(status_text, (x_pos, y_pos))
+        screen.blit(status_text, (x_pos + self.BOX_PADDING, y_pos))
+        y_pos += line_height
+        
+        # Draw chamfered border around Distance Sensor section
+        self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5,
+                                   self.WIDTH - 20, y_pos - section_start_y + 5)
+
+    def _draw_chamfered_rect(self, screen, x, y, width, height, chamfer=8, fill_color=None):
+        """Draw a rectangle with chamfered (cut) corners.
+        
+        Args:
+            screen: Pygame surface to draw on
+            x: Top-left X coordinate
+            y: Top-left Y coordinate
+            width: Rectangle width
+            height: Rectangle height
+            chamfer: Size of corner chamfer in pixels
+            fill_color: Optional RGB tuple for fill color
+        """
+        border_color = (0, 80, 60)  # Faint greenish
+        
+        # Draw filled polygon if fill_color is provided
+        if fill_color:
+            points = [
+                (x + chamfer, y),
+                (x + width - chamfer, y),
+                (x + width, y + chamfer),
+                (x + width, y + height - chamfer),
+                (x + width - chamfer, y + height),
+                (x + chamfer, y + height),
+                (x, y + height - chamfer),
+                (x, y + chamfer),
+            ]
+            pygame.draw.polygon(screen, fill_color, points)
+        
+        # Draw the four sides as lines, avoiding corners
+        # Top
+        pygame.draw.line(screen, border_color, 
+                        (x + chamfer, y), (x + width - chamfer, y), 1)
+        # Right
+        pygame.draw.line(screen, border_color,
+                        (x + width, y + chamfer), (x + width, y + height - chamfer), 1)
+        # Bottom
+        pygame.draw.line(screen, border_color,
+                        (x + width - chamfer, y + height), (x + chamfer, y + height), 1)
+        # Left
+        pygame.draw.line(screen, border_color,
+                        (x, y + height - chamfer), (x, y + chamfer), 1)
+        
+        # Draw chamfered corners
+        # Top-left
+        pygame.draw.line(screen, border_color, (x, y + chamfer), (x + chamfer, y), 1)
+        # Top-right
+        pygame.draw.line(screen, border_color, (x + width - chamfer, y), (x + width, y + chamfer), 1)
+        # Bottom-right
+        pygame.draw.line(screen, border_color, (x + width, y + height - chamfer), (x + width - chamfer, y + height), 1)
+        # Bottom-left
+        pygame.draw.line(screen, border_color, (x + chamfer, y + height), (x, y + height - chamfer), 1)
 
     def log_status_snapshot(self, robot, arena_sim):
         """Log robot status snapshot to terminal for debugging.

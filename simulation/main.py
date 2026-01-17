@@ -84,7 +84,9 @@ def main():
     config_path = Path(__file__).parent / ".env.json"
     mqtt_client = mqtt_connect(config_path=str(config_path))
 
-    # Initialize pygame
+    # Initialize pygame without audio (WSL doesn't have ALSA)
+    import os
+    os.environ['SDL_AUDIODRIVER'] = 'dummy'
     pygame.init()
 
     # Create arena simulation (includes physics space)
