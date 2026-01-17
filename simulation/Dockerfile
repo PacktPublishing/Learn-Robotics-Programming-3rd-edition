@@ -26,7 +26,7 @@ RUN cd /app && uv pip install --system ".[internal]"
 
 # Copy supervisord configuration and simulation-specific launcher service
 COPY simulation/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY simulation/launcher_service_supervisor.py /app/robot/launcher_service.py
+COPY simulation/launcher_service_supervisor.py /app/simulation/launcher_service.py
 
 # Set PYTHONPATH so robot modules can be imported
 ENV PYTHONPATH=/app/robot

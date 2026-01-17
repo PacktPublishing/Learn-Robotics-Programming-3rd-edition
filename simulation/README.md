@@ -84,6 +84,19 @@ Available behaviors:
 - `smooth_distance_avoider`
 - `drive_known_distance`
 - `circle_head_behavior`
+- `localisation`
+
+#### Updating Robot Code
+
+The robot code is mounted as a volume, so you can edit files and restart without rebuilding:
+
+```bash
+# After editing robot code, restart the container
+docker compose restart robot-services
+
+# Or restart a specific behavior via supervisorctl
+docker compose exec robot-services supervisorctl restart fixed_distance_avoider
+```
 
 ### Start Web Control Interface
 

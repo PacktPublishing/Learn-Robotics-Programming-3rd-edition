@@ -23,6 +23,7 @@ services:
       - mqtt
     volumes:
       - ./.env.json:/app/robot_control/.env.json
+      - ../robot:/app/robot  # Mount robot code for live updates
     network_mode: "service:mqtt"
     profiles:
       - robot-services
