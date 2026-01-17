@@ -24,7 +24,7 @@ class Localisation:
     def __init__(self):
         self.poses = self.generate_random_poses(population_size)
 
-        self.wheel_distance = 0
+        self.wheel_distance = 150
         self.config_ready = False
         self.previous_left_distance = 0
         self.previous_right_distance = 0
@@ -113,29 +113,12 @@ class Localisation:
         publish_sample = self.resample_poses(weights, 200)
         self.publish_poses(client, publish_sample)
 
-    def on_config_updated(self, client, userdata, message):
-        self.config_ready = True
-        data = json.loads(message.payload)
-        print(data)
-        if 'robot/wheel_distance' in data:
-            self.wheel_distance = data['robot/wheel_distance']
-
     def publish_poses(self, client, poses):
         publish_json(client, "localisation/poses", poses.tolist())
 
     def start(self):
         client = connect()
         arena.publish_map(client)
-        print("Published map. Getting wheel distance config...")
-        client.subscribe("config/updated")
-        client.message_callback_add("config/updated",
-                                    self.on_config_updated)
-        publish_json(client, "config/get", [
-                        "robot/wheel_distance",
-                        ])
-        while not self.config_ready:
-            time.sleep(0.1)
-        print("Configuration received. Starting localisation.")
 
         client.subscribe("sensors/encoders/data")
         client.publish("sensors/encoders/control/reset")
