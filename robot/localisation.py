@@ -28,10 +28,10 @@ class Localisation:
         self.previous_left_distance = 0
         self.previous_right_distance = 0
 
-        self.trans_noise_from_trans = 2.0/100
-        self.trans_noise_from_rot = 1.0/100
-        self.rot_noise_from_rot = 2/100
-        self.rot_noise_from_trans = 0.2/100
+        self.trans_noise_from_trans = 0.2/100
+        self.trans_noise_from_rot = 0.1/100
+        self.rot_noise_from_rot = 0.2/100
+        self.rot_noise_from_trans = 0.01/100
 
         self.boundary_model = BoundaryObservationModel()
 
