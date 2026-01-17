@@ -22,7 +22,7 @@ class Localisation:
         return poses
 
     def __init__(self):
-        self.poses = self.generate_random_poses(rng, population_size)
+        self.poses = self.generate_random_poses(population_size)
 
         self.wheel_distance = 0
         self.config_ready = False
