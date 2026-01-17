@@ -25,7 +25,6 @@ class Localisation:
         self.poses = self.generate_random_poses(population_size)
 
         self.wheel_distance = 150
-        self.config_ready = False
         self.previous_left_distance = 0
         self.previous_right_distance = 0
 
