@@ -25,37 +25,37 @@ export function config_store_client(mqtt_client) {
             input.value = starting_value.toString();
             input.onblur = () => {
                 const value = parseFloat(input.value);
-                mqtt_client.publish('config/set', 
+                mqtt_client.publish('config/set',
                     JSON.stringify([key, value]));
             };
             container.appendChild(input);
             keys[key] = input;
         },
         start: () => {
-            mqtt_client.publish('config/get', 
+            mqtt_client.publish('config/get',
                 JSON.stringify(Object.keys(keys)));
         }
     }
 }
 
 export function await_config(
-    mqttClient, 
-    configKeys, 
-    controlDiv, 
+    mqttClient,
+    configKeys,
+    controlDiv,
     onLoaded
 ) {
     controlDiv.innerHTML = '<p>Loading configuration...</p>';
-    
+
     mqttClient.subscribe('config/updated');
-    
+
     const messageHandler = (topic, message) => {
         if (topic !== 'config/updated') return;
-        
+
         const config = JSON.parse(message.toString());
         const missing = configKeys.filter(
             key => config[key] === undefined
         );
-        
+
         if (missing.length === 0) {
             mqttClient.unsubscribe('config/updated');
             mqttClient.off('message', messageHandler);
@@ -64,7 +64,7 @@ export function await_config(
             showMissingConfig(controlDiv, missing);
         }
     };
-    
+
     mqttClient.on('message', messageHandler);
     mqttClient.publish('config/get', JSON.stringify(configKeys));
 }
@@ -72,11 +72,11 @@ export function await_config(
 function showMissingConfig(controlDiv, missingKeys) {
     const exampleKey = missingKeys[0];
     const keyList = missingKeys.map(k => `<li>${k}</li>`).join('');
-    
+
     controlDiv.innerHTML = `
         <div style="
-            background-color: #660000; 
-            padding: 15px; 
+            background-color: #660000;
+            padding: 15px;
             border-radius: 5px;
             margin: 10px 0;
         ">
@@ -87,12 +87,12 @@ function showMissingConfig(controlDiv, missingKeys) {
             <ul>${keyList}</ul>
             <p><strong>Set them using:</strong></p>
             <code style="
-                display: block; 
-                background: #000; 
-                padding: 10px; 
+                display: block;
+                background: #000;
+                padding: 10px;
                 margin: 10px 0;
             ">
-                mosquitto_pub -h localhost -t config/set 
+                mosquitto_pub -h localhost -t config/set
                 -m '["${exampleKey}", value]'
             </code>
             <p style="font-size: 0.9em; color: #aaa;">
