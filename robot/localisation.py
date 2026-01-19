@@ -1,5 +1,6 @@
 import json
 import time
+import threading
 
 import numpy as np
 
@@ -27,6 +28,9 @@ class Localisation:
         self.wheel_distance = 150
         self.previous_left_distance = 0
         self.previous_right_distance = 0
+
+        self.publish_lock = threading.Lock()
+        self.latest_publish_sample = None
 
         self.trans_noise_from_trans = 0.2/100
         self.trans_noise_from_rot = 0.1/100
@@ -95,27 +99,32 @@ class Localisation:
     def on_encoders_data(self, client, userdata, msg):
         # Sense
         distance_data = json.loads(msg.payload)
-        left_distance_delta = distance_data['left_distance'] - self.previous_left_distance
-        right_distance_delta = distance_data['right_distance'] - self.previous_right_distance
+        left_distance_delta = (distance_data['left_distance'] -
+                               self.previous_left_distance)
+        right_distance_delta = (distance_data['right_distance'] -
+                                self.previous_right_distance)
         self.previous_left_distance = distance_data['left_distance']
         self.previous_right_distance = distance_data['right_distance']
 
         # Think
-        translation, theta = self.convert_encoders_to_motion(left_distance_delta, right_distance_delta)
+        translation, theta = self.convert_encoders_to_motion(
+            left_distance_delta, right_distance_delta)
         rotation = theta / 2
-        trans_samples, rot_samples = self.randomise_motion(translation, rotation)
+        trans_samples, rot_samples = self.randomise_motion(
+            translation, rotation)
         self.move_poses(rot_samples, trans_samples)
         weights = self.apply_observational_models()
 
         # Act
         self.poses = self.resample_poses(weights, population_size)
-        publish_sample = self.resample_poses(weights, 200)
-        self.publish_poses(client, publish_sample)
+        publish_sample = self.resample_poses(weights, 100)
 
-    def publish_poses(self, client, poses):
-        publish_json(client, "localisation/poses", poses.tolist())
+        with self.publish_lock:
+            self.latest_publish_sample = publish_sample
+
 
     def start(self):
+        print("Localisation service starting...", flush=True)
         client = connect()
         arena.publish_map(client)
 
@@ -123,8 +132,34 @@ class Localisation:
         client.publish("sensors/encoders/control/reset")
         client.message_callback_add("sensors/encoders/data",
                                     self.on_encoders_data)
+        print("Localisation service ready", flush=True)
+
+        publish_count = 0
         while True:
-            time.sleep(0.1)
+            loop_start = time.time()
+            time.sleep(0.15)
+
+            with self.publish_lock:
+                sample = self.latest_publish_sample
+                self.latest_publish_sample = None
+
+            if sample is not None:
+                publish_count += 1
+                if publish_count % 100 == 0:
+                    print(f"Published {publish_count}", flush=True)
+
+                payload = {
+                    'timestamp': time.time() * 1000,
+                    'poses': sample.tolist()
+                }
+                publish_json(client, "localisation/poses", payload)
+
+                elapsed = (time.time() - loop_start) * 1000
+                if elapsed > 200:
+                    print(
+                        f"\nSlow publish: {elapsed:.0f}ms",
+                        flush=True
+                    )
 
 service = Localisation()
 service.start()
