@@ -20,9 +20,10 @@ class ArenaSimulation:
     SCALE = 0.4  # Scale factor for display (mm to pixels)
     MARGIN = 4  # Margin around arena in pixels
     ARENA_PADDING = 8  # Padding inside the arena border (pixels)
-    BACKGROUND_COLOR = (240, 240, 240)
-    WALL_COLOR = (0, 0, 0)
-    WALL_THICKNESS = 3
+    BACKGROUND_COLOR = (0, 0, 0)  # Black background
+    ARENA_FILL_COLOR = (5, 10, 15)  # Very faint blue fill
+    WALL_COLOR = (0, 191, 255)  # Electric blue (matching status panel)
+    WALL_THICKNESS = 2
 
     def __init__(self):
         """Initialize the arena simulation with pymunk space and rendering."""
@@ -123,6 +124,9 @@ class ArenaSimulation:
 
         # Convert wall coordinates to screen space
         screen_walls = [self.world_to_screen(x, y) for x, y in self.walls]
+
+        # Draw arena fill
+        pygame.draw.polygon(screen, self.ARENA_FILL_COLOR, screen_walls)
 
         # Draw walls
         pygame.draw.lines(screen, self.WALL_COLOR, True, screen_walls,

@@ -7,10 +7,30 @@ services:
       - "1883:1883"
       - "9001:9001"
     volumes:
-      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
-      - ./mosquitto.passwd:/etc/mosquitto/passwd
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto.passwd:/etc/mosquitto/passwd:ro
     networks:
       - simulation-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  mqtt-monitor:
+    image: eclipse-mosquitto:2
+    container_name: simulation-mqtt-monitor
+    depends_on:
+      - mqtt
+    volumes:
+      - ./.env.json:/app/.env.json:ro
+      - ./mqtt-monitor.sh:/mqtt-monitor.sh:ro
+    networks:
+      - simulation-network
+    command: sh /mqtt-monitor.sh
+    profiles:
+      - mqtt-monitor
 
   # Robot services container - runs launcher and simulation services via supervisord
   robot-services:
