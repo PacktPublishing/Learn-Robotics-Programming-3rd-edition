@@ -1,5 +1,5 @@
 {% extends "robot_control/page.html.j2" %}
-{% block title %}Localisation {% endblock %}
+{% block title %}Localisation{% endblock %}
 {% block content %}
     <button id="start">Start</button>
     <button id="stop">Stop</button>
@@ -28,7 +28,11 @@
             update_pose_data(json_data) {
                 const pose_data = JSON.parse(json_data);
                 this.datasets[0].data = pose_data.map(
-                    raw_pose => ({x: raw_pose[0], y: raw_pose[1], theta: -raw_pose[2] * 180 / Math.PI})
+                    raw_pose => ({
+                        x: raw_pose[0],
+                        y: raw_pose[1],
+                        theta: -raw_pose[2] * 180 / Math.PI
+                    })
                 );
             }
         };

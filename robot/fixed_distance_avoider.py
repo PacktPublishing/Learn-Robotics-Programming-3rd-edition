@@ -31,10 +31,10 @@ class FixedDistanceAvoiderBehavior:
         right_motor_speed = self.speed
         if left_distance < self.threshold:
             # Turn right with slight randomness to avoid oscillation
-            right_motor_speed = -self.speed * random.uniform(0, 0.3)
+            right_motor_speed = -self.speed * random.uniform(0.7, 1)
         elif right_distance < self.threshold:
             # Turn left with slight randomness to avoid oscillation
-            left_motor_speed = -self.speed * random.uniform(0, 0.3)
+            left_motor_speed = -self.speed * random.uniform(0.7, 1)
 
         # Act
         publish_json(client, "motors/wheels", [left_motor_speed, right_motor_speed])
