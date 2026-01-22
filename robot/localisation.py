@@ -1,75 +1,33 @@
-import ujson as json
+import json
 import time
 
 import numpy as np
 
+from common import arena
 from common.mqtt_behavior import connect, publish_json
-from common.poses import rotated_poses, translated_poses
-from boundary_observation_model import BoundaryObservationModel
-
-boundary_observation_model = BoundaryObservationModel()
-
-width = 1500
-height = 1500
-cutout_left = 1000
-cutout_top = 500
-
-walls = [
-    (0, height),
-    (width, height),
-    (width, cutout_top),
-    (cutout_left, cutout_top),
-    (cutout_left, 0),
-    (0, 0)
-]
+from common.poses import Poses
+from observation_models.boundary import BoundaryObservationModel
 
 population_size = 20000
 rng = np.random.default_rng()
 
-
 class Localisation:
     def __init__(self):
-        self.poses = np.column_stack((
-            rng.uniform(0, width, population_size),
-            rng.uniform(0, height, population_size),
-            rng.uniform(0, 2 * np.pi, population_size)
-        ))
-        self.wheel_distance = 0
+        self.poses = Poses.generate(population_size, (arena.left, arena.right), (arena.bottom, arena.top), (0, 2 * np.pi))
 
-        self.alpha_trans_trans = 1.2/100
-        self.alpha_trans_rot = 0.5/100
-        self.alpha_rot_rot = 2/100
-        self.alpha_rot_trans = 0.1/100
-
-        self.config_ready = False
+        self.wheel_distance = 150
         self.previous_left_distance = 0
         self.previous_right_distance = 0
 
-    def observational_model(self):
-        weights = boundary_observation_model.observational_model(self.poses)
-        return weights
+        self.trans_noise_from_trans = 0.2/100
+        self.trans_noise_from_rot = 0.1/100
+        self.rot_noise_from_rot = 0.2/100
+        self.rot_noise_from_trans = 0.01/100
 
-    def resample_poses(self, weights, sample_count):
-        normalised_weights = weights / np.sum(weights)
-        return rng.choice(
-            self.poses,
-            size=sample_count,
-            p=normalised_weights
-        )
+        self.boundary_model = BoundaryObservationModel()
 
-    def on_config_updated(self, client, userdata, message):
-        self.config_ready = True
-        data = json.loads(message.payload)
-        if 'robot/wheel_distance' in data:
-            self.wheel_distance = data['robot/wheel_distance']
-
-    def publish_poses(self, client, poses):
-        publish_json(client, "localisation/poses", poses.tolist())
-
-    def publish_map(self, client, *_):
-        publish_json(client, "localisation/map", {
-            "walls": walls
-        })
+    def apply_observational_models(self):
+        return self.boundary_model.calculate_weights(self.poses)
 
     def convert_encoders_to_motion(self, left_distance_delta, right_distance_delta):
         # Special case, straight line
@@ -82,50 +40,46 @@ class Localisation:
         return mid_distance, theta
 
     def randomise_motion(self, translation, rotation):
-        trans_scale = self.alpha_trans_trans * abs(translation) \
-            + self.alpha_trans_rot * abs(rotation)
-        rot_scale = self.alpha_rot_rot * abs(rotation) \
-            + self.alpha_rot_trans * abs(translation)
+        trans_scale = self.trans_noise_from_trans * abs(translation) \
+            + self.trans_noise_from_rot * abs(rotation)
+        rot_scale = self.rot_noise_from_rot * abs(rotation) \
+            + self.rot_noise_from_trans * abs(translation)
+
         trans_samples = rng.normal(translation, trans_scale, population_size)
         rot_samples = rng.normal(rotation, rot_scale, population_size)
-        return trans_samples, rot_samples
 
-    def move_poses(self, rotation, translation):
-        self.poses = rotated_poses(self.poses, rotation)
-        self.poses = translated_poses(self.poses, translation)
-        self.poses = rotated_poses(self.poses, rotation)
+        return trans_samples, rot_samples
 
     def on_encoders_data(self, client, userdata, msg):
         # Sense
         distance_data = json.loads(msg.payload)
-        left_distance_delta = distance_data['left_distance'] - self.previous_left_distance
-        right_distance_delta = distance_data['right_distance'] - self.previous_right_distance
+        left_distance_delta = (distance_data['left_distance'] -
+                               self.previous_left_distance)
+        right_distance_delta = (distance_data['right_distance'] -
+                                self.previous_right_distance)
         self.previous_left_distance = distance_data['left_distance']
         self.previous_right_distance = distance_data['right_distance']
+
         # Think
-        translation, theta = self.convert_encoders_to_motion(left_distance_delta, right_distance_delta)
+        translation, theta = self.convert_encoders_to_motion(
+            left_distance_delta, right_distance_delta)
         rotation = theta / 2
-        trans_samples, rot_samples = self.randomise_motion(translation, rotation)
-        self.move_poses(rot_samples, trans_samples)
-        weights = self.observational_model()
-        self.poses = self.resample_poses(weights, population_size)
+        trans_samples, rot_samples = self.randomise_motion(
+            translation, rotation)
+        self.poses = self.poses.move(rot_samples, trans_samples)
+        weights = self.apply_observational_models()
+
         # Act
-        publish_sample = self.resample_poses(weights, 100)
+        publish_sample = self.poses.resample(weights, 200)
+        self.poses = self.poses.resample(weights, population_size)
         self.publish_poses(client, publish_sample)
+
+    def publish_poses(self, client, poses):
+        publish_json(client, "localisation/poses", poses.tolist())
 
     def start(self):
         client = connect()
-        self.publish_map(client)
-        print("Waiting for config")
-        client.subscribe("config/updated")
-        client.message_callback_add("config/updated",
-                                    self.on_config_updated)
-        publish_json(client, "config/get", [
-                        "robot/wheel_distance",
-                        ])
-        while not self.config_ready:
-            time.sleep(0.1)
-        print("Config received. Now waiting for sensor data...")
+        arena.publish_map(client)
 
         client.subscribe("sensors/encoders/data")
         client.publish("sensors/encoders/control/reset")
@@ -134,7 +88,6 @@ class Localisation:
 
         while True:
             time.sleep(0.1)
-
 
 service = Localisation()
 service.start()

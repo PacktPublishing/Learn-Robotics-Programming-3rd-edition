@@ -37,7 +37,8 @@ def deploy_service(service_name, command, auto_start, changed, user="root"):
 
 common = files.sync(
     name="Update common code",
-    src="robot/common", dest="robot/common")
+    src="robot/common", dest="robot/common",
+    exclude=("*.pyc", "__pycache__"))
 
 code = files.put(
     name="Update inventor hat code",
@@ -144,9 +145,14 @@ code = files.put(
     name="Update localisation",
     src="robot/localisation.py",
     dest="robot/localisation.py")
+observation_models = files.sync(
+    name="Update observation models",
+    src="robot/observation_models", dest="robot/observation_models",
+    exclude=("*.pyc", "__pycache__"))
+
 deploy_service("localisation",
                "robot/localisation.py",
-               False, common.changed or code.changed)
+               False, common.changed or code.changed or observation_models.changed)
 
 code = files.put(
     name="Update camera view code",
@@ -229,7 +235,7 @@ files.download(
 files.download(
     name="Download chartjs datalabels plugin",
     src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2",
-    dest="robot_control/libs/chartjs-plugin-datalabels"
+    dest="robot_control/libs/chartjs-plugin-datalabels.js"
 ) # https://v2_2_0--chartjs-plugin-datalabels.netlify.app/guide/
 
 # Loop over all the files in the robot_control directory
