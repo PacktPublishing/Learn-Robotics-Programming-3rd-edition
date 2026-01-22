@@ -1,7 +1,11 @@
 import atexit
+import logging
 import time
+
 import vl53l5cx_ctypes
 from common.mqtt_behavior import connect, publish_json
+
+logger = logging.getLogger(__name__)
 
 VALID_STATUSES = (vl53l5cx_ctypes.STATUS_RANGE_VALID,
                   vl53l5cx_ctypes.STATUS_RANGE_VALID_LARGE_PULSE)
@@ -15,10 +19,13 @@ class DistanceSensorService:
         self.is_ranging = False
 
     def start_ranging(self, *args):
+        logger.info("Starting ranging")
         self.sensor.start_ranging()
         self.is_ranging = True
+        logger.info("Ranging started")
 
     def stop_ranging(self, *args):
+        logger.info("Stopping ranging")
         self.sensor.stop_ranging()
         self.is_ranging = False
 
@@ -32,7 +39,7 @@ class DistanceSensorService:
         publish_json(self.client, "sensors/distance_mm", as_list)
 
     def loop_forever(self):
-        print("Making connection")
+        logger.info("Making connection")
         self.client = connect()
         self.client.subscribe("sensors/distance/control/#")
         self.client.subscribe("all/stop")
@@ -42,14 +49,15 @@ class DistanceSensorService:
             "sensors/distance/control/stop_ranging", self.stop_ranging)
         self.client.publish("sensors/distance/status", "ready")
         self.client.message_callback_add("all/stop", self.stop_ranging)
-        print("Starting loop")
+        logger.info("Starting loop")
         while True:
             if self.is_ranging and self.sensor.data_ready():
+                logger.info("Updating distance data")
                 self.update_data()
             time.sleep(0.01)
 
-
-print("Initialising sensor")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s: [%(levelname)s] %(name)s: %(message)s")
+logger.info("Initialising sensor")
 service = DistanceSensorService()
 atexit.register(service.stop_ranging)
 service.loop_forever()
