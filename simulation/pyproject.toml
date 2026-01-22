@@ -1,0 +1,24 @@
+[project]
+name = "robotics-simulation"
+version = "0.1.0"
+description = "Robot arena simulation using pygame and pymunk"
+requires-python = ">=3.11"
+
+# Common dependencies needed by both external and internal environments
+dependencies = [
+    "paho-mqtt>=2.1.0",
+    "ujson>=5.11.0",
+]
+
+[project.optional-dependencies]
+# External group: for running pygame simulation on host
+external = [
+    "pygame>=2.6.1",
+    "pymunk>=7.2.0",
+]
+
+# Internal group: for running robot services inside Docker simulation environment
+internal = [
+    "numpy>=2.4.0",
+]
+

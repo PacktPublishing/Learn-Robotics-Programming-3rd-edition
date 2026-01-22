@@ -19,12 +19,24 @@ class RobotConfigStore:
         response = {key: json.loads(self.db[key]) for key in data if key in self.db}
         publish_json(client, "config/updated", response)
 
+    def on_list(self, client, userdata, message):
+        """List all configuration keys and values."""
+        all_config = {}
+        for key in self.db.keys():
+            # Keys are bytes in dbm, decode them
+            key_str = key.decode('utf-8') if isinstance(key, bytes) else key
+            all_config[key_str] = json.loads(self.db[key])
+        print(f"Current config store: {all_config}")
+        publish_json(client, "config/list", all_config)
+
     def start(self):
         client = connect(start_loop=False)
         client.subscribe("config/set")
         client.message_callback_add("config/set", self.on_set)
         client.subscribe("config/get")
         client.message_callback_add("config/get", self.on_get)
+        client.subscribe("config/list/get")
+        client.message_callback_add("config/list/get", self.on_list)
         client.loop_forever()
 
 config_store = RobotConfigStore()

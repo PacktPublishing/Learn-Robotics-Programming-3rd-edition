@@ -143,16 +143,11 @@ deploy_service("smooth_distance_avoider",
                "robot/smooth_distance_avoider.py",
                False, common_changed or code.changed)
 
+# TODO: We might not need this file
 files.put(
     name="Update boundary probabilities",
     src="robot/boundary_probabilities.npy",
     dest="robot/boundary_probabilities.npy"
-)
-
-files.put(
-    name="Update boundary observation model",
-    src="robot/boundary_observation_model.py",
-    dest="robot/boundary_observation_model.py"
 )
 
 code = files.put(
@@ -166,7 +161,7 @@ observation_models = files.sync(
 
 deploy_service("localisation",
                "robot/localisation.py",
-               False, common_changed or code.changed  or observation_models.changed)
+               False, common_changed or code.changed or observation_models.changed)
 
 code = files.put(
     name="Update camera view code",
