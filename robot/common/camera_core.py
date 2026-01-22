@@ -1,3 +1,4 @@
+from json import load
 import time
 from multiprocessing import Process, Queue
 
@@ -5,9 +6,10 @@ from flask import Flask, Response
 from picamera2 import Picamera2
 import cv2
 
-from common.mqtt_behavior import publish_json
+from common.mqtt_behavior import publish_json, load_config
 
 ENCODE_PARAM = [int(cv2.IMWRITE_JPEG_QUALITY), 90]
+config = load_config()
 app = Flask(__name__)
 frame_buffer = Queue(maxsize=2)
 
@@ -46,9 +48,8 @@ def start_server_process():
     server.start()
     return server
 
-
 def camera_app_url(client, userdata, message):
-    publish_json(client, "camera_view/url", "http://learnrob3.local:5001/")
+    publish_json(client, "camera_view/url", f"http://{config["PI_HOSTNAME"]}:5001/")
 
 def setup_camera(size):
     camera = Picamera2()
