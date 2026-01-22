@@ -23,7 +23,7 @@ def deploy_service(service_name, command, auto_start, changed, user="root"):
         _sudo=True
     )
 
-    if changed or code.changed or unit_file.changed:
+    if changed or unit_file.changed:
         systemd.service(
             name=f"Restart {service_name} service",
             service=service_name,
@@ -34,46 +34,60 @@ def deploy_service(service_name, command, auto_start, changed, user="root"):
             _sudo=True,
         )
 
+# Create robot_control folder
+pages_folder = files.directory(
+    name="Create robot_control folder",
+    path="robot_control"
+)
+
+# Deploy .env.json to robot_control (accessible by both Python services and web)
+env_config = files.put(
+    name="Deploy environment configuration",
+    src=".env.json",
+    dest="robot_control/.env.json"
+)
 
 common = files.sync(
     name="Update common code",
     src="robot/common", dest="robot/common",
     exclude=("*.pyc", "__pycache__"))
 
+common_changed = common.changed or env_config.changed
+
 code = files.put(
     name="Update inventor hat code",
     src="robot/inventor_hat_service.py", dest="robot/inventor_hat_service.py")
 
 deploy_service("inventor_hat_service", "robot/inventor_hat_service.py",
-               True, common.changed or code.changed)
+               True, common_changed or code.changed)
 
 code = files.put(
     name="Update wheel control code",
     src="robot/wheel_control_service.py",
     dest="robot/wheel_control_service.py")
 deploy_service("wheel_control_service", "robot/wheel_control_service.py",
-               True, common.changed or code.changed)
+               True, common_changed or code.changed)
 
 code = files.put(
     name="Update launcher code",
     src="robot/launcher_service.py",
     dest="robot/launcher_service.py")
 deploy_service("launcher_service", "robot/launcher_service.py",
-               True, common.changed or code.changed)
+               True, common_changed or code.changed)
 
 code = files.put(
     name="Update config store code",
     src="robot/config_store.py",
     dest="robot/config_store.py")
 deploy_service("config_store", "robot/config_store.py",
-               True, common.changed or code.changed)
+               True, common_changed or code.changed)
 
 code = files.put(
     name="Update behavior_path code",
     src="robot/behavior_path.py",
     dest="robot/behavior_path.py")
 deploy_service("behavior_path", "robot/behavior_path.py",
-               False, common.changed or code.changed)
+               False, common_changed or code.changed)
 
 code = files.put(
     name="Update drive_known_distance code",
@@ -82,14 +96,14 @@ code = files.put(
     src="robot/drive_known_distance.py",
     dest="robot/drive_known_distance.py")
 deploy_service("drive_known_distance", "robot/drive_known_distance.py",
-               False, common.changed or code.changed)
+               False, common_changed or code.changed)
 
 code = files.put(
     name="Update circle_head code",
     src="robot/circle_head_behavior.py",
     dest="robot/circle_head_behavior.py")
 deploy_service("circle_head", "robot/circle_head_behavior.py",
-               False, common.changed or code.changed)
+               False, common_changed or code.changed)
 
 code = files.put(
     name="Update distance sensor service",
@@ -97,21 +111,21 @@ code = files.put(
     dest="robot/distance_sensor_service.py")
 deploy_service("distance_sensor_service",
                "robot/distance_sensor_service.py",
-               True, common.changed or code.changed)
+               True, common_changed or code.changed)
 
 code = files.put(
     name="Update IMU service",
     src="robot/imu_service.py",
     dest="robot/imu_service.py")
 deploy_service("imu_service", "robot/imu_service.py",
-                False, common.changed or code.changed)
+                False, common_changed or code.changed)
 
 code = files.put(
     name="Update face direction code",
     src="robot/face_direction.py",
     dest="robot/face_direction.py")
 deploy_service("face_direction", "robot/face_direction.py",
-                False, common.changed or code.changed)
+                False, common_changed or code.changed)
 
 code = files.put(
     name="Update fixed distance avoider",
@@ -119,7 +133,7 @@ code = files.put(
     dest="robot/fixed_distance_avoider.py")
 deploy_service("fixed_distance_avoider",
                "robot/fixed_distance_avoider.py",
-               False, common.changed or code.changed)
+               False, common_changed or code.changed)
 
 code = files.put(
     name="Update smooth distance avoider",
@@ -127,7 +141,7 @@ code = files.put(
     dest="robot/smooth_distance_avoider.py")
 deploy_service("smooth_distance_avoider",
                "robot/smooth_distance_avoider.py",
-               False, common.changed or code.changed)
+               False, common_changed or code.changed)
 
 files.put(
     name="Update boundary probabilities",
@@ -152,28 +166,28 @@ observation_models = files.sync(
 
 deploy_service("localisation",
                "robot/localisation.py",
-               False, common.changed or code.changed or observation_models.changed)
+               False, common_changed or code.changed  or observation_models.changed)
 
 code = files.put(
     name="Update camera view code",
     src="robot/camera_view.py",
     dest="robot/camera_view.py")
 deploy_service("camera_view", "robot/camera_view.py",
-                False, common.changed or code.changed)
+                False, common_changed or code.changed)
 
 code = files.put(
     name="Update face detector code",
     src="robot/face_detector.py",
     dest="robot/face_detector.py")
 deploy_service("face_detector", "robot/face_detector.py",
-                False, common.changed or code.changed)
+                False, common_changed or code.changed)
 
 code = files.put(
     name="Update look at face behavior code",
     src="robot/look_at_face.py",
     dest="robot/look_at_face.py")
 deploy_service("look_at_face", "robot/look_at_face.py",
-                False, common.changed or code.changed)
+                False, common_changed or code.changed)
 
 code = files.put(
     name="Update colored object detector code",
@@ -181,28 +195,28 @@ code = files.put(
     dest="robot/colored_object_detector.py")
 deploy_service("colored_object_detector",
                 "robot/colored_object_detector.py",
-                False, common.changed or code.changed)
+                False, common_changed or code.changed)
 
 code = files.put(
     name="Update object follower behavior code",
     src="robot/object_follower.py",
     dest="robot/object_follower.py")
 deploy_service("object_follower", "robot/object_follower.py",
-               False, common.changed or code.changed)
+               False, common_changed or code.changed)
 
 code = files.put(
     name="Update line detector code",
     src="robot/line_detector.py",
     dest="robot/line_detector.py")
 deploy_service("line_detector", "robot/line_detector.py",
-               False, common.changed or code.changed)
+               False, common_changed or code.changed)
 
 code = files.put(
     name="Update line follower code",
     src="robot/line_follower.py",
     dest="robot/line_follower.py")
 deploy_service("line_follower", "robot/line_follower.py",
-               False, common.changed or code.changed)
+               False, common_changed or code.changed)
 
 code = files.put(
     name="Update the voice agent code",
@@ -210,7 +224,7 @@ code = files.put(
     dest="robot/voice_agent.py"
 )
 deploy_service("voice_agent", "robot/voice_agent.py",
-               True, common.changed or code.changed,
+               True, common_changed or code.changed,
                user=host.data.get('ssh_user'))
 
 files.directory(
@@ -239,10 +253,8 @@ files.download(
 ) # https://v2_2_0--chartjs-plugin-datalabels.netlify.app/guide/
 
 # Loop over all the files in the robot_control directory
-pages_folder = files.directory(
-    name="Create robot_control folder",
-    path="robot_control"
-)
+
+
 pages = [
     files.template(
         name=f"Deploy {file_name}",
@@ -252,7 +264,7 @@ pages = [
     for file_name in os.listdir("robot_control")
 ]
 
-pages_changed = pages_folder.changed or any(page.changed for page in pages)
+pages_changed = pages_folder.changed or env_config.changed or any(page.changed for page in pages)
 
 deploy_service("web_server", "-m http.server --directory robot_control 80",
                True, pages_changed)
