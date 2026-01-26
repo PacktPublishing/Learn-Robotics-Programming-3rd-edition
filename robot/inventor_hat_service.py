@@ -1,7 +1,6 @@
 import atexit
 import json
 import time
-from functools import partial
 
 import inventorhatmini
 import paho.mqtt.client as mqtt
@@ -29,7 +28,6 @@ def all_messages(client, userdata, msg):
 def set_servo_position(servo, client, userdata, msg, fine_tune=0):
     try:
         position = float(msg.payload) + fine_tune
-        # servo.enable()
         servo.value(position)
     except OSError:
         print("Error: Failed to set servo position")
@@ -37,9 +35,25 @@ def set_servo_position(servo, client, userdata, msg, fine_tune=0):
         print("Error: Invalid position value")
 
 
-def stop_servo(servo, client=None, userdata=None, msg=None):
+def set_pan(client, userdata, msg):
+    set_servo_position(pan, client, userdata, msg, fine_tune=5)
+
+
+def set_tilt(client, userdata, msg):
+    set_servo_position(tilt, client, userdata, msg, fine_tune=0)
+
+
+def stop_servo(servo):
     if servo.is_enabled():
         servo.disable()
+
+
+def stop_pan(client=None, userdata=None, msg=None):
+    stop_servo(pan)
+
+
+def stop_tilt(client=None, userdata=None, msg=None):
+    stop_servo(tilt)
 
 
 def set_motor_wheels(client, userdata, msg):
@@ -53,8 +67,8 @@ def set_motor_wheels(client, userdata, msg):
 def stop_motors(client=None, userdata=None, msg=None):
     left_motor.stop()
     right_motor.stop()
-    stop_servo(pan)
-    stop_servo(tilt)
+    stop_pan()
+    stop_tilt()
 
 
 def set_led(client, userdata, msg):
@@ -109,16 +123,11 @@ client.message_callback_add("motors/stop", stop_motors)
 client.message_callback_add("motors/wheels", set_motor_wheels)
 client.message_callback_add("leds/#", all_messages)
 client.message_callback_add("leds/set", set_led)
-client.message_callback_add("motors/servo/pan/position",
-                            partial(set_servo_position, pan,
-                                    fine_tune=5))
-client.message_callback_add("motors/servo/pan/stop",
-                            partial(stop_servo, pan))
-client.message_callback_add("motors/servo/tilt/position",
-                            partial(set_servo_position, tilt,
-                                    fine_tune=0))
-client.message_callback_add("motors/servo/tilt/stop",
-                            partial(stop_servo, tilt))
+
+client.message_callback_add("motors/servo/pan/position", set_pan)
+client.message_callback_add("motors/servo/pan/stop", stop_pan)
+client.message_callback_add("motors/servo/tilt/position", set_tilt)
+client.message_callback_add("motors/servo/tilt/stop", stop_tilt)
 client.message_callback_add("all/stop", stop_motors)
 client.message_callback_add("all/#", all_messages)
 client.message_callback_add("sensors/encoders/control/reset", reset_encoders)
