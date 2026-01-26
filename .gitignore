@@ -4,7 +4,7 @@ debug_data
 .env.js
 .env.json
 pyinfra-debug.log
-.env.json
+.ipynb_checkpoints
 
 __pycache__/
 *.pyc
