@@ -2,3 +2,7 @@ debug_data
 .DS_Store
 .vscode
 .env.js
+__pycache__
+*.pyc
+.env.json
+*.passwd
