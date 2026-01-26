@@ -5,9 +5,9 @@ debug_data
 .env.json
 pyinfra-debug.log
 .env.json
-
 __pycache__/
 *.pyc
 node_modules/
 dist/
-simulation/mosquitto.passwd
+*.passwd
+.ipynb_checkpoints
