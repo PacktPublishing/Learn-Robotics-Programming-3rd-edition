@@ -3,3 +3,7 @@ debug_data
 .vscode
 .env.js
 pyinfra-debug.log
+*.pyc
+__pycache__/
+.env.json
+*.passwd
