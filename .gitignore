@@ -7,3 +7,4 @@ pyinfra-debug.log
 __pycache__/
 .env.json
 *.passwd
+.ipynb_checkpoints
