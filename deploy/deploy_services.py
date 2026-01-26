@@ -37,7 +37,9 @@ def deploy_service(service_name, command, auto_start, changed, user="root"):
 
 common = files.sync(
     name="Update common code",
-    src="robot/common", dest="robot/common")
+    src="robot/common", dest="robot/common",
+    exclude=("*.pyc", "__pycache__")
+    )
 
 code = files.put(
     name="Update inventor hat code",
