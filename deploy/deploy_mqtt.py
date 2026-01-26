@@ -3,9 +3,9 @@ from pyinfra.operations import \
 
 
 mosquitto_packages = apt.packages(
-    name="Install mosquitto", 
+    name="Install mosquitto",
     packages=[
-        "mosquitto", 
+        "mosquitto",
         "mosquitto-clients",
         "python3-paho-mqtt"
     ],

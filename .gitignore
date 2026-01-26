@@ -2,4 +2,12 @@ debug_data
 .DS_Store
 .vscode
 .env.js
+.env.json
 pyinfra-debug.log
+.env.json
+
+__pycache__/
+*.pyc
+node_modules/
+dist/
+simulation/mosquitto.passwd
