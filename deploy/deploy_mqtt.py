@@ -13,7 +13,7 @@ mosquitto_packages = apt.packages(
     present=True, _sudo=True)
 
 # Load MQTT credentials from .env.json
-with open('.env.json', 'r') as f:
+with open('robot_control/.env.json', 'r') as f:
     env_config = json.load(f)
 
 mqtt_username = env_config["MQTT_USERNAME"]
@@ -22,7 +22,7 @@ mqtt_password = env_config["MQTT_PASSWORD"]
 # Deploy env file to track changes
 env_file = files.put(
     name="Deploy MQTT environment config",
-    src=".env.json",
+    src="robot_control/.env.json",
     dest="/etc/mosquitto/.env.json",
     _sudo=True
 )
