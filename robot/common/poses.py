@@ -2,6 +2,9 @@ import numpy as np
 
 rng = np.random.default_rng()
 
+# Note - perhaps "theta" should be named "orientation" to be nice and clear throughout.
+# Note - why am I passing a theta range - this part of generation makes less sense than the x and y range, since the robot can be facing any direction at any point in the arena. Maybe I should just generate random orientations without a range? Or maybe I should just generate a uniform distribution of orientations between 0 and 2*pi?
+
 class Poses(np.ndarray):
     Pose = np.dtype([('x', np.float32), ('y', np.float32), ('theta', np.float32)])
 
@@ -21,6 +24,10 @@ class Poses(np.ndarray):
         result['x'] += np.cos(self['theta']) * length
         result['y'] += np.sin(self['theta']) * length
         return result
+
+    @property
+    def positions(self) -> np.ndarray:
+        return self.view(np.float32).reshape(-1, 3)[:, :2]
 
     def rotate(self, rotation) -> 'Poses':
         result = self.copy()
