@@ -86,7 +86,7 @@ class DistanceObservationModel:
         """
         endpoints = self.sensor_endpoints(poses)
         flat = endpoints.reshape(-1, 2)
-        flat_probs = np.log(self.get_probabilities(flat))
+        flat_probs = self.get_probabilities(flat)
         probs = flat_probs.reshape(len(poses), 8)
 
         return np.prod(probs, axis=1)
