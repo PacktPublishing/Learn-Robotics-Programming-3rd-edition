@@ -7,6 +7,7 @@ from common import arena
 from common.mqtt_behavior import connect, publish_json
 from common.poses import Poses
 from observation_models.boundary import BoundaryObservationModel
+from observation_models.distance import DistanceObservationModel
 
 population_size = 20000
 rng = np.random.default_rng()
@@ -25,9 +26,12 @@ class Localisation:
         self.rot_noise_from_trans = 0.01/100
 
         self.boundary_model = BoundaryObservationModel()
+        self.distance_model = DistanceObservationModel()
 
     def apply_observational_models(self):
-        return self.boundary_model.calculate_weights(self.poses)
+        boundary_weights = self.boundary_model.calculate_weights(self.poses)
+        distance_weights = self.distance_model.calculate_weights(self.poses)
+        return boundary_weights * distance_weights
 
     def convert_encoders_to_motion(self, left_distance_delta, right_distance_delta):
         # Special case, straight line
@@ -74,6 +78,10 @@ class Localisation:
         self.poses = self.poses.resample(weights, population_size)
         self.publish_poses(client, publish_sample)
 
+    def on_distance_readings(self, client, userdata, msg):
+        sensor_readings = json.loads(msg.payload)
+        self.distance_model.handle_sensor_readings(sensor_readings)
+
     def publish_poses(self, client, poses):
         publish_json(client, "localisation/poses", poses.tolist())
 
@@ -85,6 +93,11 @@ class Localisation:
         client.publish("sensors/encoders/control/reset")
         client.message_callback_add("sensors/encoders/data",
                                     self.on_encoders_data)
+        client.subscribe("sensors/distance/data")
+        client.message_callback_add("sensors/distance/data",
+                                    self.on_distance_readings)
+        client.publish("sensors/distance/control/start_ranging", "")
+
         while True:
             time.sleep(0.1)
 

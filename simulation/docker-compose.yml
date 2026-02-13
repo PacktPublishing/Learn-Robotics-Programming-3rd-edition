@@ -8,9 +8,11 @@ services:
       - "9001:9001"
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - ./mosquitto.passwd:/etc/mosquitto/passwd:ro
     networks:
       - simulation-network
+    command: |
+        sh -c "mosquitto_passwd -b -c /mosquitto/config/passwd simuser simpassword && \
+            mosquitto -c /mosquitto/config/mosquitto.conf"
     deploy:
       resources:
         limits:
@@ -37,7 +39,7 @@ services:
     build:
       context: ..
       dockerfile: simulation/Dockerfile
-      target: internal
+      target: services
     container_name: simulation-robot-services
     depends_on:
       - mqtt

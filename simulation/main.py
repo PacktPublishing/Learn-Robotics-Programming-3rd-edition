@@ -82,6 +82,7 @@ def main():
     # Connect to MQTT broker
     print("Connecting to MQTT broker...")
     config_path = Path(__file__).parent / ".env.json"
+    print("Using config from:", config_path)
     mqtt_client = mqtt_connect(config_path=str(config_path))
 
     # Initialize pygame without audio (WSL doesn't have ALSA)

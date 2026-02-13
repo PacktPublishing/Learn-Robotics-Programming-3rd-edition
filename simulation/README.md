@@ -25,6 +25,18 @@ The simulation consists of three components:
 2. Robot services (behavior_line, etc.) - run in Docker
 3. Pygame visualization - runs on host with uv
 
+### One-command startup
+
+Start everything in one terminal:
+
+```bash
+cd simulation
+./start_simulation.sh
+```
+
+This starts MQTT, pygame simulation, web control, and robot services.
+Press Ctrl+C to stop only the pygame process. Docker services continue to run.
+
 ### Setup
 
 First, ensure you have the mosquitto password file created:
@@ -44,11 +56,18 @@ docker compose up mqtt
 ### Start the Pygame Simulation
 
 Run the visualization on your host machine:
+
 ```bash
 cd simulation
-uv pip install --system .[external]
-uv run ./simulation
+uv sync --extra simulation
+uv run python simulation.py
 ```
+
+This uses uv's project virtual environment and does not install into your system Python.
+Use `uv run python simulation.py` to avoid path resolution differences between shells.
+
+If VS Code auto-activates a different environment, uv may warn that `VIRTUAL_ENV`
+is being ignored; that warning is safe, and uv will still use `simulation/.venv`.
 
 Controls:
 - Press ESC or Q to quit

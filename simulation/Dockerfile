@@ -11,8 +11,8 @@ WORKDIR /app
 COPY simulation/pyproject.toml /app/pyproject.toml
 COPY robot/ /app/robot/
 
-# ===== Internal target: Robot services =====
-FROM base AS internal
+# ===== Services target: Robot services =====
+FROM base AS services
 
 # Install supervisor for process management
 RUN apt-get update && \
@@ -20,9 +20,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /var/log/supervisor
 
-# Install dependencies from the internal group
+# Install dependencies from the services group
 # This includes paho-mqtt, ujson, and numpy for robot services
-RUN cd /app && uv pip install --system ".[internal]"
+RUN cd /app && uv pip install --system ".[services]"
 
 # Copy supervisord configuration and simulation-specific launcher service
 COPY simulation/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
