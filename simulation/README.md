@@ -127,6 +127,19 @@ docker compose --profile web-interface up --build web-control
 
 Then open your browser to http://localhost:8080 and navigate to the desired page (e.g., `fixed_distance_avoider.html`).
 
+### WSL troubleshooting
+
+If the pygame app appears in the Windows taskbar but the window does not show,
+WSLg may be in a bad state.
+
+Quick recovery on Windows:
+
+```bash
+wsl --shutdown
+```
+
+Then restart Docker Desktop / VS Code and run the simulation again.
+
 ### Stop Everything
 
 Stop all services:

@@ -142,14 +142,6 @@ code = files.put(
 deploy_service("smooth_distance_avoider",
                "robot/smooth_distance_avoider.py",
                False, common_changed or code.changed)
-
-# TODO: We might not need this file
-files.put(
-    name="Update boundary probabilities",
-    src="robot/boundary_probabilities.npy",
-    dest="robot/boundary_probabilities.npy"
-)
-
 code = files.put(
     name="Update localisation",
     src="robot/localisation.py",

@@ -7,7 +7,7 @@ class StatusPanel:
     """Displays robot and simulation status information."""
 
     # Panel settings
-    WIDTH = 300  # Width of status panel in pixels
+    WIDTH = 520  # Width of status panel in pixels
     BOX_PADDING = 4  # Left padding inside bordered boxes (pixels)
     CONTENT_PADDING = 8  # Vertical padding between header and content (pixels)
     BACKGROUND_COLOR = (0, 0, 0)  # Black background
@@ -27,6 +27,7 @@ class StatusPanel:
 
         pygame.font.init()
         self.font = pygame.font.SysFont("courier", 20)
+        self.small_font = pygame.font.SysFont("courier", 18)
 
     def draw(self, screen: pygame.Surface, robot):
         """Draw status information panel.
@@ -58,7 +59,7 @@ class StatusPanel:
         # Robot position and orientation
         pos_x, pos_y = robot.body.position
         angle_rad = robot.body.angle
-        angle_deg = angle_rad * 180 / math.pi
+        angle_deg = (math.degrees(angle_rad)) % 360.0
 
         # Robot Position Section
         section_start_y = y_pos
@@ -157,6 +158,47 @@ class StatusPanel:
         self._draw_chamfered_rect(screen, x_pos - 5, section_start_y - 5,
                                    self.WIDTH - 20, y_pos - section_start_y + 5)
 
+        self._draw_distance_grid(screen, robot)
+
+    def _draw_distance_grid(self, screen: pygame.Surface, robot):
+        grid_rows = 4
+        grid_cols = 8
+        cell_w = 58
+        cell_h = 30
+        label_h = 32
+        inner_pad = 8
+        outer_pad = 8
+
+        grid_w = grid_cols * cell_w
+        grid_h = (grid_rows * cell_h) + label_h
+        box_w = grid_w + (2 * inner_pad)
+        box_h = grid_h + (2 * inner_pad)
+
+        box_x = self.x_offset + self.WIDTH - box_w - outer_pad
+        box_y = self.height - box_h - outer_pad
+
+        self._draw_chamfered_rect(
+            screen,
+            box_x,
+            box_y,
+            box_w,
+            box_h,
+            fill_color=(0, 80, 60),
+        )
+
+        title_surface = self.small_font.render("DIST MM R4-R7", True, self.TITLE_COLOR)
+        screen.blit(title_surface, (box_x + inner_pad, box_y + inner_pad - 1))
+
+        distances = robot.distance_sensor.distance_mm
+        for row in range(grid_rows):
+            sensor_row = 4 + row
+            row_values = distances[sensor_row * 8:(sensor_row + 1) * 8]
+            y = box_y + inner_pad + label_h + (row * cell_h)
+            for col, value in enumerate(row_values):
+                x = box_x + inner_pad + (col * cell_w)
+                text = self.small_font.render(f"{int(value):4d}", True, self.TEXT_COLOR)
+                screen.blit(text, (x, y))
+
     def _draw_chamfered_rect(self, screen, x, y, width, height, chamfer=8, fill_color=None):
         """Draw a rectangle with chamfered (cut) corners.
 
@@ -223,7 +265,7 @@ class StatusPanel:
         # Robot position
         pos_x, pos_y = robot.body.position
         angle_rad = robot.body.angle
-        angle_deg = angle_rad * 180 / math.pi
+        angle_deg = (math.degrees(angle_rad)) % 360.0
 
         print("\nROBOT POSITION:")
         print(f"  X: {pos_x:.1f} mm")

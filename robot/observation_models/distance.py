@@ -3,22 +3,21 @@ import numpy as np
 from common import arena
 from common.poses import Poses
 
-Vector2D = np.dtype([('x', np.float32), ('y', np.float32)])
-low_probability = 10 ** -10
-
 
 class DistanceObservationModel:
     def __init__(self, probability_field_path="robot/observation_models/distance_map.npy"):
         self.probability_field = np.load(probability_field_path)
+        self.low_probability = np.min(self.probability_field)
         self.frame = arena.MapFrame(100)
         self.sensor_forward_offset = 50.0 # mm
         sensor_fov = np.pi / 4  # 45 degrees
-        sensor_angles = np.linspace(-sensor_fov/2, sensor_fov/2, 8)
+        sensor_angles = np.linspace(-sensor_fov / 2, sensor_fov / 2, 8)
         self.sensor_unit_vectors = np.array([
             (np.cos(angle), np.sin(angle))
             for angle in sensor_angles
         ])
-        self.relative_sensor_positions = np.empty((8, 2), dtype=Vector2D)  # (x, y) positions of each sensor relative to robot center
+        # (x, y) positions of each sensor relative to robot center
+        self.relative_sensor_positions = np.zeros((8, 2))
 
     def get_probabilities(self, world_positions: np.ndarray) -> np.ndarray:
         """Get the boundary proximity probabilities for the given world positions.
@@ -32,14 +31,12 @@ class DistanceObservationModel:
             & (map_positions[:, 0] < self.probability_field.shape[1])
             & (map_positions[:, 1] >= 0)
             & (map_positions[:, 1] < self.probability_field.shape[0]))
-        out = np.full(mask.shape, low_probability, dtype=float)
+        out = np.full(mask.shape, self.low_probability, dtype=float)
         out[mask] = self.probability_field[
             map_positions[mask][:, 1],
             map_positions[mask][:, 0]
         ]
         return out
-
-    # def calculate_weights(self, poses: Poses):
 
     def handle_sensor_readings(self, sensor_readings: np.ndarray):
         """Process sensor readings to update internal state if needed.
@@ -89,4 +86,5 @@ class DistanceObservationModel:
         flat_probs = self.get_probabilities(flat)
         probs = flat_probs.reshape(len(poses), 8)
 
-        return np.prod(probs, axis=1)
+        # return np.prod(probs, axis=1)
+        return np.mean(probs, axis=1)

@@ -1,8 +1,6 @@
 """Window setup and configuration for the simulation."""
 import os
 import logging
-import subprocess
-import time
 import pygame
 
 
@@ -19,40 +17,6 @@ def is_wsl():
     except Exception:
         pass
     return False
-
-
-def setup_window_topmost_wsl():
-    """Set pygame window as topmost in WSL using PowerShell.
-
-    This uses PowerShell to call Windows API and set the window
-    as HWND_TOPMOST so it stays above other windows.
-    """
-    try:
-        time.sleep(0.5)  # Give window time to appear
-        ps_script = """
-        $window = Get-Process | Where-Object {$_.MainWindowTitle -like '*Robot Arena Simulation*'} | Select-Object -First 1
-        if ($window) {
-            Add-Type @"
-                using System;
-                using System.Runtime.InteropServices;
-                public class Win32 {
-                    [DllImport("user32.dll")]
-                    public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
-                    public static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
-                    public const uint SWP_NOMOVE = 0x0002;
-                    public const uint SWP_NOSIZE = 0x0001;
-                }
-"@
-            [Win32]::SetWindowPos($window.MainWindowHandle, [Win32]::HWND_TOPMOST, 0, 0, 0, 0, [Win32]::SWP_NOMOVE -bor [Win32]::SWP_NOSIZE)
-        }
-        """
-        subprocess.Popen(
-            ['powershell.exe', '-Command', ps_script],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
-    except Exception as e:
-        logging.warning(f"Could not set window topmost in WSL: {e}")
 
 
 def setup_window_topmost_linux():
@@ -84,10 +48,5 @@ def create_display(width, height, title="Robot Arena Simulation"):
     screen = pygame.display.set_mode((width, height))
     pygame.display.set_caption(title)
 
-    # Set window as topmost
-    if is_wsl():
-        setup_window_topmost_wsl()
-    else:
-        setup_window_topmost_linux()
 
     return screen

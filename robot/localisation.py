@@ -79,7 +79,8 @@ class Localisation:
         self.publish_poses(client, publish_sample)
 
     def on_distance_readings(self, client, userdata, msg):
-        sensor_readings = json.loads(msg.payload)
+        sensor_data = np.array(json.loads(msg.payload))
+        sensor_readings = sensor_data.reshape((8, 8))
         self.distance_model.handle_sensor_readings(sensor_readings)
 
     def publish_poses(self, client, poses):
@@ -93,8 +94,8 @@ class Localisation:
         client.publish("sensors/encoders/control/reset")
         client.message_callback_add("sensors/encoders/data",
                                     self.on_encoders_data)
-        client.subscribe("sensors/distance/data")
-        client.message_callback_add("sensors/distance/data",
+        client.subscribe("sensors/distance_mm")
+        client.message_callback_add("sensors/distance_mm",
                                     self.on_distance_readings)
         client.publish("sensors/distance/control/start_ranging", "")
 
