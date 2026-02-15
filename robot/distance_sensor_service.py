@@ -18,6 +18,12 @@ class DistanceSensorService:
         self.sensor.set_ranging_frequency_hz(10)
         self.is_ranging = False
 
+    def on_connect(self, client, userdata, flags, rc):
+        logger.info("Connected with result code %s", rc)
+        client.subscribe("sensors/distance/control/#")
+        client.subscribe("all/stop")
+        client.publish("sensors/distance/status", "ready")
+
     def start_ranging(self, *args):
         logger.info("Starting ranging")
         self.sensor.start_ranging()
@@ -40,14 +46,11 @@ class DistanceSensorService:
 
     def loop_forever(self):
         logger.info("Making connection")
-        self.client = connect()
-        self.client.subscribe("sensors/distance/control/#")
-        self.client.subscribe("all/stop")
+        self.client = connect(on_connect=self.on_connect)
         self.client.message_callback_add(
             "sensors/distance/control/start_ranging", self.start_ranging)
         self.client.message_callback_add(
             "sensors/distance/control/stop_ranging", self.stop_ranging)
-        self.client.publish("sensors/distance/status", "ready")
         self.client.message_callback_add("all/stop", self.stop_ranging)
         logger.info("Starting loop")
         while True:
