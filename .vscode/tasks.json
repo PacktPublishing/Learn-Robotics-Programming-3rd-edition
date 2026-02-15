@@ -1,0 +1,51 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Create terminals",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"runOptions": {
+				"runOn": "folderOpen"
+			},
+			"dependsOn": [
+				"pyinfra",
+				"mqttui"
+			]
+		},
+		{
+			"label": "pyinfra",
+			"type": "shell",
+			"command": "/home/danny/.local/bin/poetry",
+			"args": ["run", "bash"],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "mqttui",
+			"type": "shell",
+			"command": "mqttui -b mqtt://learnrob3.local -u robot --password robot",
+			"problemMatcher": []
+		},
+		{
+			"label": "Start simulation",
+			"type": "shell",
+			"command": "./start_simulation.sh",
+			"options": {
+				"cwd": "${workspaceFolder}/simulation"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Stop simulation services",
+			"type": "shell",
+			"command": "docker compose --profile web-interface --profile robot-services down",
+			"options": {
+				"cwd": "${workspaceFolder}/simulation"
+			},
+			"problemMatcher": []
+		}
+	]
+}

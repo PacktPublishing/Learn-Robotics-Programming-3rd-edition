@@ -1,6 +1,5 @@
 debug_data
 .DS_Store
-.vscode
 .env.js
 .env.json
 pyinfra-debug.log
@@ -11,4 +10,3 @@ node_modules/
 dist/
 *.passwd
 .ipynb_checkpoints
-*.npy
