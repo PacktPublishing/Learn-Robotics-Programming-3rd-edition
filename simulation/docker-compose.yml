@@ -8,11 +8,15 @@ services:
       - "9001:9001"
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-config:/mosquitto/config
     networks:
       - simulation-network
+    user: "0"
     command: |
-        sh -c "mosquitto_passwd -b -c /mosquitto/config/passwd simuser simpassword && \
-            mosquitto -c /mosquitto/config/mosquitto.conf"
+      sh -c "rm -f /mosquitto/config/passwd && \
+        mosquitto_passwd -b -c /mosquitto/config/passwd simuser simpassword && \
+        chown mosquitto:mosquitto /mosquitto/config/passwd && \
+        exec mosquitto -c /mosquitto/config/mosquitto.conf"
     deploy:
       resources:
         limits:
@@ -69,3 +73,5 @@ services:
 networks:
   simulation-network:
     driver: bridge
+volumes:
+  mosquitto-config:

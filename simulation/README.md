@@ -39,6 +39,8 @@ Press Ctrl+C to stop only the pygame process. Docker services continue to run.
 
 ### Setup
 
+You will need either Docker Desktop or Podman with compose support.
+
 First, ensure you have the mosquitto password file created:
 ```bash
 cd simulation
