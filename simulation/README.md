@@ -153,6 +153,6 @@ docker compose --profile robot-services down
 - The glitch rate, is this a constant of the simulation or the sensor? It probably makes sense for the sensor to have a glitch rate parameter, so we can test different rates. Light conditions in the real world could affect this.
 
 
-## Styleing todo
+## Test notes
 
-We can make this interface look a bit more futuristic/cyberpunk. But that's for later.
+I've compared the vl53l5cx distance sensor array orientation with teh sensor arrya on the robot, and the orientation is correct.
