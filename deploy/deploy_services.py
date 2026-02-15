@@ -43,7 +43,7 @@ pages_folder = files.directory(
 # Deploy .env.json to robot_control (accessible by both Python services and web)
 env_config = files.put(
     name="Deploy environment configuration",
-    src=".env.json",
+    src="robot_control/.env.json",
     dest="robot_control/.env.json"
 )
 
