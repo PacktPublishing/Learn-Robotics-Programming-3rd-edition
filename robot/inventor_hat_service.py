@@ -96,6 +96,10 @@ def update_encoders(client):
         client,
         "sensors/encoders/data",
         {
+            "left_counts": left_data.count,
+            "right_counts": right_data.count,
+            "left_radians": left_data.radians,
+            "right_radians": right_data.radians,
             "left_distance": left_data.radians * wheel_radius,
             "right_distance": right_data.radians * wheel_radius,
             "left_mm_per_sec": left_data.radians_per_second * wheel_radius,
