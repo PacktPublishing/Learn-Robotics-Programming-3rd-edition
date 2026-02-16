@@ -99,6 +99,13 @@ deploy_service("drive_known_distance", "robot/drive_known_distance.py",
                False, common_changed or code.changed)
 
 code = files.put(
+    name="Update encoder turn calibration code",
+    src="robot/encoder_turn_calibration.py",
+    dest="robot/encoder_turn_calibration.py")
+deploy_service("encoder_turn_calibration", "robot/encoder_turn_calibration.py",
+               False, common_changed or code.changed)
+
+code = files.put(
     name="Update circle_head code",
     src="robot/circle_head_behavior.py",
     dest="robot/circle_head_behavior.py")
