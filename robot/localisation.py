@@ -16,7 +16,7 @@ class Localisation:
     def __init__(self):
         self.poses = Poses.generate(population_size, (arena.left, arena.right), (arena.bottom, arena.top), (0, 2 * np.pi))
 
-        self.wheel_distance = 150
+        self.wheel_distance = 136 #161
         self.previous_left_distance = 0
         self.previous_right_distance = 0
 
@@ -30,7 +30,7 @@ class Localisation:
 
     def apply_observational_models(self):
         boundary_weights = self.boundary_model.calculate_weights(self.poses)
-        distance_weights = self.distance_model.calculate_weights(self.poses)
+        distance_weights = 1 # self.distance_model.calculate_weights(self.poses)
         return boundary_weights * distance_weights
 
     def convert_encoders_to_motion(self, left_distance_delta, right_distance_delta):

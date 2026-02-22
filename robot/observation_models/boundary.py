@@ -1,10 +1,12 @@
 import numpy as np
 
 from common import arena
+from common.poses import Poses
 
 low_probability = 10 ** -10
-boundary_region = 50.0  # mm on each side of boundary
+crosshair_radius = 50.0  # mm on each side of boundary
 
+Pose2D = np.dtype([('x', np.float64), ('y', np.float64)])
 
 class BoundaryObservationModel:
     def in_boundary(self, poses):
@@ -19,41 +21,29 @@ class BoundaryObservationModel:
 
     def calculate_weights(self, poses):
         return np.where(self.in_boundary(poses), 1.0, low_probability)
+        # return self.observe_crosshair(poses)
 
-    def boundary_probability(self, poses):
-        # Calculate distance from each boundary edge (positive = inside)
-        dist_left = poses['x'] - arena.left
-        dist_right = arena.right - poses['x']
-        dist_bottom = poses['y'] - arena.bottom
-        dist_top = arena.top - poses['y']
+    def observe_crosshair(self, poses):
+        """Observe a 5 tap crosshair pattern for each pose.
+        """
+        crosshair_points = np.array([
+            [0, 0],
+            [crosshair_radius, 0],
+            [-crosshair_radius, 0],
+            [0, crosshair_radius],
+            [0, -crosshair_radius]
+        ])  # shape (5, 2)
 
-        # For the cutout, calculate distance (negative = inside cutout)
-        # Only relevant if x > cutout_left and y < cutout_top
-        in_cutout_region = np.logical_and(
-            poses['x'] > arena.cutout_left - boundary_region,
-            poses['y'] < arena.cutout_top + boundary_region
-        )
-        dist_from_cutout_x = poses['x'] - arena.cutout_left  # negative when in cutout
-        dist_from_cutout_y = arena.cutout_top - poses['y']  # negative when above cutout
-        # For cutout, we want the minimum of both distances (most constraining)
-        dist_cutout = np.where(
-            in_cutout_region,
-            np.minimum(dist_from_cutout_x, dist_from_cutout_y),
-            boundary_region + 1  # Far from cutout, don't affect probability
-        )
+        # # Expand poses to shape (num_poses, 1, 2) and crosshair to (1, 5, 2)
+        # expanded_poses = poses[['x', 'y']][:, np.newaxis, :]  # shape (num_poses, 1, 2)
+        # expanded_crosshair = crosshair_points[np.newaxis, :, :]  # shape (1, 5, 2)
 
-        # Find the minimum distance to any boundary (most constraining)
-        min_dist = np.minimum.reduce([
-            dist_left, dist_right, dist_bottom, dist_top, dist_cutout
-        ])
-
-        # Convert distance to probability:
-        # distance > +50mm: prob = 1.0
-        # distance < -50mm: prob = 0.0
-        # -50mm < distance < +50mm: linear gradient
-        weights = (min_dist + boundary_region) / (2 * boundary_region)
-        return np.where(
-            weights < low_probability,
-            low_probability,
-            np.where(weights > 1.0, 1.0, weights)
-        )
+        # Calculate absolute positions of crosshair points for each pose
+        crosshair_positions = poses.positions[:, np.newaxis, :] + crosshair_points  # shape (num_poses, 5, 2)
+        # Make the boundary observation for all points in the crosshair
+        # flatten
+        flat_positions = crosshair_positions.reshape(-1,2).view(Pose2D)  # shape (num_poses * 5, 2)
+        flat_weights = np.where(self.in_boundary(flat_positions), 1.0, low_probability)
+        all_weights=flat_weights.reshape(-1, 5)  # shape (num_poses, 5)
+        # Create a mean weight for each pose based on the crosshair points
+        return np.mean(all_weights, axis=1)  # shape (num_poses,)

@@ -11,8 +11,8 @@ from common.mqtt_behavior import publish_json
 from simulated_vl53l5cx import SimulatedVL53L5CX
 
 
-class RobotWheel:
-    """Simulates a robot wheel with motor and encoder characteristics."""
+class RobotConfiguration:
+    """Centralized configuration for simulation calibration and geometry."""
 
     # Motor speed calibration
     BASE_SPEED_MM_PER_SEC = 195.0  # Mean speed at motor setting 1.0
@@ -23,12 +23,62 @@ class RobotWheel:
     WHEEL_DIAMETER = 67  # mm
     WHEEL_RADIUS = WHEEL_DIAMETER / 2  # mm
 
+    # Gear lash simulation (encoder can lead wheel motion slightly)
+    LASH_ANGLE_DEG = 16.0
+    LASH_ANGLE_RADIANS = math.radians(LASH_ANGLE_DEG)
+    LASH_VELOCITY_THRESHOLD = 1.0  # mm/s - minimum velocity to treat as motion
+
+    # Robot dimensions (in mm)
+    WIDTH = 125  # Chassis width
+    LENGTH = 200
+    WHEEL_POSITION_FROM_FRONT = 100
+    WHEEL_THICKNESS = 25
+    WHEEL_SEPARATION = 136  # Center-to-center distance between wheels (measured on real robot)
+
+    # Physics properties
+    MASS = 1.0  # kg
+    MOMENT_SCALE = 1.0  # Scale factor for moment of inertia
+
+    # Motor timeout
+    MOTOR_TIMEOUT = 1.0  # Stop motors after 1 second of no commands
+
+    # Slip + inertia (body motion only, encoders still reflect wheel rotation)
+    SLIP_MEAN = 0.03  # Mean slip fraction per wheel (3% loss)
+    SLIP_STDDEV = 0.01  # Variation across wheels
+    SLIP_MAX = 0.15  # Clamp to avoid extreme loss
+    INERTIA_TIME_CONSTANT = 0.12  # Seconds for wheel velocity to settle
+
+    # Contact patch variation (scaled by tire width)
+    CONTACT_VARIATION_PER_MM = 0.08  # Max fraction per mm of tire width
+    CONTACT_VARIATION_STDDEV = 0.3  # Fraction of max variation (gaussian)
+    CONTACT_VARIATION_TAU = 0.5  # Seconds for contact variation to settle
+    CONTACT_TURN_FACTOR = 0.2  # Extra variation per rad/s of turning
+
+    # Distance sensor mounting (VL53L5CX)
+    DISTANCE_SENSOR_OFFSET_FROM_FRONT = 5  # mm - sensor is 5mm from front edge
+    DISTANCE_SENSOR_HEIGHT = 45  # mm - sensor height above floor
+
+    # Display settings
+    ROBOT_COLOR = (50, 100, 200)  # Blue
+    WHEEL_COLOR = (40, 40, 40)  # Dark gray
+
+    # Timing and control
+    ENCODER_PUBLISH_INTERVAL = 0.1  # Publish at 10 Hz like real robot
+    DISTANCE_PUBLISH_INTERVAL = 0.1  # 10 Hz matching sensor frequency
+    TARGET_VELOCITY_DAMPING = 0.3  # Higher = faster response (0-1)
+
+
+class RobotWheel:
+    """Simulates a robot wheel with motor and encoder characteristics."""
+
+    CONFIG = RobotConfiguration
+
     def __init__(self):
         """Initialize wheel with random speed variation and encoder."""
         # Add random variation to simulate real motor/gear/wheel differences
         self.speed_factor = random.gauss(
             1.0,
-            self.SPEED_VARIATION_STDDEV / self.BASE_SPEED_MM_PER_SEC
+            self.CONFIG.SPEED_VARIATION_STDDEV / self.CONFIG.BASE_SPEED_MM_PER_SEC
         )
         self.current_speed = 0.0  # Current motor speed setting (-1.0 to 1.0)
 
@@ -36,6 +86,8 @@ class RobotWheel:
         self.encoder_count = 0.0  # Accumulated encoder counts
         self.encoder_radians = 0.0  # Accumulated radians
         self.last_update_time = time.time()
+        self.lash_remaining_radians = 0.0
+        self.last_command_direction = 0
 
     def set_speed(self, speed: float):
         """Set the wheel motor speed.
@@ -43,6 +95,17 @@ class RobotWheel:
         Args:
             speed: Motor speed from -1.0 (full reverse) to 1.0 (full forward)
         """
+        new_direction = 0
+        if speed > 0:
+            new_direction = 1
+        elif speed < 0:
+            new_direction = -1
+
+        if new_direction != self.last_command_direction:
+            if new_direction != 0:
+                self.lash_remaining_radians = self.CONFIG.LASH_ANGLE_RADIANS
+            self.last_command_direction = new_direction
+
         self.current_speed = max(-1.0, min(1.0, speed))
 
     def get_velocity(self) -> float:
@@ -51,7 +114,14 @@ class RobotWheel:
         Returns:
             Velocity in mm/s
         """
-        return self.current_speed * self.BASE_SPEED_MM_PER_SEC * self.speed_factor
+        return self.current_speed * self.CONFIG.BASE_SPEED_MM_PER_SEC * self.speed_factor
+
+    def get_drive_velocity(self) -> float:
+        """Get wheel velocity applied to the robot body, accounting for lash."""
+        commanded_velocity = self.get_velocity()
+        if self.lash_remaining_radians > 0 and abs(commanded_velocity) >= self.CONFIG.LASH_VELOCITY_THRESHOLD:
+            return 0.0
+        return commanded_velocity
 
     def update_encoder(self, dt: float, actual_velocity: float = None):
         """Update encoder counts based on wheel movement.
@@ -62,25 +132,39 @@ class RobotWheel:
                            If None, uses commanded velocity.
         """
         # Use actual velocity from physics if provided, otherwise use commanded
-        velocity = actual_velocity if actual_velocity is not None else self.get_velocity()
+        commanded_velocity = self.get_velocity()
+        velocity = actual_velocity if actual_velocity is not None else commanded_velocity
 
         # Apply velocity threshold to simulate static friction and mechanical play
         # Real encoders won't register movement below a minimum threshold
-        VELOCITY_THRESHOLD = 1.0  # mm/s - minimum velocity to register movement
-        if abs(velocity) < VELOCITY_THRESHOLD:
+        if abs(velocity) < self.CONFIG.LASH_VELOCITY_THRESHOLD:
             velocity = 0.0
+
+        # Simulate gear lash: encoder may count slightly before wheel motion starts.
+        if actual_velocity is not None:
+            if abs(actual_velocity) < self.CONFIG.LASH_VELOCITY_THRESHOLD:
+                if self.lash_remaining_radians > 0 and abs(commanded_velocity) >= self.CONFIG.LASH_VELOCITY_THRESHOLD:
+                    lash_distance_mm = min(
+                        abs(commanded_velocity) * dt,
+                        self.lash_remaining_radians * self.CONFIG.WHEEL_RADIUS
+                    )
+                    lash_radians = lash_distance_mm / self.CONFIG.WHEEL_RADIUS
+                    self.lash_remaining_radians -= lash_radians
+                    self.encoder_radians += math.copysign(lash_radians, commanded_velocity)
+            else:
+                self.lash_remaining_radians = 0.0
 
         # Calculate distance traveled in mm
         distance_mm = velocity * dt
 
         # Convert to radians of wheel rotation
-        radians = distance_mm / self.WHEEL_RADIUS
+        radians = distance_mm / self.CONFIG.WHEEL_RADIUS
 
         # Update accumulated values
         self.encoder_radians += radians
 
         # Convert radians to encoder counts
-        counts_per_radian = self.COUNTS_PER_REV / (2 * math.pi)
+        counts_per_radian = self.CONFIG.COUNTS_PER_REV / (2 * math.pi)
         self.encoder_count = self.encoder_radians * counts_per_radian
 
     def reset_encoder(self):
@@ -97,35 +181,16 @@ class RobotWheel:
         velocity = self.get_velocity()
 
         return {
-            "distance": self.encoder_radians * self.WHEEL_RADIUS,  # mm
+            "counts": self.encoder_count,
+            "radians": self.encoder_radians,
+                "distance": self.encoder_radians * self.CONFIG.WHEEL_RADIUS,  # mm
             "mm_per_sec": velocity  # mm/s
         }
 
 class Robot:
     """Represents the robot in the simulation."""
 
-    # Robot dimensions (in mm) - approximate size of the robot
-    WIDTH = 125  # Chassis width
-    LENGTH = 200
-    WHEEL_DIAMETER = 67
-    WHEEL_POSITION_FROM_FRONT = 100
-    WHEEL_THICKNESS = 25
-    WHEEL_SEPARATION = 157  # Center-to-center distance between wheels (measured on real robot)
-
-    # Physics properties
-    MASS = 1.0  # kg
-    MOMENT_SCALE = 1.0  # Scale factor for moment of inertia
-
-    # Motor timeout
-    MOTOR_TIMEOUT = 1.0  # Stop motors after 1 second of no commands
-
-    # Distance sensor mounting (VL53L5CX)
-    DISTANCE_SENSOR_OFFSET_FROM_FRONT = 5  # mm - sensor is 5mm from front edge
-    DISTANCE_SENSOR_HEIGHT = 45  # mm - sensor height above floor
-
-    # Display settings
-    ROBOT_COLOR = (50, 100, 200)  # Blue
-    WHEEL_COLOR = (40, 40, 40)  # Dark gray
+    CONFIG = RobotConfiguration
 
     def __init__(self, x: float, y: float, angle: float, space: pymunk.Space, mqtt_client=None):
         """Initialize the robot with a pymunk rigid body.
@@ -143,23 +208,32 @@ class Robot:
         self.left_wheel = RobotWheel()
         self.right_wheel = RobotWheel()
 
+        # Slip factors are fixed per wheel for the duration of the run
+        self.left_wheel_slip = max(0.0, min(random.gauss(self.CONFIG.SLIP_MEAN, self.CONFIG.SLIP_STDDEV), self.CONFIG.SLIP_MAX))
+        self.right_wheel_slip = max(0.0, min(random.gauss(self.CONFIG.SLIP_MEAN, self.CONFIG.SLIP_STDDEV), self.CONFIG.SLIP_MAX))
+        self.filtered_left_velocity = 0.0
+        self.filtered_right_velocity = 0.0
+        self.last_drive_update = time.time()
+        self.contact_variation_left = 0.0
+        self.contact_variation_right = 0.0
+
         # Track last motor command time for timeout
         self.last_motor_command_time = 0.0
 
         # Create pymunk body
-        moment = pymunk.moment_for_box(self.MASS, (self.LENGTH, self.WIDTH)) * self.MOMENT_SCALE
-        self.body = pymunk.Body(self.MASS, moment)
+        moment = pymunk.moment_for_box(self.CONFIG.MASS, (self.CONFIG.LENGTH, self.CONFIG.WIDTH)) * self.CONFIG.MOMENT_SCALE
+        self.body = pymunk.Body(self.CONFIG.MASS, moment)
         self.body.position = (x, y)
         self.body.angle = angle
 
         # Create shape for the robot body including wheel protrusions
         # Wheels extend WHEEL_THICKNESS beyond the body on each side
         # (wheel center is at WIDTH/2 + WHEEL_THICKNESS/2, plus WHEEL_THICKNESS/2 for wheel radius)
-        half_length = self.LENGTH / 2
-        half_width = self.WIDTH / 2
-        wheel_protrusion = self.WHEEL_THICKNESS  # Full wheel thickness
-        wheel_front = half_length - self.WHEEL_POSITION_FROM_FRONT
-        wheel_back = wheel_front - self.WHEEL_DIAMETER
+        half_length = self.CONFIG.LENGTH / 2
+        half_width = self.CONFIG.WIDTH / 2
+        wheel_protrusion = self.CONFIG.WHEEL_THICKNESS  # Full wheel thickness
+        wheel_front = half_length - self.CONFIG.WHEEL_POSITION_FROM_FRONT
+        wheel_back = wheel_front - self.CONFIG.WHEEL_DIAMETER
 
         # Create polygon that includes wheel volumes
         vertices = [
@@ -190,10 +264,10 @@ class Robot:
 
         # Initialize distance sensor
         # Sensor is mounted at front center: LENGTH/2 - DISTANCE_SENSOR_OFFSET_FROM_FRONT from center
-        sensor_local_x = self.LENGTH / 2 - self.DISTANCE_SENSOR_OFFSET_FROM_FRONT
+        sensor_local_x = self.CONFIG.LENGTH / 2 - self.CONFIG.DISTANCE_SENSOR_OFFSET_FROM_FRONT
         sensor_local_y = 0.0  # Centered on robot width
         self.distance_sensor = SimulatedVL53L5CX(
-            sensor_height=self.DISTANCE_SENSOR_HEIGHT,
+            sensor_height=self.CONFIG.DISTANCE_SENSOR_HEIGHT,
             sensor_offset_x=sensor_local_x,
             sensor_offset_y=sensor_local_y,
             glitch_rate=0.01
@@ -226,11 +300,11 @@ class Robot:
 
         # Encoder update timing
         self.last_encoder_publish = time.time()
-        self.encoder_publish_interval = 0.1  # Publish at 10 Hz like real robot
+        self.encoder_publish_interval = self.CONFIG.ENCODER_PUBLISH_INTERVAL
 
         # Distance sensor update timing
         self.last_distance_publish = time.time()
-        self.distance_publish_interval = 0.1  # 10 Hz matching sensor frequency
+        self.distance_publish_interval = self.CONFIG.DISTANCE_PUBLISH_INTERVAL
 
     def _on_encoder_reset(self, client, userdata, message):
         """Handle encoder reset MQTT messages.
@@ -282,25 +356,54 @@ class Robot:
 
         Call this BEFORE the physics step so that physics can constrain the motion.
         """
+        now = time.time()
+        dt = max(now - self.last_drive_update, 1e-3)
+        self.last_drive_update = now
+
         # Check for motor command timeout
         if self.last_motor_command_time > 0:
             time_since_last_command = time.time() - self.last_motor_command_time
-            if time_since_last_command > self.MOTOR_TIMEOUT:
+            if time_since_last_command > self.CONFIG.MOTOR_TIMEOUT:
                 # Stop motors after timeout
                 self.left_wheel.set_speed(0.0)
                 self.right_wheel.set_speed(0.0)
 
         # Get commanded wheel velocities in mm/s
-        left_velocity = self.left_wheel.get_velocity()
-        right_velocity = self.right_wheel.get_velocity()
+        left_velocity = self.left_wheel.get_drive_velocity()
+        right_velocity = self.right_wheel.get_drive_velocity()
+
+        # Apply slip to body motion (encoders still track wheel rotation)
+        left_velocity *= (1.0 - self.left_wheel_slip)
+        right_velocity *= (1.0 - self.right_wheel_slip)
+
+        # Apply small contact patch variation (bounded by tire width, low-pass filtered)
+        turn_rate_estimate = abs(right_velocity - left_velocity) / self.CONFIG.WHEEL_SEPARATION
+        max_contact_variation = self.CONFIG.WHEEL_THICKNESS * self.CONFIG.CONTACT_VARIATION_PER_MM
+        max_contact_variation *= (1.0 + (turn_rate_estimate * self.CONFIG.CONTACT_TURN_FACTOR))
+
+        target_left_variation = random.gauss(0.0, self.CONFIG.CONTACT_VARIATION_STDDEV) * max_contact_variation
+        target_right_variation = random.gauss(0.0, self.CONFIG.CONTACT_VARIATION_STDDEV) * max_contact_variation
+        alpha_variation = dt / (self.CONFIG.CONTACT_VARIATION_TAU + dt)
+        self.contact_variation_left += (target_left_variation - self.contact_variation_left) * alpha_variation
+        self.contact_variation_right += (target_right_variation - self.contact_variation_right) * alpha_variation
+
+        left_variation = max(-max_contact_variation, min(self.contact_variation_left, max_contact_variation))
+        right_variation = max(-max_contact_variation, min(self.contact_variation_right, max_contact_variation))
+        left_velocity *= (1.0 + left_variation)
+        right_velocity *= (1.0 + right_variation)
+
+        # Apply inertia as a first-order lag on wheel velocities
+        alpha = dt / (self.CONFIG.INERTIA_TIME_CONSTANT + dt)
+        self.filtered_left_velocity += (left_velocity - self.filtered_left_velocity) * alpha
+        self.filtered_right_velocity += (right_velocity - self.filtered_right_velocity) * alpha
 
         # Calculate differential drive kinematics from commanded velocities
         # Linear velocity (forward) is average of both wheels
-        linear_velocity = (left_velocity + right_velocity) / 2.0
+        linear_velocity = (self.filtered_left_velocity + self.filtered_right_velocity) / 2.0
 
         # Angular velocity from difference between wheels
         # omega = (v_right - v_left) / wheel_separation
-        angular_velocity_target = (right_velocity - left_velocity) / self.WHEEL_SEPARATION
+        angular_velocity_target = (self.filtered_right_velocity - self.filtered_left_velocity) / self.CONFIG.WHEEL_SEPARATION
 
         # Apply damped velocity control to achieve target velocities
         # This allows pymunk physics to handle collisions and constraints properly
@@ -310,7 +413,7 @@ class Robot:
 
         # Use exponential damping toward target velocity
         # This provides smooth motion while allowing physics constraints to work
-        damping = 0.3  # Higher = faster response (0-1)
+        damping = self.CONFIG.TARGET_VELOCITY_DAMPING
         current_vx, current_vy = self.body.velocity
         new_vx = current_vx + (target_vx - current_vx) * damping
         new_vy = current_vy + (target_vy - current_vy) * damping
@@ -345,7 +448,7 @@ class Robot:
         # Calculate individual wheel velocities from differential drive kinematics
         # v_left = v_forward - (ω * separation/2)
         # v_right = v_forward + (ω * separation/2)
-        half_separation = self.WHEEL_SEPARATION / 2
+        half_separation = self.CONFIG.WHEEL_SEPARATION / 2
         actual_left_velocity = forward_velocity - (angular_velocity * half_separation)
         actual_right_velocity = forward_velocity + (angular_velocity * half_separation)
 
@@ -404,6 +507,10 @@ class Robot:
             self.mqtt_client,
             "sensors/encoders/data",
             {
+                "left_counts": left_data["counts"],
+                "right_counts": right_data["counts"],
+                "left_radians": left_data["radians"],
+                "right_radians": right_data["radians"],
                 "left_distance": left_data["distance"],
                 "right_distance": right_data["distance"],
                 "left_mm_per_sec": left_data["mm_per_sec"],
@@ -440,8 +547,8 @@ class Robot:
 
         # Calculate the four corners of the robot rectangle
         # Robot is centered at (x, y)
-        half_width = self.WIDTH / 2
-        half_length = self.LENGTH / 2
+        half_width = self.CONFIG.WIDTH / 2
+        half_length = self.CONFIG.LENGTH / 2
 
         # Local coordinates (before rotation)
         corners = [
@@ -466,8 +573,8 @@ class Robot:
         screen_corners = [world_to_screen_fn(wx, wy) for wx, wy in world_corners]
 
         # Draw the robot with anti-aliasing
-        pygame.gfxdraw.filled_polygon(screen, screen_corners, self.ROBOT_COLOR)
-        pygame.gfxdraw.aapolygon(screen, screen_corners, self.ROBOT_COLOR)
+        pygame.gfxdraw.filled_polygon(screen, screen_corners, self.CONFIG.ROBOT_COLOR)
+        pygame.gfxdraw.aapolygon(screen, screen_corners, self.CONFIG.ROBOT_COLOR)
 
         # Draw wheels
         self._draw_wheels(screen, world_to_screen_fn, x, y, cos_a, sin_a)
@@ -502,11 +609,11 @@ class Robot:
             sin_a: Sine of robot angle
         """
         # Wheel position (distance from center to wheel centers)
-        wheel_offset_x = self.LENGTH / 2 - self.WHEEL_POSITION_FROM_FRONT
-        wheel_offset_y = self.WIDTH / 2 + self.WHEEL_THICKNESS / 2
+        wheel_offset_x = self.CONFIG.LENGTH / 2 - self.CONFIG.WHEEL_POSITION_FROM_FRONT
+        wheel_offset_y = self.CONFIG.WIDTH / 2 + self.CONFIG.WHEEL_THICKNESS / 2
 
-        half_wheel_diameter = self.WHEEL_DIAMETER / 2
-        half_wheel_thickness = self.WHEEL_THICKNESS / 2
+        half_wheel_diameter = self.CONFIG.WHEEL_DIAMETER / 2
+        half_wheel_thickness = self.CONFIG.WHEEL_THICKNESS / 2
 
         # Left and right wheel positions in local coordinates
         for side in [-1, 1]:  # -1 for left, 1 for right
@@ -533,5 +640,5 @@ class Robot:
             screen_wheel_corners = [world_to_screen_fn(wx, wy) for wx, wy in world_wheel_corners]
 
             # Draw the wheel with anti-aliasing
-            pygame.gfxdraw.filled_polygon(screen, screen_wheel_corners, self.WHEEL_COLOR)
-            pygame.gfxdraw.aapolygon(screen, screen_wheel_corners, self.WHEEL_COLOR)
+            pygame.gfxdraw.filled_polygon(screen, screen_wheel_corners, self.CONFIG.WHEEL_COLOR)
+            pygame.gfxdraw.aapolygon(screen, screen_wheel_corners, self.CONFIG.WHEEL_COLOR)

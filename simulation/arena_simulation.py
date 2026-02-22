@@ -25,12 +25,21 @@ class ArenaSimulation:
     WALL_COLOR = (0, 191, 255)  # Electric blue (matching status panel)
     WALL_THICKNESS = 2
 
+    # Arena shear (dimensionless). Set small values to simulate non-rectilinear
+    # construction. Shear is applied as:
+    # [x']   [1  SHEAR_X] [x]
+    # [y'] = [SHEAR_Y 1]  [y]
+    ARENA_SHEAR_X = 0.001  # x' = x + SHEAR_X * y
+    ARENA_SHEAR_Y = 0.0  # y' = y + SHEAR_Y * x
+
     def __init__(self):
         """Initialize the arena simulation with pymunk space and rendering."""
         # Get dimensions directly from arena.py - single source of truth
         self.arena_width = arena.right
         self.arena_height = arena.top
         self.walls = arena.walls
+        # Distorted arena outline used for physics + rendering only.
+        self.sheared_walls = [self._apply_arena_shear(point) for point in self.walls]
 
         self.display_width = int(self.arena_width * self.SCALE) + (self.MARGIN * 2) + (self.ARENA_PADDING * 2)
         self.display_height = int(self.arena_height * self.SCALE) + (self.MARGIN * 2) + (self.ARENA_PADDING * 2)
@@ -59,7 +68,8 @@ class ArenaSimulation:
         Returns:
             Robot instance at a random valid position
         """
-        margin = max(robot_class.WIDTH, robot_class.LENGTH)
+        robot_config = getattr(robot_class, "CONFIG", robot_class)
+        margin = max(robot_config.WIDTH, robot_config.LENGTH)
 
         # Choose a random position, avoiding the cutout area
         while True:
@@ -81,9 +91,9 @@ class ArenaSimulation:
         static_body = self.space.static_body
 
         # Create segments for each wall section
-        for i in range(len(self.walls)):
-            start = self.walls[i]
-            end = self.walls[(i + 1) % len(self.walls)]
+        for i in range(len(self.sheared_walls)):
+            start = self.sheared_walls[i]
+            end = self.sheared_walls[(i + 1) % len(self.sheared_walls)]
 
             wall_segment = pymunk.Segment(static_body, start, end, 2)
             wall_segment.elasticity = 0.8  # Some bounce
@@ -123,7 +133,7 @@ class ArenaSimulation:
         screen.fill(self.BACKGROUND_COLOR)
 
         # Convert wall coordinates to screen space
-        screen_walls = [self.world_to_screen(x, y) for x, y in self.walls]
+        screen_walls = [self.world_to_screen(x, y) for x, y in self.sheared_walls]
 
         # Draw arena fill
         pygame.draw.polygon(screen, self.ARENA_FILL_COLOR, screen_walls)
@@ -131,3 +141,10 @@ class ArenaSimulation:
         # Draw walls
         pygame.draw.lines(screen, self.WALL_COLOR, True, screen_walls,
                          self.WALL_THICKNESS)
+
+    def _apply_arena_shear(self, point: Tuple[float, float]) -> Tuple[float, float]:
+        """Apply a small shear to arena coordinates to simulate construction error."""
+        x, y = point
+        sheared_x = x + (self.ARENA_SHEAR_X * y)
+        sheared_y = y + (self.ARENA_SHEAR_Y * x)
+        return (sheared_x, sheared_y)

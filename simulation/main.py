@@ -150,7 +150,7 @@ def main():
                         distance = math.sqrt(dx*dx + dy*dy)
 
                         # Use robot length as click radius
-                        if distance < robot.LENGTH:
+                        if distance < robot.CONFIG.LENGTH:
                             state.dragging = True
                             state.drag_offset_x = dx
                             state.drag_offset_y = dy

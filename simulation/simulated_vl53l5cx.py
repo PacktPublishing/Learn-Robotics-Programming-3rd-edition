@@ -22,6 +22,7 @@ class SimulatedVL53L5CX:
     # Simulation constants
     GLITCH_VALUE = 3000  # mm - value for invalid readings
     DEFAULT_GLITCH_RATE = 0.01  # 1% of readings are glitches
+    NOISE_STDDEV_MM = 10.0  # mm - ~95% of samples within +/- 20 mm
 
     def __init__(self, sensor_height: float, sensor_offset_x: float, sensor_offset_y: float,
                  glitch_rate: float = DEFAULT_GLITCH_RATE):
@@ -151,6 +152,9 @@ class SimulatedVL53L5CX:
                 floor_distance = self.floor_distances[row]
                 distance = min(obstacle_distance, floor_distance)
 
+                # Add zero-mean noise to simulate sensor accuracy limits
+                distance = self._add_noise(distance)
+
                 # Apply glitches randomly
                 if random.random() < self.glitch_rate:
                     distance = self.GLITCH_VALUE
@@ -231,6 +235,12 @@ class SimulatedVL53L5CX:
         if debug:
             print("    No valid hits detected")
         return self.MAX_RANGE
+
+    def _add_noise(self, distance: float) -> float:
+        if distance <= 0:
+            return distance
+        noisy = random.gauss(distance, self.NOISE_STDDEV_MM)
+        return max(self.MIN_RANGE, min(noisy, self.MAX_RANGE))
 
     def get_data(self):
         """Get current distance data.

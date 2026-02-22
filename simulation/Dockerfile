@@ -9,7 +9,6 @@ WORKDIR /app
 
 # Copy common files
 COPY simulation/pyproject.toml /app/pyproject.toml
-COPY robot/ /app/robot/
 
 # ===== Services target: Robot services =====
 FROM base AS services
@@ -19,6 +18,8 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends supervisor && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir -p /var/log/supervisor
+
+COPY robot/ /app/robot/
 
 # Install dependencies from the services group
 # This includes paho-mqtt, ujson, and numpy for robot services
