@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Tuple
 
 # Add robot directory to path so imports relative to robot/ work
-sys.path.insert(0, str(Path(__file__).parent.parent / "robot"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "robot"))
 
 from common import arena
 

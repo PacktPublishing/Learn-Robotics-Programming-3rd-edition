@@ -8,7 +8,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 WORKDIR /app
 
 # Copy common files
-COPY simulation/pyproject.toml /app/pyproject.toml
+COPY local_tools/simulation/pyproject.toml /app/pyproject.toml
 
 # ===== Services target: Robot services =====
 FROM base AS services
@@ -26,8 +26,8 @@ COPY robot/ /app/robot/
 RUN cd /app && uv pip install --system ".[services]"
 
 # Copy supervisord configuration and simulation-specific launcher service
-COPY simulation/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY simulation/launcher_service_supervisor.py /app/simulation/launcher_service.py
+COPY local_tools/simulation/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY local_tools/simulation/launcher_service_supervisor.py /app/simulation/launcher_service.py
 
 # Set PYTHONPATH so robot modules can be imported
 ENV PYTHONPATH=/app/robot
@@ -46,8 +46,8 @@ RUN pip install --no-cache-dir jinja2 && \
 
 # Copy robot_control files and template rendering script
 COPY robot_control /app/robot_control
-COPY simulation/.env.json /app/robot_control/.env.json
-COPY simulation/render_templates.py /app/render_templates.py
+COPY local_tools/simulation/.env.json /app/robot_control/.env.json
+COPY local_tools/simulation/render_templates.py /app/render_templates.py
 
 # Create libs directory and download JavaScript libraries
 RUN mkdir -p /app/robot_control/libs && \

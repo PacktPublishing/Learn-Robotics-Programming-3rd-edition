@@ -34,8 +34,18 @@
 			"type": "shell",
 			"command": "./start_simulation.sh",
 			"options": {
-				"cwd": "${workspaceFolder}/simulation"
+				"cwd": "${workspaceFolder}/local_tools/simulation"
 			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Run simulation (uv)",
+			"type": "shell",
+			"command": "uv run python main.py",
+			"options": {
+				"cwd": "${workspaceFolder}/local_tools/simulation"
+			},
+			"isBackground": true,
 			"problemMatcher": []
 		},
 		{
@@ -43,7 +53,7 @@
 			"type": "shell",
 			"command": "docker compose --profile web-interface --profile robot-services down",
 			"options": {
-				"cwd": "${workspaceFolder}/simulation"
+				"cwd": "${workspaceFolder}/local_tools/simulation"
 			},
 			"problemMatcher": []
 		}

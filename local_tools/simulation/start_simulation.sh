@@ -52,6 +52,6 @@ echo
 
 echo "Press Ctrl+C to stop the pygame simulation process."
 echo "To stop Docker services later, run:"
-echo "  cd simulation && docker compose --profile web-interface --profile robot-services down"
+echo "  cd local_tools/simulation && docker compose --profile web-interface --profile robot-services down"
 
 wait "$SIM_PID"

@@ -16,7 +16,7 @@ The simulation display will be the "robot position" according to the simulation.
 
 The simulation uses data from robot/common/arena.py to define the arena layout - a single pointof truth, and helpers from robot/common/mqtt_behaviors.py to manage MQTT interactions.
 
-The simulations package setup is independent from the pyinfra setup, with python dependencies defined in simulation/pyproject.toml.
+The simulations package setup is independent from the pyinfra setup, with python dependencies defined in local_tools/simulation/pyproject.toml.
 
 ## Running the Simulation
 
@@ -30,7 +30,7 @@ The simulation consists of three components:
 Start everything in one terminal:
 
 ```bash
-cd simulation
+cd local_tools/simulation
 ./start_simulation.sh
 ```
 
@@ -43,7 +43,7 @@ You will need either Docker Desktop or Podman with compose support.
 
 First, ensure you have the mosquitto password file created:
 ```bash
-cd simulation
+cd local_tools/simulation
 docker run --rm -v $(pwd)/mosquitto.passwd:/mosquitto/config/passwd eclipse-mosquitto:2 mosquitto_passwd -b /mosquitto/config/passwd sim-user sim-password
 ```
 
@@ -51,7 +51,7 @@ docker run --rm -v $(pwd)/mosquitto.passwd:/mosquitto/config/passwd eclipse-mosq
 
 Start the broker in daemon mode (runs in background):
 ```bash
-cd simulation
+cd local_tools/simulation
 docker compose up mqtt
 ```
 
@@ -60,7 +60,7 @@ docker compose up mqtt
 Run the visualization on your host machine:
 
 ```bash
-cd simulation
+cd local_tools/simulation
 uv sync --extra simulation
 uv run python simulation.py
 ```
@@ -69,7 +69,7 @@ This uses uv's project virtual environment and does not install into your system
 Use `uv run python simulation.py` to avoid path resolution differences between shells.
 
 If VS Code auto-activates a different environment, uv may warn that `VIRTUAL_ENV`
-is being ignored; that warning is safe, and uv will still use `simulation/.venv`.
+is being ignored; that warning is safe, and uv will still use `.venv` for this project.
 
 Controls:
 - Press ESC or Q to quit
@@ -85,7 +85,7 @@ Start the robot services container which runs supervisord with:
 Note: Hardware services (inventor_hat, distance_sensor) are replaced by the pygame simulation.
 
 ```bash
-cd simulation
+cd local_tools/simulation
 docker compose --profile robot-services up --build robot-services
 ```
 
@@ -123,7 +123,7 @@ docker compose exec robot-services supervisorctl restart fixed_distance_avoider
 
 Start the web control interface to visualize sensor data:
 ```bash
-cd simulation
+cd local_tools/simulation
 docker compose --profile web-interface up --build web-control
 ```
 
@@ -146,7 +146,7 @@ Then restart Docker Desktop / VS Code and run the simulation again.
 
 Stop all services:
 ```bash
-cd simulation
+cd local_tools/simulation
 docker compose --profile robot-services down
 ```
 

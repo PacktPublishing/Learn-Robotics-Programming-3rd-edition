@@ -41,15 +41,15 @@ services:
   # Robot services container - runs launcher and simulation services via supervisord
   robot-services:
     build:
-      context: ..
-      dockerfile: simulation/Dockerfile
+      context: ../..
+      dockerfile: local_tools/simulation/Dockerfile
       target: services
     container_name: simulation-robot-services
     depends_on:
       - mqtt
     volumes:
       - ./.env.json:/app/robot_control/.env.json
-      - ../robot:/app/robot  # Mount robot code for live updates
+      - ../../robot:/app/robot  # Mount robot code for live updates
     network_mode: "service:mqtt"
     profiles:
       - robot-services
@@ -57,8 +57,8 @@ services:
   # Web control interface (does not start by default)
   web-control:
     build:
-      context: ..
-      dockerfile: simulation/Dockerfile
+      context: ../..
+      dockerfile: local_tools/simulation/Dockerfile
       target: web
     container_name: simulation-web-control
     depends_on:
