@@ -6,6 +6,8 @@ import inventorhatmini
 from common.mqtt_behavior import publish_json, connect
 
 last_message = 0
+
+
 board = inventorhatmini.InventorHATMini()
 left_motor = board.motors[1]
 right_motor = board.motors[0]
@@ -89,13 +91,20 @@ def reset_encoders(*_):
     right_encoder.zero()
 
 
+class EncoderState:
+    seq = 0
+
+
 def update_encoders(client):
     left_data = left_encoder.capture()
     right_data = right_encoder.capture()
+    EncoderState.seq += 1
     publish_json(
         client,
         "sensors/encoders/data",
         {
+            "seq": EncoderState.seq,
+            "timestamp_ms": int(time.time() * 1000),
             "left_counts": left_data.count,
             "right_counts": right_data.count,
             "left_radians": left_data.radians,

@@ -8,7 +8,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 WORKDIR /app
 
 # Copy common files
-COPY local_tools/simulation/pyproject.toml /app/pyproject.toml
+COPY local_tools/pyproject.toml /app/pyproject.toml
 
 # ===== Services target: Robot services =====
 FROM base AS services

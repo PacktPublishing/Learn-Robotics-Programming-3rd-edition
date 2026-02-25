@@ -11,7 +11,7 @@ Consumes localisation particle output and publishes a representative pose.
 From repo root:
 
 ```bash
-python local_tools/pose_analysis/pose_analysis_service.py
+uv run --project local_tools python local_tools/pose_analysis/pose_analysis_service.py
 ```
 
 The service reads MQTT credentials from:
@@ -26,11 +26,11 @@ Default behavior publishes mean of all poses (`mean-all`).
 To follow the densest pose region:
 
 ```bash
-POSE_ANALYSIS_USE_LARGEST_CLUSTER=1 python local_tools/pose_analysis/pose_analysis_service.py
+POSE_ANALYSIS_USE_LARGEST_CLUSTER=1 uv run --project local_tools python local_tools/pose_analysis/pose_analysis_service.py
 ```
 
 Tune cluster bin size (millimeters):
 
 ```bash
-POSE_ANALYSIS_USE_LARGEST_CLUSTER=1 POSE_ANALYSIS_CLUSTER_BIN_MM=60 python local_tools/pose_analysis/pose_analysis_service.py
+POSE_ANALYSIS_USE_LARGEST_CLUSTER=1 POSE_ANALYSIS_CLUSTER_BIN_MM=60 uv run --project local_tools python local_tools/pose_analysis/pose_analysis_service.py
 ```

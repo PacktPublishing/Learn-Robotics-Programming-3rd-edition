@@ -41,7 +41,7 @@
 		{
 			"label": "Run simulation (uv)",
 			"type": "shell",
-			"command": "uv run python main.py",
+			"command": "uv run --project .. python main.py",
 			"options": {
 				"cwd": "${workspaceFolder}/local_tools/simulation"
 			},
@@ -55,6 +55,25 @@
 			"options": {
 				"cwd": "${workspaceFolder}/local_tools/simulation"
 			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Sync local_tools (uv)",
+			"type": "shell",
+			"command": "uv sync --project . --extra simulation",
+			"options": {
+				"cwd": "${workspaceFolder}/local_tools"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Run pose analysis service",
+			"type": "shell",
+			"command": "uv run --project .. python pose_analysis_service.py",
+			"options": {
+				"cwd": "${workspaceFolder}/local_tools/pose_analysis"
+			},
+			"isBackground": true,
 			"problemMatcher": []
 		}
 	]

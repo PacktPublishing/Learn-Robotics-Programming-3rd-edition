@@ -12,16 +12,11 @@ mode can be enabled with `POSE_ANALYSIS_USE_LARGEST_CLUSTER=1`.
 import json
 import math
 import os
-import sys
 import time
 from pathlib import Path
 from typing import Iterable
 
-
-ROBOT_SYMLINK = Path(__file__).resolve().parent / "robot"
-sys.path.insert(0, str(ROBOT_SYMLINK))
-
-from common import mqtt_behavior
+from robot.common import mqtt_behavior
 
 
 INPUT_TOPIC = "localisation/poses"
@@ -103,13 +98,7 @@ def resolve_config_path() -> Path:
         return Path(explicit).expanduser().resolve()
 
     repo_root = Path(__file__).resolve().parents[2]
-    candidates = [
-        repo_root / "local_tools" / "simulation" / ".env.json",
-        repo_root / "robot_control" / ".env.json",
-    ]
-    for path in candidates:
-        if path.exists():
-            return path
+    return repo_root / "local_tools" / "simulation" / ".env.json"
 
     raise FileNotFoundError(
         "No config file found. Set POSE_ANALYSIS_CONFIG or create "
@@ -119,23 +108,18 @@ def resolve_config_path() -> Path:
 
 class PoseAnalysisService:
     def __init__(self):
-        self.running = True
         self.config_path = resolve_config_path()
 
         self.use_largest_cluster = os.getenv("POSE_ANALYSIS_USE_LARGEST_CLUSTER", "0") == "1"
         self.cluster_bin_mm = float(os.getenv("POSE_ANALYSIS_CLUSTER_BIN_MM", str(DEFAULT_CLUSTER_BIN_MM)))
 
-        self.client = None
-
     def on_connect(self, client, userdata, flags, rc: int):
         print(f"Connected to MQTT with result code {rc}")
         client.subscribe(INPUT_TOPIC)
+        client.message_callback_add(INPUT_TOPIC, self.on_message)
         print(f"Subscribed to {INPUT_TOPIC}")
 
     def on_message(self, client, userdata, msg):
-        if msg.topic != INPUT_TOPIC:
-            return
-
         try:
             poses = parse_pose_list(msg.payload)
             if not poses:
@@ -156,10 +140,9 @@ class PoseAnalysisService:
             + (f"largest-cluster (bin={self.cluster_bin_mm}mm)" if self.use_largest_cluster else "mean-all")
         )
 
-        self.client = mqtt_behavior.connect(on_connect=self.on_connect, config_path=str(self.config_path))
-        self.client.on_message = self.on_message
+        mqtt_behavior.connect(on_connect=self.on_connect, config_path=str(self.config_path))
 
-        while self.running:
+        while True:
             time.sleep(0.1)
 
 if __name__ == "__main__":

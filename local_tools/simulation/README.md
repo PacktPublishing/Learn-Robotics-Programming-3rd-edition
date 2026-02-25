@@ -16,7 +16,7 @@ The simulation display will be the "robot position" according to the simulation.
 
 The simulation uses data from robot/common/arena.py to define the arena layout - a single pointof truth, and helpers from robot/common/mqtt_behaviors.py to manage MQTT interactions.
 
-The simulations package setup is independent from the pyinfra setup, with python dependencies defined in local_tools/simulation/pyproject.toml.
+Local tools share a single uv project with dependencies defined in local_tools/pyproject.toml.
 
 ## Running the Simulation
 
@@ -61,12 +61,12 @@ Run the visualization on your host machine:
 
 ```bash
 cd local_tools/simulation
-uv sync --extra simulation
-uv run python simulation.py
+uv sync --project .. --extra simulation
+uv run --project .. python simulation.py
 ```
 
 This uses uv's project virtual environment and does not install into your system Python.
-Use `uv run python simulation.py` to avoid path resolution differences between shells.
+Use `uv run --project .. python simulation.py` to avoid path resolution differences between shells.
 
 If VS Code auto-activates a different environment, uv may warn that `VIRTUAL_ENV`
 is being ignored; that warning is safe, and uv will still use `.venv` for this project.
