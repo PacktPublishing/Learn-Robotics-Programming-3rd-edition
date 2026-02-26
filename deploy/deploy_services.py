@@ -50,7 +50,7 @@ env_config = files.put(
 common = files.sync(
     name="Update common code",
     src="robot/common", dest="robot/common",
-    exclude=("*.pyc", "__pycache__"))
+    exclude=("*.pyc", "**/*.pyc", "__pycache__", "**/__pycache__", "**/__pycache__/*"))
 
 common_changed = common.changed or env_config.changed
 
@@ -156,7 +156,7 @@ code = files.put(
 observation_models = files.sync(
     name="Update observation models",
     src="robot/observation_models", dest="robot/observation_models",
-    exclude=("*.pyc", "__pycache__"))
+    exclude=("*.pyc", "**/*.pyc", "__pycache__", "**/__pycache__", "**/__pycache__/*"))
 
 deploy_service("localisation",
                "robot/localisation.py",
