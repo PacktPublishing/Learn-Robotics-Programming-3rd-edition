@@ -20,6 +20,17 @@ pan = board.servos[0]
 tilt = board.servos[1]
 
 
+class MotorTiming:
+    enabled = True
+    sample_count = 0
+    report_every = 50
+    seq = 0
+    max_gap_us = 0.0
+    max_total_us = 0.0
+    sum_gap_us = 0.0
+    sum_total_us = 0.0
+
+
 def all_messages(client, userdata, msg):
     global last_message
     last_message = time.time()
@@ -59,10 +70,38 @@ def stop_tilt(client=None, userdata=None, msg=None):
 
 def set_motor_wheels(client, userdata, msg):
     left, right = json.loads(msg.payload)
-    left_motor.enable()
+    start = time.perf_counter()
     left_motor.speed(left)
-    right_motor.enable()
+    after_left = time.perf_counter()
     right_motor.speed(right)
+    after_right = time.perf_counter()
+
+    if not MotorTiming.enabled:
+        return
+
+    gap_us = (after_left - start) * 1_000_000.0
+    total_us = (after_right - start) * 1_000_000.0
+
+    MotorTiming.sample_count += 1
+    MotorTiming.sum_gap_us += gap_us
+    MotorTiming.sum_total_us += total_us
+    MotorTiming.max_gap_us = max(MotorTiming.max_gap_us, gap_us)
+    MotorTiming.max_total_us = max(MotorTiming.max_total_us, total_us)
+
+    if MotorTiming.sample_count % MotorTiming.report_every == 0:
+        avg_gap_us = MotorTiming.sum_gap_us / MotorTiming.sample_count
+        avg_total_us = MotorTiming.sum_total_us / MotorTiming.sample_count
+        MotorTiming.seq += 1
+        timing_data = {
+            "seq": MotorTiming.seq,
+            "timestamp": time.time(),
+            "samples": MotorTiming.sample_count,
+            "avg_gap_us": avg_gap_us,
+            "max_gap_us": MotorTiming.max_gap_us,
+            "avg_total_us": avg_total_us,
+            "max_total_us": MotorTiming.max_total_us,
+        }
+        publish_json(client, "motors/wheels/timing", timing_data)
 
 
 def stop_motors(client=None, userdata=None, msg=None):
