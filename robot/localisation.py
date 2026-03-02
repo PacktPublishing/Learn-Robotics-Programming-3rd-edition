@@ -10,11 +10,13 @@ from observation_models.boundary import BoundaryObservationModel
 from observation_models.distance import DistanceObservationModel
 
 population_size = 20000
+ess_resample_ratio_threshold = 0.5
 rng = np.random.default_rng()
 
 class Localisation:
     def __init__(self):
         self.poses = Poses.generate(population_size, (arena.left, arena.right), (arena.bottom, arena.top), (0, 2 * np.pi))
+        self.weights = np.full(population_size, 1.0 / population_size)
         self.localisation_seq = 0
 
         self.wheel_distance = 136 #161
@@ -23,8 +25,8 @@ class Localisation:
 
         self.trans_noise_from_trans = 0.2/100
         self.trans_noise_from_rot = 0.1/100
-        self.rot_noise_from_rot = 0.2/100
-        self.rot_noise_from_trans = 0.01/100
+        self.rot_noise_from_rot = 0.4/100
+        self.rot_noise_from_trans = 0.04/100
 
         self.boundary_model = BoundaryObservationModel()
         self.distance_model = DistanceObservationModel()
@@ -55,6 +57,30 @@ class Localisation:
         if ess_ratio < 0.5:
             return "medium"
         return "high"
+
+    def should_resample(self, ess: float) -> bool:
+        return ess < (population_size * ess_resample_ratio_threshold)
+
+    def pose_spread_metrics(self) -> tuple[float, float]:
+        x = self.poses['x'].astype(np.float64)
+        y = self.poses['y'].astype(np.float64)
+        theta = self.poses['theta'].astype(np.float64)
+        weights = self.weights
+
+        mean_x = np.sum(weights * x)
+        mean_y = np.sum(weights * y)
+        var_x = np.sum(weights * (x - mean_x) ** 2)
+        var_y = np.sum(weights * (y - mean_y) ** 2)
+        spread_xy_mm = float(np.sqrt(var_x + var_y))
+
+        mean_sin = np.sum(weights * np.sin(theta))
+        mean_cos = np.sum(weights * np.cos(theta))
+        resultant_length = float(np.hypot(mean_sin, mean_cos))
+        resultant_length = max(resultant_length, 1e-12)
+        theta_circular_std_rad = float(np.sqrt(-2.0 * np.log(resultant_length)))
+        spread_theta_deg = float(np.degrees(theta_circular_std_rad))
+
+        return spread_xy_mm, spread_theta_deg
 
     def apply_observational_models(self):
         boundary_weights = self.boundary_model.calculate_weights(self.poses)
@@ -101,15 +127,27 @@ class Localisation:
         trans_samples, rot_samples = self.randomise_motion(
             translation, rotation)
         self.poses = self.poses.move(rot_samples, trans_samples)
-        weights = self.apply_observational_models()
+        observation_likelihoods = self.apply_observational_models()
+        self.weights = self.weights * observation_likelihoods
+        total_weight = np.sum(self.weights)
+        if total_weight <= 0.0:
+            self.weights.fill(1.0 / population_size)
+        else:
+            self.weights = self.weights / total_weight
+
         in_bounds_ratio = float(np.mean(self.boundary_model.in_boundary(self.poses)))
-        ess = self.effective_sample_size(weights)
+        ess = self.effective_sample_size(self.weights)
+        spread_xy_mm, spread_theta_deg = self.pose_spread_metrics()
+        resample_triggered = self.should_resample(ess)
         self.localisation_seq += 1
         localisation_timestamp_ms = int(time.time() * 1000)
 
         # Act
-        publish_sample = self.poses.resample(weights, 200)
-        self.poses = self.poses.resample(weights, population_size)
+        publish_sample = self.poses.resample(self.weights, 200)
+        if resample_triggered:
+            self.poses = self.poses.resample(self.weights, population_size)
+            self.weights.fill(1.0 / population_size)
+
         self.publish_poses(
             client,
             publish_sample,
@@ -132,7 +170,10 @@ class Localisation:
                 "effective_sample_size": ess,
                 "ess_ratio": float(ess / population_size),
                 "ess_status": self.ess_status(ess),
-                "resample_triggered": True,
+                "pose_spread_xy_mm": spread_xy_mm,
+                "pose_spread_theta_deg": spread_theta_deg,
+                "resample_triggered": resample_triggered,
+                "ess_resample_ratio_threshold": ess_resample_ratio_threshold,
             }
         )
 
