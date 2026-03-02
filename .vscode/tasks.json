@@ -75,6 +75,85 @@
 			},
 			"isBackground": true,
 			"problemMatcher": []
+		},
+		{
+			"label": "Deploy script (pyinfra)",
+			"type": "shell",
+			"command": "/home/danny/.local/bin/poetry",
+			"args": [
+				"run",
+				"pyinfra",
+				"inventory.py",
+				"${input:deployScript}",
+				"-y",
+				"--limit",
+				"${input:deployTargetHost}"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Deploy services (pyinfra, inventory prompt)",
+			"type": "shell",
+			"command": "/home/danny/.local/bin/poetry",
+			"args": [
+				"run",
+				"python",
+				"deploy/run_deploy_services.py"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Deploy services (pyinfra, host text prompt)",
+			"type": "shell",
+			"command": "/home/danny/.local/bin/poetry",
+			"args": [
+				"run",
+				"python",
+				"deploy/run_deploy_services.py",
+				"--host",
+				"${input:deployTargetHostText}"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		}
+	],
+	"inputs": [
+		{
+			"id": "deployTargetHost",
+			"type": "pickString",
+			"description": "Select target host",
+			"default": "learnrob3.local",
+			"options": [
+				"learnrob3-2.local",
+				"learnrob3-1.local",
+				"learnrob3.local"
+			]
+		},
+		{
+			"id": "deployScript",
+			"type": "pickString",
+			"description": "Select pyinfra deploy script",
+			"default": "deploy/update_code.py",
+			"options": [
+				"deploy/disable_wifi_power_save.py",
+				"deploy/update_code_rsync.py",
+				"deploy/update_code.py",
+				"deploy/deploy_services.py"
+			]
+		},
+		{
+			"id": "deployTargetHostText",
+			"type": "promptString",
+			"description": "Hostname for --host (leave blank to show inventory menu)",
+			"default": "learnrob3.local"
 		}
 	]
 }
