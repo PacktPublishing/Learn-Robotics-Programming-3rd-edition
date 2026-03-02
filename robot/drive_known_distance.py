@@ -9,6 +9,7 @@ class DriveKnownDistanceBehavior:
     def __init__(self):
         self.left_distance = 0
         self.right_distance = 0
+        self.has_encoder_data = False
         self.distance_pid = PIDController(0.2, 0.01)
         self.speed = 180
         self.stopping_distance = 100
@@ -17,14 +18,19 @@ class DriveKnownDistanceBehavior:
         distance_data = json.loads(msg.payload)
         self.left_distance = distance_data['left_distance']
         self.right_distance = distance_data['right_distance']
+        self.has_encoder_data = True
 
     def drive_line(self, client, expected_distance=1000):
+        start_left_distance = self.left_distance
+        start_right_distance = self.right_distance
         distance_reached = False
         time_stepper = TimeStepper()
         while not distance_reached:
             # Sense
-            left_error = expected_distance - self.left_distance
-            right_error = expected_distance - self.right_distance
+            left_travelled_distance = self.left_distance - start_left_distance
+            right_travelled_distance = self.right_distance - start_right_distance
+            left_error = expected_distance - left_travelled_distance
+            right_error = expected_distance - right_travelled_distance
             time_difference = time_stepper.step()
 
             # Think
@@ -60,10 +66,11 @@ class DriveKnownDistanceBehavior:
     def start(self):
         client = connect()
         client.subscribe("sensors/encoders/data")
-        client.publish("sensors/encoders/control/reset")
         publish_json(client, "wheel_control/enabled", True)
         client.message_callback_add("sensors/encoders/data",
                                     self.on_encoders_data)
+        while not self.has_encoder_data:
+            time.sleep(0.05)
         client.subscribe("config/updated")
         client.message_callback_add("config/updated",
                                     self.on_config_updated)
