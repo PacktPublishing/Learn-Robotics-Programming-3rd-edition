@@ -64,6 +64,77 @@ Run each trajectory from each start pose, 5 repeats minimum.
 4. **Cutout approach-turn**: approach cutout opening, turn, retreat.
 5. **Kidnapped reset**: move robot manually mid-run, continue.
 
+### Later section: trajectory implementation plans
+
+Manual driving is likely too imprecise for consistent comparisons across runs.
+
+Planned automation approach:
+
+- Use closed-loop wheel speed control (encoder-driven) to improve repeatability of line and turn segments.
+- Implement trajectory runner services derived from `BehaviorPath` rather than duplicating path-driving logic.
+- Reuse `BehaviorPath` primitives such as `drive_line` and `drive_curve`.
+- Create small scenario services for the first four trajectories (straight+stop, square loop, rotate in place, cutout approach-turn).
+- Run each scenario service after placing the robot at a known start pose from `experiment_start_poses.json`.
+
+Implementation notes:
+
+- Keep each scenario service focused on sequence definition (segment lengths, turn angles, speeds), not motor-control internals.
+- Use consistent names/tags so logger output maps directly to trajectory definitions.
+- Keep kidnapped-reset as a partially manual intervention test, even when other trajectories are automated.
+
+Proposed service names:
+
+- `trajectory_straight_stop_service`
+- `trajectory_square_loop_service`
+- `trajectory_rotate_in_place_service`
+- `trajectory_cutout_approach_turn_service`
+
+Proposed common motion settings (initial values):
+
+- `line_speed_mm_s = 140`
+- `curve_speed_mm_s = 110`
+- `pause_s = 0.75` between segments
+
+Proposed segment definitions (v1):
+
+1. `trajectory_straight_stop_service` (tag: `straight_stop`)
+	- `drive_line(500 mm, 140 mm/s)`
+	- pause 0.75 s
+	- `drive_line(500 mm, 140 mm/s)`
+	- pause 0.75 s
+
+2. `trajectory_square_loop_service` (tag: `square_loop`)
+	- Repeat 4x:
+	  - `drive_line(350 mm, 140 mm/s)`
+	  - pause 0.75 s
+	  - `drive_curve(+90 deg, 110 mm/s)`
+	  - pause 0.75 s
+
+3. `trajectory_rotate_in_place_service` (tag: `rotate_in_place`)
+	- `drive_curve(+180 deg, 110 mm/s)`
+	- pause 0.75 s
+	- `drive_curve(-180 deg, 110 mm/s)`
+	- pause 0.75 s
+
+4. `trajectory_cutout_approach_turn_service` (tag: `cutout_approach_turn`)
+	- `drive_line(450 mm, 140 mm/s)`
+	- pause 0.75 s
+	- `drive_curve(+90 deg, 110 mm/s)`
+	- pause 0.75 s
+	- `drive_line(250 mm, 140 mm/s)`
+	- pause 0.75 s
+	- `drive_curve(+90 deg, 110 mm/s)`
+	- pause 0.75 s
+	- `drive_line(350 mm, 140 mm/s)`
+	- pause 0.75 s
+
+Run pattern:
+
+- Place robot on a start pose from `experiment_start_poses.json`.
+- Launch exactly one trajectory service.
+- Start logger with matching `--tag`.
+- Stop service and logger, then summarize with `mqtt_run_summary.py`.
+
 ### C. Metrics to record
 
 For each run:
