@@ -8,6 +8,7 @@
     <div style="height: 60vh; width: 60vh;">
         <canvas id="poses"></canvas>
     </div>
+    <div id="ess_billboard">SEQ: -- | ESS: -- | SpreadXY: -- mm | SpreadTheta: -- deg</div>
     <script src="libs/chart.js"></script>
     <script src="libs/chartjs-plugin-datalabels.js"></script>
 
@@ -120,6 +121,21 @@
             }, 0);
         }
 
+        function updateEssBillboard(message) {
+            const payload = JSON.parse(message);
+            const seq = Number.isFinite(payload.seq) ? payload.seq : '--';
+            const ess = payload.effective_sample_size;
+            const spreadXY = payload.pose_spread_xy_mm;
+            const spreadTheta = payload.pose_spread_theta_deg;
+
+            const essText = (typeof ess === 'number' && Number.isFinite(ess)) ? Math.round(ess) : '--';
+            const spreadXYText = (typeof spreadXY === 'number' && Number.isFinite(spreadXY)) ? Math.round(spreadXY) : '--';
+            const spreadThetaText = (typeof spreadTheta === 'number' && Number.isFinite(spreadTheta)) ? spreadTheta.toFixed(1) : '--';
+
+            document.getElementById('ess_billboard').innerText =
+                `SEQ: ${seq} | ESS: ${essText} | SpreadXY: ${spreadXYText} mm | SpreadTheta: ${spreadThetaText} deg`;
+        }
+
         mqttClient.subscribe('localisation/#')
         mqttClient.on('message', (topic, message) => {
             switch (topic) {
@@ -134,6 +150,9 @@
                     const payload = JSON.parse(message);
                     mapPlotter.walls = payload.walls;
                     triggerChartUpdate();
+                    break;
+                case 'localisation/diagnostics':
+                    updateEssBillboard(message);
                     break;
             }
         });
