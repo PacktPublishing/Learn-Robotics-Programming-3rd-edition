@@ -44,6 +44,8 @@ def circular_mean(angles: Iterable[float]) -> float:
 
 def parse_pose_list(payload: bytes) -> list[tuple[float, float, float]]:
     parsed = json.loads(payload)
+    if isinstance(parsed, dict):
+        parsed = parsed.get("poses", [])
     if not isinstance(parsed, list):
         return []
 
