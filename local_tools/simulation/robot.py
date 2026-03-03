@@ -5,6 +5,7 @@ import pymunk
 import random
 import math
 import time
+import os
 import ujson as json
 
 from common.mqtt_behavior import publish_json
@@ -13,6 +14,17 @@ from simulated_vl53l5cx import SimulatedVL53L5CX
 
 class RobotConfiguration:
     """Centralized configuration for simulation calibration and geometry."""
+
+    @staticmethod
+    def _env_float(name: str, default: float) -> float:
+        value = os.getenv(name)
+        if value is None:
+            return default
+        try:
+            return float(value)
+        except ValueError:
+            print(f"Invalid {name}={value!r}; using default {default}")
+            return default
 
     # Motor speed calibration
     BASE_SPEED_MM_PER_SEC = 195.0  # Mean speed at motor setting 1.0
@@ -47,6 +59,12 @@ class RobotConfiguration:
     SLIP_STDDEV = 0.01  # Variation across wheels
     SLIP_MAX = 0.15  # Clamp to avoid extreme loss
     INERTIA_TIME_CONSTANT = 0.12  # Seconds for wheel velocity to settle
+
+    # Systematic asymmetry (defaults keep current behavior)
+    LEFT_DRIVE_SCALE = _env_float.__func__("SIM_LEFT_DRIVE_SCALE", 1.0)
+    RIGHT_DRIVE_SCALE = _env_float.__func__("SIM_RIGHT_DRIVE_SCALE", 1.0)
+    LEFT_ENCODER_SCALE = _env_float.__func__("SIM_LEFT_ENCODER_SCALE", 1.06)
+    RIGHT_ENCODER_SCALE = _env_float.__func__("SIM_RIGHT_ENCODER_SCALE", 0.94)
 
     # Contact patch variation (scaled by tire width)
     CONTACT_VARIATION_PER_MM = 0.08  # Max fraction per mm of tire width
@@ -373,6 +391,10 @@ class Robot:
         left_velocity = self.left_wheel.get_drive_velocity()
         right_velocity = self.right_wheel.get_drive_velocity()
 
+        # Apply persistent drivetrain asymmetry
+        left_velocity *= self.CONFIG.LEFT_DRIVE_SCALE
+        right_velocity *= self.CONFIG.RIGHT_DRIVE_SCALE
+
         # Apply slip to body motion (encoders still track wheel rotation)
         left_velocity *= (1.0 - self.left_wheel_slip)
         right_velocity *= (1.0 - self.right_wheel_slip)
@@ -452,6 +474,10 @@ class Robot:
         half_separation = self.CONFIG.WHEEL_SEPARATION / 2
         actual_left_velocity = forward_velocity - (angular_velocity * half_separation)
         actual_right_velocity = forward_velocity + (angular_velocity * half_separation)
+
+        # Apply encoder-side asymmetry to model wheel/encoder calibration mismatch
+        actual_left_velocity *= self.CONFIG.LEFT_ENCODER_SCALE
+        actual_right_velocity *= self.CONFIG.RIGHT_ENCODER_SCALE
 
         # Update wheel encoders with actual velocities
         self.left_wheel.update_encoder(dt, actual_left_velocity)

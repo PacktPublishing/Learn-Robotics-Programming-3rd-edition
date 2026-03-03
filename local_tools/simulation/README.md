@@ -71,6 +71,30 @@ Use `uv run --project .. python simulation.py` to avoid path resolution differen
 If VS Code auto-activates a different environment, uv may warn that `VIRTUAL_ENV`
 is being ignored; that warning is safe, and uv will still use `.venv` for this project.
 
+### Systematic asymmetry tuning
+
+You can inject persistent left/right asymmetry via environment variables:
+
+- `SIM_LEFT_DRIVE_SCALE` (default `1.0`)
+- `SIM_RIGHT_DRIVE_SCALE` (default `1.0`)
+- `SIM_LEFT_ENCODER_SCALE` (default `1.0`)
+- `SIM_RIGHT_ENCODER_SCALE` (default `1.0`)
+
+Examples:
+
+```bash
+cd local_tools/simulation
+SIM_LEFT_DRIVE_SCALE=0.96 SIM_RIGHT_DRIVE_SCALE=1.02 uv run --project .. python main.py
+```
+
+```bash
+cd local_tools/simulation
+SIM_LEFT_ENCODER_SCALE=1.00 SIM_RIGHT_ENCODER_SCALE=0.98 uv run --project .. python main.py
+```
+
+`*_DRIVE_SCALE` affects how wheel commands move the body (traction/weight-bias style asymmetry).
+`*_ENCODER_SCALE` affects reported encoder distance relative to motion (calibration mismatch).
+
 Controls:
 - Press ESC or Q to quit
 - Close the window to exit
