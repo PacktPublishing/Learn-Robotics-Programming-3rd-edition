@@ -3,8 +3,8 @@ import numpy as np
 from common import arena
 from common.poses import Poses
 
-low_probability = 10 ** -10
-crosshair_radius = 50.0  # mm on each side of boundary
+low_probability = 0.1
+crosshair_radius = 100.0  # mm on each side of boundary
 
 Pose2D = np.dtype([('x', np.float64), ('y', np.float64)])
 
@@ -20,8 +20,8 @@ class BoundaryObservationModel:
         return np.logical_and(inside_walls, not_in_cutouts)
 
     def calculate_weights(self, poses):
-        return np.where(self.in_boundary(poses), 1.0, low_probability)
-        # return self.observe_crosshair(poses)
+        # return np.where(self.in_boundary(poses), 1.0, low_probability)
+        return self.observe_crosshair(poses)
 
     def observe_crosshair(self, poses):
         """Observe a 5 tap crosshair pattern for each pose.
