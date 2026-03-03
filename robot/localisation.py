@@ -9,13 +9,13 @@ from common.poses import Poses
 from observation_models.boundary import BoundaryObservationModel
 from observation_models.distance import DistanceObservationModel
 
-population_size = 20000
+population_size = 20
 ess_resample_ratio_threshold = 0.5
 rng = np.random.default_rng()
 
 class Localisation:
     def __init__(self):
-        self.poses = Poses.generate(population_size, (arena.left, arena.right), (arena.bottom, arena.top), (0, 2 * np.pi))
+        self.poses: Poses = Poses.generate(population_size, (arena.left, arena.right), (arena.bottom, arena.top), (0, 2 * np.pi))
         self.weights = np.full(population_size, 1.0 / population_size)
         self.localisation_seq = 0
 
@@ -23,10 +23,10 @@ class Localisation:
         self.previous_left_distance = 0
         self.previous_right_distance = 0
 
-        self.trans_noise_from_trans = 0.2/100
-        self.trans_noise_from_rot = 0.1/100
-        self.rot_noise_from_rot = 0.4/100
-        self.rot_noise_from_trans = 0.04/100
+        self.trans_noise_from_trans = 0.05/100
+        self.trans_noise_from_rot = 0.025/100
+        self.rot_noise_from_rot = 0.1/100
+        self.rot_noise_from_trans = 0.01/100
 
         self.boundary_model = BoundaryObservationModel()
         self.distance_model = DistanceObservationModel()
@@ -108,6 +108,12 @@ class Localisation:
 
         return trans_samples, rot_samples
 
+    def resample(self) -> np.ndarray:
+        resampled_poses, parent_indices = self.poses.resample(self.weights, population_size)
+        self.poses = resampled_poses.view(Poses)
+        self.weights.fill(1.0 / population_size)
+        return parent_indices.astype(np.int64)
+
     def on_encoders_data(self, client, userdata, msg):
         # Sense
         distance_data = json.loads(msg.payload)
@@ -126,7 +132,7 @@ class Localisation:
         rotation = theta / 2
         trans_samples, rot_samples = self.randomise_motion(
             translation, rotation)
-        self.poses = self.poses.move(rot_samples, trans_samples)
+        self.poses = self.poses.move(rot_samples, trans_samples).view(Poses)
         observation_likelihoods = self.apply_observational_models()
         self.weights = self.weights * observation_likelihoods
         total_weight = np.sum(self.weights)
@@ -139,14 +145,14 @@ class Localisation:
         ess = self.effective_sample_size(self.weights)
         spread_xy_mm, spread_theta_deg = self.pose_spread_metrics()
         resample_triggered = self.should_resample(ess)
+        resample_indices = None
         self.localisation_seq += 1
         localisation_timestamp_ms = int(time.time() * 1000)
 
         # Act
-        publish_sample = self.poses.resample(self.weights, 200)
         if resample_triggered:
-            self.poses = self.poses.resample(self.weights, population_size)
-            self.weights.fill(1.0 / population_size)
+            resample_indices = self.resample().tolist()
+        publish_sample = self.poses
 
         self.publish_poses(
             client,
@@ -154,7 +160,8 @@ class Localisation:
             self.localisation_seq,
             localisation_timestamp_ms,
             source_encoder_seq,
-            source_encoder_timestamp_ms
+            source_encoder_timestamp_ms,
+            resample_indices,
         )
         self.publish_diagnostics(
             client,
@@ -182,14 +189,25 @@ class Localisation:
         sensor_readings = sensor_data.reshape((8, 8))
         self.distance_model.handle_sensor_readings(sensor_readings)
 
-    def publish_poses(self, client, poses, seq, timestamp_ms, source_encoder_seq, source_encoder_timestamp_ms):
-        publish_json(client, "localisation/poses", poses.tolist())
+    def publish_poses(self, client, poses, seq, timestamp_ms, source_encoder_seq, source_encoder_timestamp_ms, resample_indices):
+        poses_payload = poses.tolist()
+        payload = {
+            "seq": seq,
+            "timestamp_ms": timestamp_ms,
+            "pose_count": int(len(poses_payload)),
+            "source_encoder_seq": source_encoder_seq,
+            "source_encoder_timestamp_ms": source_encoder_timestamp_ms,
+            "resample_indices": resample_indices,
+            "poses": poses_payload,
+        }
+        publish_json(client, "localisation/poses", payload)
         publish_json(client, "localisation/poses_meta", {
             "seq": seq,
             "timestamp_ms": timestamp_ms,
-            "pose_count": int(len(poses)),
+            "pose_count": int(len(poses_payload)),
             "source_encoder_seq": source_encoder_seq,
             "source_encoder_timestamp_ms": source_encoder_timestamp_ms,
+            "resample_indices": resample_indices,
         })
 
     def publish_diagnostics(self, client, diagnostics):

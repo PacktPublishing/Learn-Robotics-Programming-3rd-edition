@@ -42,7 +42,7 @@ class Poses(np.ndarray):
             .translate(translation) \
             .rotate(rotation)
 
-    def resample(self, weights, sample_count) -> 'Poses':
+    def resample(self, weights, sample_count) -> tuple['Poses', np.ndarray]:
         """Low variance resampling algorithm (systematic resampling).
 
         This ensures better representation of the particle distribution
@@ -53,7 +53,7 @@ class Poses(np.ndarray):
             sample_count: Number of poses to return
 
         Returns:
-            Resampled poses array
+            Resampled poses array and the selected indices
         """
         cumulative_sum = np.cumsum(weights)
         total_weight = cumulative_sum[-1]
@@ -67,5 +67,4 @@ class Poses(np.ndarray):
 
         # Find indices using searchsorted (efficient binary search)
         indices = np.searchsorted(cumulative_sum, sample_points)
-
-        return self[indices]
+        return self[indices].view(Poses), indices

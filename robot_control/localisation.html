@@ -8,7 +8,7 @@
     <div style="height: 60vh; width: 60vh;">
         <canvas id="poses"></canvas>
     </div>
-    <div id="ess_billboard">SEQ: -- | ESS: -- | SpreadXY: -- mm | SpreadTheta: -- deg</div>
+    <div id="meta_billboard">SEQ: -- | Poses: -- | Source encoder: -- | Resampled: --</div>
     <script src="libs/chart.js"></script>
     <script src="libs/chartjs-plugin-datalabels.js"></script>
 
@@ -26,15 +26,132 @@
                 label: 'poses',
                 data: [{x: 750, y: 750, theta: 0}],
             }],
-            update_pose_data(json_data) {
-                const pose_data = JSON.parse(json_data);
+            update_pose_data(pose_data) {
                 this.datasets[0].data = pose_data.map(
-                    raw_pose => ({
-                        x: raw_pose[0],
-                        y: raw_pose[1],
-                        theta: -raw_pose[2] * 180 / Math.PI
+                    pose => ({
+                        x: Array.isArray(pose) ? Number(pose[0]) : Number(pose.x),
+                        y: Array.isArray(pose) ? Number(pose[1]) : Number(pose.y),
+                        theta: -(Array.isArray(pose) ? Number(pose[2]) : Number(pose.theta)) * 180 / Math.PI,
                     })
                 );
+            }
+        };
+
+        const lineageTracker = {
+            nodes: new Map(),
+            currentPoses: [],
+            latestSeq: null,
+            currentKeys: [],
+            colors: Array.from({ length: 20 }, (_, index) => {
+                const hue = Math.round((index * 137.508) % 360);
+                return `hsl(${hue}, 75%, 45%)`;
+            }),
+            poseKey(seq, index) {
+                return `${seq}:${index}`;
+            },
+            ingest(payload) {
+                let rawPoseData = payload;
+                let seq = null;
+                let resampleIndices = null;
+
+                if (!Array.isArray(payload) && payload && typeof payload === 'object') {
+                    rawPoseData = Array.isArray(payload.poses) ? payload.poses : [];
+                    seq = Number(payload.seq);
+                    resampleIndices = Array.isArray(payload.resample_indices) ? payload.resample_indices : null;
+                }
+
+                if (!Number.isFinite(seq)) {
+                    seq = this.latestSeq === null ? 1 : this.latestSeq + 1;
+                }
+
+                const previousPoses = this.currentPoses;
+                const previousPosesByIndex = new Map(previousPoses.map((pose) => [pose.index, pose]));
+
+                const poseData = rawPoseData.map((pose, index) => {
+                    const x = Array.isArray(pose) ? Number(pose[0]) : Number(pose.x);
+                    const y = Array.isArray(pose) ? Number(pose[1]) : Number(pose.y);
+                    const theta = Array.isArray(pose) ? Number(pose[2]) : Number(pose.theta);
+                    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(theta)) {
+                        return null;
+                    }
+
+                    let parentIndex = null;
+                    let parentKey = null;
+                    if (Array.isArray(resampleIndices) && index < resampleIndices.length) {
+                        const candidateParentIndex = Number(resampleIndices[index]);
+                        if (Number.isInteger(candidateParentIndex) && candidateParentIndex >= 0) {
+                            parentIndex = candidateParentIndex;
+                            const parentPose = previousPosesByIndex.get(parentIndex);
+                            if (parentPose) {
+                                parentKey = parentPose.key;
+                            }
+                        }
+                        if (!parentKey) {
+                            const fallbackParent = previousPosesByIndex.get(index);
+                            if (fallbackParent) {
+                                parentIndex = index;
+                                parentKey = fallbackParent.key;
+                            }
+                        }
+                    } else {
+                        const parentPose = previousPosesByIndex.get(index);
+                        if (parentPose) {
+                            parentIndex = index;
+                            parentKey = parentPose.key;
+                        }
+                    }
+
+                    const key = this.poseKey(seq, index);
+                    const poseDataEntry = {
+                        key,
+                        seq,
+                        index,
+                        x,
+                        y,
+                        theta,
+                        parentIndex,
+                        parentKey,
+                    };
+                    this.nodes.set(key, poseDataEntry);
+                    return poseDataEntry;
+                }).filter((pose) => pose !== null);
+
+                this.currentPoses = poseData;
+                this.currentKeys = poseData.map((pose) => pose.key);
+                this.latestSeq = seq;
+
+                const keepKeys = new Set(this.currentKeys);
+                const stack = [...this.currentKeys];
+                while (stack.length > 0) {
+                    const key = stack.pop();
+                    const node = this.nodes.get(key);
+                    if (!node || !node.parentKey || keepKeys.has(node.parentKey)) {
+                        continue;
+                    }
+                    keepKeys.add(node.parentKey);
+                    stack.push(node.parentKey);
+                }
+                for (const existingKey of this.nodes.keys()) {
+                    if (!keepKeys.has(existingKey)) {
+                        this.nodes.delete(existingKey);
+                    }
+                }
+            },
+            pathForCurrentPose(currentPose) {
+                const path = [];
+                const seen = new Set();
+                let currentKey = currentPose.key;
+                while (currentKey && !seen.has(currentKey)) {
+                    seen.add(currentKey);
+                    const node = this.nodes.get(currentKey);
+                    if (!node) {
+                        break;
+                    }
+                    path.push(node);
+                    currentKey = node.parentKey;
+                }
+                path.reverse();
+                return path;
             }
         };
 
@@ -69,7 +186,40 @@
                 }
                 this.drawWalls(ctx, scales);
             }
-        }
+        };
+
+        const lineagePlotter = {
+            id: 'lineagePlotter',
+            drawPaths(ctx, scales) {
+                ctx.save();
+                ctx.lineWidth = 2;
+                for (const currentPose of lineageTracker.currentPoses) {
+                    const path = lineageTracker.pathForCurrentPose(currentPose);
+                    if (path.length < 2) {
+                        continue;
+                    }
+                    const color = lineageTracker.colors[currentPose.index % lineageTracker.colors.length];
+                    ctx.strokeStyle = color;
+                    ctx.beginPath();
+                    for (let i = 0; i < path.length; i += 1) {
+                        const point = path[i];
+                        const px = scales.x.getPixelForValue(point.x);
+                        const py = scales.y.getPixelForValue(point.y);
+                        if (i === 0) {
+                            ctx.moveTo(px, py);
+                        } else {
+                            ctx.lineTo(px, py);
+                        }
+                    }
+                    ctx.stroke();
+                }
+                ctx.restore();
+            },
+            afterDatasetsDraw(chart) {
+                const { ctx, scales } = chart;
+                this.drawPaths(ctx, scales);
+            }
+        };
 
         const datalabels = {
             color: 'blue',
@@ -107,13 +257,17 @@
                     }
                 }
             },
-            plugins: [ChartDataLabels, mapPlotter]
+            plugins: [ChartDataLabels, mapPlotter, lineagePlotter]
         };
-        const pose_ctx = document.getElementById('poses').getContext('2d');
+        const pose_canvas = document.getElementById('poses');
+        const pose_ctx = pose_canvas.getContext('2d');
         let pose_chart = new Chart(pose_ctx, pose_chart_config);
 
         let awaiting_update = false;
         function triggerChartUpdate()  {
+            if (awaiting_update) {
+                return;
+            }
             awaiting_update = true;
             setTimeout(() => {
                 awaiting_update = false;
@@ -121,38 +275,34 @@
             }, 0);
         }
 
-        function updateEssBillboard(message) {
-            const payload = JSON.parse(message);
+        function updateMetaBillboard(payload) {
             const seq = Number.isFinite(payload.seq) ? payload.seq : '--';
-            const ess = payload.effective_sample_size;
-            const spreadXY = payload.pose_spread_xy_mm;
-            const spreadTheta = payload.pose_spread_theta_deg;
+            const poseCount = Number.isFinite(payload.pose_count) ? payload.pose_count : '--';
+            const sourceEncoderSeq = Number.isFinite(payload.source_encoder_seq) ? payload.source_encoder_seq : '--';
+            const resampled = Array.isArray(payload.resample_indices) ? 'yes' : 'no';
 
-            const essText = (typeof ess === 'number' && Number.isFinite(ess)) ? Math.round(ess) : '--';
-            const spreadXYText = (typeof spreadXY === 'number' && Number.isFinite(spreadXY)) ? Math.round(spreadXY) : '--';
-            const spreadThetaText = (typeof spreadTheta === 'number' && Number.isFinite(spreadTheta)) ? spreadTheta.toFixed(1) : '--';
-
-            document.getElementById('ess_billboard').innerText =
-                `SEQ: ${seq} | ESS: ${essText} | SpreadXY: ${spreadXYText} mm | SpreadTheta: ${spreadThetaText} deg`;
+            document.getElementById('meta_billboard').innerText =
+                `SEQ: ${seq} | Poses: ${poseCount} | Source encoder: ${sourceEncoderSeq} | Resampled: ${resampled}`;
         }
 
-        mqttClient.subscribe('localisation/#')
+        mqttClient.subscribe('localisation/poses')
+        mqttClient.subscribe('localisation/map')
         mqttClient.on('message', (topic, message) => {
             switch (topic) {
                 case 'localisation/poses':
-                    if (awaiting_update) {
-                        return;
+                    {
+                        const payload = JSON.parse(message);
+                        const poseList = Array.isArray(payload) ? payload : (Array.isArray(payload.poses) ? payload.poses : []);
+                        data.update_pose_data(poseList);
+                        lineageTracker.ingest(payload);
+                        updateMetaBillboard(payload);
                     }
-                    data.update_pose_data(message);
                     triggerChartUpdate();
                     break;
                 case 'localisation/map':
                     const payload = JSON.parse(message);
                     mapPlotter.walls = payload.walls;
                     triggerChartUpdate();
-                    break;
-                case 'localisation/diagnostics':
-                    updateEssBillboard(message);
                     break;
             }
         });
