@@ -35,33 +35,3 @@ ENV PYTHONPATH=/app/robot
 # Default command runs supervisord
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
 
-# ===== Web target: Web control interface =====
-FROM base AS web
-
-# Install jinja2 for template rendering and curl for downloading libs
-RUN pip install --no-cache-dir jinja2 && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copy robot_control files and template rendering script
-COPY robot_control /app/robot_control
-COPY local_tools/simulation/.env.json /app/robot_control/.env.json
-COPY local_tools/simulation/render_templates.py /app/render_templates.py
-
-# Create libs directory and download JavaScript libraries
-RUN mkdir -p /app/robot_control/libs && \
-    curl -L https://github.com/bobboteck/JoyStick/raw/master/joy.js \
-         -o /app/robot_control/libs/joy.js && \
-    curl -L https://unpkg.com/mqtt@5.7.0/dist/mqtt.esm.js \
-         -o /app/robot_control/libs/mqtt.js && \
-    curl -L https://cdn.jsdelivr.net/npm/chart.js \
-         -o /app/robot_control/libs/chart.js && \
-    curl -L https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2 \
-         -o /app/robot_control/libs/chartjs-plugin-datalabels.js
-
-# Expose HTTP port
-EXPOSE 8080
-
-# Render templates and start web server
-CMD python render_templates.py && python -m http.server 8080 -d /app/robot_control

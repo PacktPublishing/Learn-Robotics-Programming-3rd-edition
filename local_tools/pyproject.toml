@@ -22,3 +22,10 @@ simulation = [
 services = [
 ]
 
+# Web group: for FastAPI-based web control service
+web = [
+    "fastapi>=0.116.0",
+    "uvicorn[standard]>=0.35.0",
+    "jinja2>=3.1.6",
+]
+

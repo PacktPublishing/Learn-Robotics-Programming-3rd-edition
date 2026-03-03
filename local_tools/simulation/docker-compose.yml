@@ -58,13 +58,13 @@ services:
   web-control:
     build:
       context: ../..
-      dockerfile: local_tools/simulation/Dockerfile
-      target: web
+      dockerfile: local_tools/web_control/Dockerfile
     container_name: simulation-web-control
     depends_on:
       - mqtt
     volumes:
       - ./.env.json:/app/robot_control/.env.json
+      - ../../robot_control:/app/robot_control
     ports:
       - "8080:8080"
     profiles:
