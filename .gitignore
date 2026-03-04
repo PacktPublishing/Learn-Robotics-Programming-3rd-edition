@@ -4,7 +4,6 @@ debug_data
 .env.js
 .env.json
 pyinfra-debug.log
-.env.json
 __pycache__/
 *.pyc
 node_modules/

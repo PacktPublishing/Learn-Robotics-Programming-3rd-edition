@@ -22,6 +22,10 @@ class Poses(np.ndarray):
         result['y'] += np.sin(self['theta']) * length
         return result
 
+    @property
+    def positions(self) -> np.ndarray:
+        return self.view(np.float32).reshape(-1, 3)[:, :2]
+
     def rotate(self, rotation) -> 'Poses':
         result = self.copy()
         result['theta'] += rotation
