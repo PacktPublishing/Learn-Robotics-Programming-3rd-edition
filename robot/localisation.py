@@ -15,7 +15,7 @@ class Localisation:
     def __init__(self):
         self.poses = Poses.generate(population_size, (arena.left, arena.right), (arena.bottom, arena.top), (0, 2 * np.pi))
 
-        self.wheel_distance = 150
+        self.wheel_distance = 136
         self.previous_left_distance = 0
         self.previous_right_distance = 0
 

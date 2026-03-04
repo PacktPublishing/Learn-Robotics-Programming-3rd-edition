@@ -85,13 +85,20 @@ def reset_encoders(*_):
     right_encoder.zero()
 
 
+class EncoderState:
+    seq = 0
+
+
 def update_encoders(client):
     left_data = left_encoder.capture()
     right_data = right_encoder.capture()
+    EncoderState.seq += 1
     publish_json(
         client,
         "sensors/encoders/data",
         {
+            "seq": EncoderState.seq,
+            "timestamp_ms": int(time.time() * 1000),
             "left_distance": left_data.radians * wheel_radius,
             "right_distance": right_data.radians * wheel_radius,
             "left_mm_per_sec": left_data.radians_per_second * wheel_radius,
