@@ -15,6 +15,7 @@ rng = np.random.default_rng()
 class Localisation:
     def __init__(self):
         self.poses = Poses.generate(population_size, (arena.left, arena.right), (arena.bottom, arena.top), (0, 2 * np.pi))
+        self.localisation_seq = 0
 
         self.wheel_distance = 136 #161
         self.previous_left_distance = 0
@@ -27,6 +28,33 @@ class Localisation:
 
         self.boundary_model = BoundaryObservationModel()
         self.distance_model = DistanceObservationModel()
+
+    def effective_sample_size(self, weights: np.ndarray) -> float:
+        """Return Effective Sample Size (ESS) for the current particle weights.
+
+        ESS is a measure of how diverse the particle weights are:
+            ESS = 1 / sum(normalized_weight^2)
+
+        Interpretation:
+        - High ESS (near particle count): weights are spread out (high diversity).
+        - Low ESS: a small number of particles dominate (low diversity / overconfidence risk).
+        """
+        total_weight = np.sum(weights)
+        if total_weight <= 0:
+            return 0.0
+        normalized = weights / total_weight
+        sum_squared = np.sum(normalized * normalized)
+        if sum_squared <= 0:
+            return 0.0
+        return float(1.0 / sum_squared)
+
+    def ess_status(self, ess: float) -> str:
+        ess_ratio = ess / population_size
+        if ess_ratio < 0.1:
+            return "low"
+        if ess_ratio < 0.5:
+            return "medium"
+        return "high"
 
     def apply_observational_models(self):
         boundary_weights = self.boundary_model.calculate_weights(self.poses)
@@ -57,6 +85,8 @@ class Localisation:
     def on_encoders_data(self, client, userdata, msg):
         # Sense
         distance_data = json.loads(msg.payload)
+        source_encoder_seq = distance_data.get('seq')
+        source_encoder_timestamp_ms = distance_data.get('timestamp_ms')
         left_distance_delta = (distance_data['left_distance'] -
                                self.previous_left_distance)
         right_distance_delta = (distance_data['right_distance'] -
@@ -72,19 +102,57 @@ class Localisation:
             translation, rotation)
         self.poses = self.poses.move(rot_samples, trans_samples)
         weights = self.apply_observational_models()
+        in_bounds_ratio = float(np.mean(self.boundary_model.in_boundary(self.poses)))
+        ess = self.effective_sample_size(weights)
+        self.localisation_seq += 1
+        localisation_timestamp_ms = int(time.time() * 1000)
 
         # Act
         publish_sample = self.poses.resample(weights, 200)
         self.poses = self.poses.resample(weights, population_size)
-        self.publish_poses(client, publish_sample)
+        self.publish_poses(
+            client,
+            publish_sample,
+            self.localisation_seq,
+            localisation_timestamp_ms,
+            source_encoder_seq,
+            source_encoder_timestamp_ms
+        )
+        self.publish_diagnostics(
+            client,
+            {
+                "seq": self.localisation_seq,
+                "timestamp_ms": localisation_timestamp_ms,
+                "source_encoder_seq": source_encoder_seq,
+                "source_encoder_timestamp_ms": source_encoder_timestamp_ms,
+                "translation_mm": float(translation),
+                "theta_rad": float(theta),
+                "rotation_rad": float(rotation),
+                "in_bounds_ratio": in_bounds_ratio,
+                "effective_sample_size": ess,
+                "ess_ratio": float(ess / population_size),
+                "ess_status": self.ess_status(ess),
+                "resample_triggered": True,
+            }
+        )
 
     def on_distance_readings(self, client, userdata, msg):
         sensor_data = np.array(json.loads(msg.payload))
         sensor_readings = sensor_data.reshape((8, 8))
         self.distance_model.handle_sensor_readings(sensor_readings)
 
-    def publish_poses(self, client, poses):
+    def publish_poses(self, client, poses, seq, timestamp_ms, source_encoder_seq, source_encoder_timestamp_ms):
         publish_json(client, "localisation/poses", poses.tolist())
+        publish_json(client, "localisation/poses_meta", {
+            "seq": seq,
+            "timestamp_ms": timestamp_ms,
+            "pose_count": int(len(poses)),
+            "source_encoder_seq": source_encoder_seq,
+            "source_encoder_timestamp_ms": source_encoder_timestamp_ms,
+        })
+
+    def publish_diagnostics(self, client, diagnostics):
+        publish_json(client, "localisation/diagnostics", diagnostics)
 
     def start(self):
         client = connect()

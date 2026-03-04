@@ -21,8 +21,8 @@ docker compose up -d mqtt
 sleep 2
 
 echo "[2/4] Starting pygame simulation"
-uv sync --extra simulation
-uv run python simulation.py &
+uv sync --project .. --extra simulation
+uv run --project .. python simulation.py &
 SIM_PID=$!
 
 echo "[3/4] Starting web control interface"

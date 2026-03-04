@@ -301,6 +301,7 @@ class Robot:
         # Encoder update timing
         self.last_encoder_publish = time.time()
         self.encoder_publish_interval = self.CONFIG.ENCODER_PUBLISH_INTERVAL
+        self.encoder_seq = 0
 
         # Distance sensor update timing
         self.last_distance_publish = time.time()
@@ -502,11 +503,14 @@ class Robot:
 
         left_data = self.left_wheel.get_encoder_data()
         right_data = self.right_wheel.get_encoder_data()
+        self.encoder_seq += 1
 
         publish_json(
             self.mqtt_client,
             "sensors/encoders/data",
             {
+                "seq": self.encoder_seq,
+                "timestamp_ms": int(time.time() * 1000),
                 "left_counts": left_data["counts"],
                 "right_counts": right_data["counts"],
                 "left_radians": left_data["radians"],

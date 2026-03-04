@@ -1,0 +1,76 @@
+{
+  "arena": {
+    "width_mm": 1500,
+    "height_mm": 1500,
+    "cutout": {
+      "x_min_mm": 1000,
+      "y_max_mm": 500,
+      "description": "Points with x > x_min_mm and y < y_max_mm are outside the L-shape"
+    },
+    "recorded_origin": "top_left",
+    "model_origin": "bottom_left",
+    "y_conversion": "y_bottom_left_mm = arena_height_mm - y_top_left_mm"
+  },
+  "start_poses": [
+    {
+      "id": "cutout_1",
+      "group": "cutout",
+      "x_top_left_mm": 1000,
+      "y_top_left_mm": 850,
+      "theta_deg": -135,
+      "theta_pi": -0.75,
+      "x_bottom_left_mm": 1000,
+      "y_bottom_left_mm": 650
+    },
+    {
+      "id": "cutout_2",
+      "group": "cutout",
+      "x_top_left_mm": 920,
+      "y_top_left_mm": 1120,
+      "theta_deg": -90,
+      "theta_pi": -0.5,
+      "x_bottom_left_mm": 920,
+      "y_bottom_left_mm": 380
+    },
+    {
+      "id": "corner_1",
+      "group": "opposite_corners",
+      "x_top_left_mm": 175,
+      "y_top_left_mm": 100,
+      "theta_deg": -30,
+      "theta_pi": -0.1666666667,
+      "x_bottom_left_mm": 175,
+      "y_bottom_left_mm": 1400
+    },
+    {
+      "id": "corner_2",
+      "group": "opposite_corners",
+      "x_top_left_mm": 225,
+      "y_top_left_mm": 350,
+      "theta_deg": 45,
+      "theta_pi": 0.25,
+      "x_bottom_left_mm": 225,
+      "y_bottom_left_mm": 1150
+    },
+    {
+      "id": "center_1",
+      "group": "central",
+      "x_top_left_mm": 600,
+      "y_top_left_mm": 850,
+      "theta_deg": -150,
+      "theta_pi": -0.8333333333,
+      "x_bottom_left_mm": 600,
+      "y_bottom_left_mm": 650
+    },
+    {
+      "id": "center_2",
+      "group": "central",
+      "x_top_left_mm": 545,
+      "y_top_left_mm": 350,
+      "theta_deg": 120,
+      "theta_pi": 0.6666666667,
+      "x_bottom_left_mm": 545,
+      "y_bottom_left_mm": 1150
+    }
+  ]
+}
