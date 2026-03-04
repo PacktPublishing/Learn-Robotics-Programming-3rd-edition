@@ -74,3 +74,17 @@ class DistanceObservationModel:
         ) # shape (N, 8, 2)
 
         return poses.positions[:, None] + sensor_rotated  # shape (N, 8, 2)
+
+    def calculate_weights(self, poses: Poses) -> np.ndarray:
+        """Given a set of poses, use the last set of measurements
+        to determine the pose weights.
+        Pose weights are based on projecting all the sensors against the loaded probability_field,
+        and for each pose, multiplying these.
+        """
+        endpoints = self.sensor_endpoints(poses)
+        flat = endpoints.reshape(-1, 2)
+        flat_probs = self.get_probabilities(flat)
+        probs = flat_probs.reshape(len(poses), 8)
+
+        # return np.prod(probs, axis=1)
+        return np.mean(probs, axis=1)
