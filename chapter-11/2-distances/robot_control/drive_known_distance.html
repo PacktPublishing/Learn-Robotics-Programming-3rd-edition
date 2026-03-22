@@ -1,0 +1,28 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Drive known distance{% endblock %}
+{% block content %}
+    <button id="start">Start</button>
+    <div class="line_chart">
+        <canvas id="plot"></canvas>
+    </div>
+
+    <script type="module">
+        import 'https://cdn.jsdelivr.net/npm/chart.js';
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+        import { create_timeseries_chart } from './chart_helper.js';
+        let mqttClient = connect();
+
+        publish_when_clicked(mqttClient, "start", "launcher/start", "drive_known_distance");
+
+        const behavior_chart = create_timeseries_chart('plot', ['left_error', 'right_error']);
+
+        mqttClient.subscribe('drive_known_distance/plot');
+        mqttClient.on('message', (topic, message) => {
+            switch (topic) {
+                case 'drive_known_distance/plot':
+                    behavior_chart.update_data(JSON.parse(message));
+                    break;
+            }
+        });
+    </script>
+{% endblock %}
