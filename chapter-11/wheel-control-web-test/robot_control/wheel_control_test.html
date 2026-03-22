@@ -1,0 +1,41 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Wheel control test{% endblock %}
+{% block content %}
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+    <label for="speed">mm per sec</label>
+    <input type="number" id="speed" step="1" value="300">
+    <div class="line_chart">
+        <canvas id="plot"></canvas>
+    </div>
+
+    <script type="module">
+        import 'https://cdn.jsdelivr.net/npm/chart.js';
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+        import { create_timeseries_chart } from './chart_helper.js';
+        let mqttClient = connect();
+
+        document.getElementById("start").addEventListener("click", () => {
+            mqttClient.publish("wheel_control/enabled", "true");
+            const speed = document.getElementById("speed").value;
+            mqttClient.publish("wheel_control/wheel_speed_mm", `[${speed}, ${speed}]`);
+        });
+        document.getElementById("stop").addEventListener("click", () => {
+            mqttClient.publish("wheel_control/wheel_speed_mm", "[0, 0]");
+            mqttClient.publish("wheel_control/enabled", "false");
+        });
+        document.getElementById("speed").addEventListener("change", (event) => {
+            const speed = event.target.value;
+            mqttClient.publish("wheel_control/wheel_speed_mm", `[${speed}, ${speed}]`);
+        });
+
+        const behavior_chart = create_timeseries_chart('plot', ['left_error', 'right_error']);
+
+        mqttClient.subscribe('wheel_control/plot');
+        mqttClient.on('message', (topic, message) => {
+            if (topic === 'wheel_control/plot') {
+                behavior_chart.update_data(JSON.parse(message));
+            }
+        });
+    </script>
+{% endblock %}
