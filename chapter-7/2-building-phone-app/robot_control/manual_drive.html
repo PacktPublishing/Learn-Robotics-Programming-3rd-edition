@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Robot control - Manual drive</title>
+        <link rel="stylesheet" type="text/css" href="styles.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="libs/joy.js"></script>
+    </head>
+    <body>
+        <h1>Robot control - Manual drive</h1>
+        <a href="index.html">Back to menu</a>
+        <div id="joydiv" style="width:50vh;height: 50vh;"></div>
+        <script type="module">
+            var joystick = new JoyStick(
+              'joydiv', 
+              {} , 
+              function(stickData) {
+                console.log(stickData.x, stickData.y);
+              }
+          );
+        </script>
+    </body>
+</html>
