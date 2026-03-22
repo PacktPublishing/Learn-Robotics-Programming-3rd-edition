@@ -1,0 +1,33 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Face direction{% endblock %}
+{% block content %}
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+    <div class="line_chart">
+        <canvas id="plot"></canvas>
+    </div>
+    Status: <samp id="status"></samp>
+    <script type="module">
+        import 'https://cdn.jsdelivr.net/npm/chart.js';
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+        import { create_timeseries_chart } from './chart_helper.js';
+
+        let mqttClient = connect();
+
+        publish_when_clicked(mqttClient, "start", "launcher/start", "face_direction");
+        publish_when_clicked(mqttClient, "stop", "launcher/stop", "face_direction");
+        const behavior_chart = create_timeseries_chart('plot', ['yaw_error', 'control_signal'])
+        mqttClient.subscribe('face_direction/plot');
+        mqttClient.subscribe('sensors/imu/status');
+        mqttClient.on('message', (topic, message) => {
+            switch (topic) {
+                case 'sensors/imu/status':
+                    document.getElementById('status').innerText = message;
+                    break;
+                case 'face_direction/plot':
+                    behavior_chart.update_data(JSON.parse(message));
+                    break;
+            }
+        });
+    </script>
+{% endblock %}
