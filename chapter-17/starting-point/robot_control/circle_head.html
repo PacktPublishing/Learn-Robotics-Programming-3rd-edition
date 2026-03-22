@@ -1,0 +1,13 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Circle head{% endblock %}
+{% block content %}
+    <button id="start">Start circling head</button>
+    <button id="stop">Stop circling head</button>
+    <script type="module">
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+        let mqttClient = connect();
+
+        publish_when_clicked(mqttClient, "start", "launcher/start", "circle_head");
+        publish_when_clicked(mqttClient, "stop", "launcher/stop", "circle_head");
+    </script>
+{% endblock %}
