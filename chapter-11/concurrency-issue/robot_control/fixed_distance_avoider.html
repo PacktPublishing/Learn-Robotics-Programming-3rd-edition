@@ -1,0 +1,39 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Fixed distance avoider{% endblock %}
+{% block content %}
+    <button id="start_avoider">Start avoider</button>
+    <button id="stop_avoider">Stop avoider</button>
+
+    <div style="width: 400px; height: 400px;">
+        <canvas id="distance_chart" width="400" height="400"></canvas>
+    </div>
+    <div class="line_chart">
+        <canvas id="plot"></canvas>
+    </div>
+    <script type="module">
+        import 'https://cdn.jsdelivr.net/npm/chart.js';
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+        import { create_timeseries_chart } from './chart_helper.js';
+        import { make_distance_chart } from './distance_chart.js';
+        let mqttClient = connect();
+
+        publish_when_clicked(mqttClient, "start_avoider", "launcher/start", "fixed_distance_avoider");
+        publish_when_clicked(mqttClient, "stop_avoider", "launcher/stop", "fixed_distance_avoider");
+
+        const distance_chart = make_distance_chart(mqttClient);
+        const fixed_distance_chart = create_timeseries_chart('plot', ['left_distance', 'right_distance']);
+
+        mqttClient.subscribe('sensors/distance_mm');
+        mqttClient.subscribe('fixed_distance_avoider/plot');
+        mqttClient.on('message', (topic, message) => {
+            switch (topic) {
+                case 'sensors/distance_mm':
+                    distance_chart.update_data(JSON.parse(message));
+                    break;
+                case 'fixed_distance_avoider/plot':
+                    fixed_distance_chart.update_data(JSON.parse(message));
+                    break;
+            }
+        });
+    </script>
+{% endblock %}
