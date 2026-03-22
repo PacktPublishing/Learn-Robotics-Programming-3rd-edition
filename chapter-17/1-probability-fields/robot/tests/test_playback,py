@@ -1,0 +1,4 @@
+import soundfile as sf
+import sounddevice as sd
+audio, samplerate = sf.read("ahoy.wav")
+sd.play(audio, samplerate)
