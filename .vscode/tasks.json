@@ -7,9 +7,6 @@
 				"kind": "build",
 				"isDefault": true
 			},
-			"runOptions": {
-				"runOn": "folderOpen"
-			},
 			"dependsOn": [
 				"pyinfra",
 				"mqttui"
@@ -18,7 +15,7 @@
 		{
 			"label": "pyinfra",
 			"type": "shell",
-			"command": "/home/danny/.local/bin/poetry",
+			"command": "poetry",
 			"args": ["run", "bash"],
 			"isBackground": true,
 			"problemMatcher": []
@@ -79,7 +76,7 @@
 		{
 			"label": "Deploy script (pyinfra)",
 			"type": "shell",
-			"command": "/home/danny/.local/bin/poetry",
+			"command": "poetry",
 			"args": [
 				"run",
 				"pyinfra",
@@ -97,7 +94,7 @@
 		{
 			"label": "Deploy services (pyinfra, inventory prompt)",
 			"type": "shell",
-			"command": "/home/danny/.local/bin/poetry",
+			"command": "poetry",
 			"args": [
 				"run",
 				"python",
@@ -111,7 +108,7 @@
 		{
 			"label": "Deploy services (pyinfra, host text prompt)",
 			"type": "shell",
-			"command": "/home/danny/.local/bin/poetry",
+			"command": "poetry",
 			"args": [
 				"run",
 				"python",
