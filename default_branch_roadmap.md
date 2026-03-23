@@ -32,3 +32,7 @@ We can verify each commit and the state of things.
 
 Hmm - so there's an issue here - one branch (Chapter-10/original) was an expo branch.
 It should be chapter-10/expo I think. I've renamed the folder, but we need to recreate an expo branch, and put it on the remote, removing this version.
+
+### PR branches for fixes/tests
+
+These will need to be rebased/reconstructed on the default branch. This may be a little tricky.
