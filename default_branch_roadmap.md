@@ -25,8 +25,10 @@ We can verify each commit and the state of things.
 - We MUST ignore branches marked with expo, old, archive, bokeh, https, experiments, jinja for now. We will come back to them.
 - Summarise chapters incorporated in a roadmap complete table at the bottom of this document.
 
-## Chapters complete
+## Issues
 
-origin branch name | destination folder | completed (y/n) | notes
---- | --- | --- | ---
 
+### Chapter-10/expo
+
+Hmm - so there's an issue here - one branch (Chapter-10/original) was an expo branch.
+It should be chapter-10/expo I think. I've renamed the folder, but we need to recreate an expo branch, and put it on the remote, removing this version.
