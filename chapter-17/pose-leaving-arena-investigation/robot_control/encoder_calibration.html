@@ -1,0 +1,57 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Encoder calibration{% endblock %}
+{% block content %}
+    <button id="start">Start turn</button>
+    <button id="stop">Stop turn</button>
+    <button id="reset">Reset encoders</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th></th>
+                <th>Left</th>
+                <th>Right</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th>Counts</th>
+                <td><samp id="left_counts">0</samp></td>
+                <td><samp id="right_counts">0</samp></td>
+            </tr>
+            <tr>
+                <th>Radians</th>
+                <td><samp id="left_radians">0</samp></td>
+                <td><samp id="right_radians">0</samp></td>
+            </tr>
+            <tr>
+                <th>Distance (mm)</th>
+                <td><samp id="left_distance">0</samp></td>
+                <td><samp id="right_distance">0</samp></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script type="module">
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+
+        const mqttClient = connect();
+        publish_when_clicked(mqttClient, "start", "launcher/start", "encoder_turn_calibration");
+        publish_when_clicked(mqttClient, "stop", "launcher/stop", "encoder_turn_calibration");
+        publish_when_clicked(mqttClient, "reset", "sensors/encoders/control/reset", "");
+
+        mqttClient.subscribe('sensors/encoders/data');
+        mqttClient.on('message', (topic, message) => {
+            if (topic !== 'sensors/encoders/data') {
+                return;
+            }
+            const data = JSON.parse(message);
+            document.getElementById('left_counts').innerText = data.left_counts ?? 0;
+            document.getElementById('right_counts').innerText = data.right_counts ?? 0;
+            document.getElementById('left_radians').innerText = (data.left_radians ?? 0).toFixed(4);
+            document.getElementById('right_radians').innerText = (data.right_radians ?? 0).toFixed(4);
+            document.getElementById('left_distance').innerText = (data.left_distance ?? 0).toFixed(2);
+            document.getElementById('right_distance').innerText = (data.right_distance ?? 0).toFixed(2);
+        });
+    </script>
+{% endblock %}

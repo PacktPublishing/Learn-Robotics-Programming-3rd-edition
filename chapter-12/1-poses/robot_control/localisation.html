@@ -1,0 +1,80 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Localisation {% endblock %}
+{% block content %}
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+    <div>
+        <canvas id="poses"></canvas>
+    </div>
+    <script src="libs/chart.js"></script>
+    <script src="libs/chartjs-plugin-datalabels"></script>
+
+    <script type="module">
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+        let mqttClient = connect();
+
+        publish_when_clicked(mqttClient, "start", "launcher/start", "localisation");
+        publish_when_clicked(mqttClient, "stop", "launcher/stop", "localisation");
+
+        const data = {
+            datasets: [{
+                label: 'poses',
+                data: [{x: 750, y: 750, theta: 0}],
+            }],
+            update_pose_data(json_data) {
+                const pose_data = JSON.parse(json_data);
+                this.datasets[0].data = pose_data.map(
+                    raw_pose => ({x: raw_pose[0], y: raw_pose[1], theta: -raw_pose[2] * 180 / Math.PI})
+                );
+            }
+        };
+
+        const datalabels = {
+            color: 'blue',
+            font: {
+                size: 24
+            },
+            padding: 0,
+            formatter(value) {
+                return '>'
+            },
+            rotation(ctx) {
+                const index = ctx.dataIndex;
+                return ctx.dataset.data[index].theta;
+            }
+        };
+
+        const pose_chart_config = {
+            type: 'scatter',
+            data: data,
+            options: {
+                animation: false,
+                responsive: true,
+                plugins: {
+                    datalabels
+                },
+                scales: {
+                    x: {
+                        suggestedMin: 0,
+                        suggestedMax: 1500,
+                    },
+                    y: {
+                        suggestedMin: 0,
+                        suggestedMax: 1500,
+                    }
+                }
+            },
+            plugins: [ChartDataLabels]
+        }
+        const pose_ctx = document.getElementById('poses').getContext('2d');
+        let pose_chart = new Chart(pose_ctx, pose_chart_config);
+
+        mqttClient.subscribe('localisation/poses')
+        mqttClient.on('message', (topic, message) => {
+            if (topic == 'localisation/poses') {
+                data.update_pose_data(message);
+                pose_chart.update();
+            }
+        });
+    </script>
+{% endblock %}

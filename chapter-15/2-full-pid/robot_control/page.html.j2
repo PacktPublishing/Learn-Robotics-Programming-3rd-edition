@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Robot control - {% block title %}{% endblock %}</title>
+        <link rel="stylesheet" type="text/css" href="styles.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        <h1>Robot control - {{ self.title() }}</h1>
+        <a href="index.html">Back to menu</a><br>
+        {% block content %}{% endblock %}
+    </body>
+</html>

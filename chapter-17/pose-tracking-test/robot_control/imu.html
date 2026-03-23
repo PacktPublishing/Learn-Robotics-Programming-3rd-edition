@@ -1,0 +1,70 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}IMU visualization{% endblock %}
+{% block content %}
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+    <div>
+        <canvas id="plot" style="width: 80%; height: 80%;"></canvas>
+    </div>
+    Status: <samp id="status"></samp>
+
+    <script type="module">
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+
+        let mqttClient = connect();
+        publish_when_clicked(mqttClient, "start", "launcher/start", "imu_service");
+        publish_when_clicked(mqttClient, "stop", "launcher/stop", "imu_service");
+
+        const canvas = document.getElementById('plot');
+        const engine = new BABYLON.Engine(canvas, true);
+        const scene = new BABYLON.Scene(engine);
+        const camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0, 10, -15));
+        camera.setTarget(BABYLON.Vector3.Zero());
+        const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0));
+        light.intensity = 0.7;
+        function makeRobot() {
+            // Orient so X is forward, Y is up, Z is right
+            const chassis = new BABYLON.MeshBuilder.CreateBox("robot", { height: 1, width: 5, depth : 3 });
+            chassis.position.y = 0.5;
+            const wheelL = new BABYLON.MeshBuilder.CreateCylinder("wheelL", { diameter: 1, height: 0.5 });
+            wheelL.position.z = 1.5;
+            wheelL.position.y = 0.5;
+            wheelL.rotation.x = Math.PI / 2;
+            const wheelR = wheelL.clone("wheelR");
+            wheelR.position.z = -1.5;
+            const electronics = new BABYLON.MeshBuilder.CreateBox("electronics", { height: 0.5, width: 1, depth : 1.5 });
+            electronics.position.y = 1.25;
+            electronics.position.x = -1;
+
+            return new BABYLON.Mesh.MergeMeshes(
+                [
+                    chassis,
+                    wheelL,
+                    wheelR,
+                    electronics
+                ],
+                true
+            );
+        }
+        const robot = makeRobot();
+
+        mqttClient.subscribe('sensors/imu/#');
+        mqttClient.on('message', (topic, message) => {
+            switch (topic) {
+                case 'sensors/imu/euler':
+                    const { roll, pitch, yaw } = JSON.parse(message);
+                    robot.setDirection(new BABYLON.Vector3(0, 0, 1),
+                        yaw, pitch, roll);
+                    break;
+                case 'sensors/imu/status':
+                    document.getElementById('status').innerText = message;
+                    break;
+            }
+        });
+
+        engine.runRenderLoop(() => {
+            scene.render();
+        });
+    </script>
+{% endblock %}

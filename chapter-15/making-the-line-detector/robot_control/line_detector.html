@@ -1,0 +1,45 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Line detector{% endblock %}
+{% block content %}
+    <button id="start_detection">Start detection</button>
+    <button id="stop_detection">Stop detection</button>
+    <button id="start_following">Start following</button>
+    <button id="stop_following">Stop following</button>
+
+    <div id="camera_view"></div>
+    <div class="line_chart">
+        <canvas id="plot"></canvas>
+    </div>
+
+    <script type="module">
+        import 'https://cdn.jsdelivr.net/npm/chart.js';
+        import { create_timeseries_chart } from './chart_helper.js';
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+
+        let mqttClient = connect();
+        publish_when_clicked(mqttClient, "start_detection", "launcher/start", "line_detector");
+        publish_when_clicked(mqttClient, "stop_detection", "launcher/stop", "line_detector");
+
+        publish_when_clicked(mqttClient, "start_following", "launcher/start", "line_follower");
+        publish_when_clicked(mqttClient, "stop_following", "launcher/stop", "line_follower");
+
+        const camera_view = document.getElementById('camera_view');
+        const behavior_chart = create_timeseries_chart('plot', ['turn', 'direction_error']);
+
+        mqttClient.subscribe('camera_view/url');
+        mqttClient.subscribe('line_follower/log');
+        mqttClient.publish('camera_view/url/get', '')
+        mqttClient.on('message', (topic, message) => {
+            switch (topic) {
+                case 'camera_view/url':
+                    const location = JSON.parse(message);
+                    camera_view.innerHTML = `<img src='${location}'/>`;
+                    break;
+                case 'line_follower/log':
+                    const log_data = JSON.parse(message);
+                    behavior_chart.update_data(log_data);
+                    break;
+            }
+        });
+    </script>
+{% endblock %}

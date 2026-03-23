@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Robot control - Fixed distance avoider</title>
+        <link rel="stylesheet" type="text/css" href="styles.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        <h1>Robot control -Fixed distance avoider</h1>
+        <a href="index.html">Back to menu</a>
+        <button id="start_avoider">Start avoider</button>
+        <button id="stop_avoider">Stop avoider</button>
+        <iframe src="/distance_plotter"></iframe>
+        <iframe src="/fixed_distance_avoider_plot"></iframe>
+        <script type="module">
+            import { connect, publish_when_clicked } from './mqtt_client.js';
+            let mqttClient = connect();
+
+            publish_when_clicked(mqttClient, "start_avoider", "launcher/start", "fixed_distance_avoider");
+            publish_when_clicked(mqttClient, "stop_avoider", "launcher/stop", "fixed_distance_avoider");
+        </script>
+    </body>
+</html>

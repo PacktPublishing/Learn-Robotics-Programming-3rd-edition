@@ -1,0 +1,156 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Create terminals",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"dependsOn": [
+				"pyinfra",
+				"mqttui"
+			]
+		},
+		{
+			"label": "pyinfra",
+			"type": "shell",
+			"command": "poetry",
+			"args": ["run", "bash"],
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "mqttui",
+			"type": "shell",
+			"command": "mqttui -b mqtt://learnrob3.local -u robot --password robot",
+			"problemMatcher": []
+		},
+		{
+			"label": "Start simulation",
+			"type": "shell",
+			"command": "./start_simulation.sh",
+			"options": {
+				"cwd": "${workspaceFolder}/local_tools/simulation"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Run simulation (uv)",
+			"type": "shell",
+			"command": "uv run --project .. python main.py",
+			"options": {
+				"cwd": "${workspaceFolder}/local_tools/simulation"
+			},
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Stop simulation services",
+			"type": "shell",
+			"command": "docker compose --profile web-interface --profile robot-services down",
+			"options": {
+				"cwd": "${workspaceFolder}/local_tools/simulation"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Sync local_tools (uv)",
+			"type": "shell",
+			"command": "uv sync --project . --extra simulation",
+			"options": {
+				"cwd": "${workspaceFolder}/local_tools"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Run pose analysis service",
+			"type": "shell",
+			"command": "uv run --project .. python pose_analysis_service.py",
+			"options": {
+				"cwd": "${workspaceFolder}/local_tools/pose_analysis"
+			},
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Deploy script (pyinfra)",
+			"type": "shell",
+			"command": "poetry",
+			"args": [
+				"run",
+				"pyinfra",
+				"inventory.py",
+				"${input:deployScript}",
+				"-y",
+				"--limit",
+				"${input:deployTargetHost}"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Deploy services (pyinfra, inventory prompt)",
+			"type": "shell",
+			"command": "poetry",
+			"args": [
+				"run",
+				"python",
+				"deploy/run_deploy_services.py"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Deploy services (pyinfra, host text prompt)",
+			"type": "shell",
+			"command": "poetry",
+			"args": [
+				"run",
+				"python",
+				"deploy/run_deploy_services.py",
+				"--host",
+				"${input:deployTargetHostText}"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
+		}
+	],
+	"inputs": [
+		{
+			"id": "deployTargetHost",
+			"type": "pickString",
+			"description": "Select target host",
+			"default": "learnrob3.local",
+			"options": [
+				"learnrob3-2.local",
+				"learnrob3-1.local",
+				"learnrob3.local"
+			]
+		},
+		{
+			"id": "deployScript",
+			"type": "pickString",
+			"description": "Select pyinfra deploy script",
+			"default": "deploy/update_code.py",
+			"options": [
+				"deploy/disable_wifi_power_save.py",
+				"deploy/update_code_rsync.py",
+				"deploy/update_code.py",
+				"deploy/deploy_services.py"
+			]
+		},
+		{
+			"id": "deployTargetHostText",
+			"type": "promptString",
+			"description": "Hostname for --host (leave blank to show inventory menu)",
+			"default": "learnrob3.local"
+		}
+	]
+}

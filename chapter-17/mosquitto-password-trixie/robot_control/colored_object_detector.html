@@ -1,0 +1,33 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Colored object detector{% endblock %}
+{% block content %}
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+    <button id="start_look_at">Start following</button>
+    <button id="stop_look_at">Stop following</button>
+
+    <div id="camera_view"></div>
+
+    <script type="module">
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+
+        let mqttClient = connect();
+        publish_when_clicked(mqttClient, "start", "launcher/start", "colored_object_detector");
+        publish_when_clicked(mqttClient, "stop", "launcher/stop", "colored_object_detector");
+        publish_when_clicked(mqttClient, "start_look_at", "launcher/start", "object_follower");
+        publish_when_clicked(mqttClient, "stop_look_at", "launcher/stop", "object_follower");
+
+        const camera_view = document.getElementById('camera_view');
+
+        mqttClient.subscribe('camera_view/url');
+        mqttClient.publish('camera_view/url/get', '')
+        mqttClient.on('message', (topic, message) => {
+            switch (topic) {
+                case 'camera_view/url':
+                    const location = JSON.parse(message);
+                    camera_view.innerHTML = `<img src='${location}'/>`;
+                    break;
+            }
+        });
+    </script>
+{% endblock %}

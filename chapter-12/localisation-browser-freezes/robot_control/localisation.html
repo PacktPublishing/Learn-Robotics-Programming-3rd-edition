@@ -1,0 +1,213 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Localisation {% endblock %}
+{% block content %}
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+    <button id="start_moving">Start moving</button>
+    <button id="stop_moving">Stop moving</button>
+    <div style="height: 60vh; width: 60vh;">
+        <canvas id="poses"></canvas>
+    </div>
+    <script src="libs/chart.js"></script>
+    <script src="libs/chartjs-plugin-datalabels.js"></script>
+
+    <script type="module">
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+        let mqttClient = connect();
+
+        publish_when_clicked(mqttClient, "start", "launcher/start", "localisation");
+        publish_when_clicked(mqttClient, "stop", "launcher/stop", "localisation");
+        publish_when_clicked(mqttClient, "start_moving", "launcher/start", "fixed_distance_avoider");
+        publish_when_clicked(mqttClient, "stop_moving", "launcher/stop", "fixed_distance_avoider");
+
+        const data = {
+            datasets: [{
+                label: 'poses',
+                data: [{x: 750, y: 750, theta: 0}],
+            }],
+            update_pose_data(json_data) {
+                const payload = JSON.parse(json_data);
+                const pose_data = payload.poses || payload;
+                this.datasets[0].data = pose_data.map(
+                    raw_pose => ({
+                        x: raw_pose[0],
+                        y: raw_pose[1],
+                        theta: -raw_pose[2] * 180 / Math.PI
+                    })
+                );
+                return payload.timestamp;
+            }
+        };
+
+        const mapPlotter = {
+            id: 'mapPlotter',
+            walls: [],
+            scaledWallVertex(vertex, scales) {
+                return [
+                    scales.x.getPixelForValue(vertex[0]),
+                    scales.y.getPixelForValue(vertex[1])
+                ]
+            },
+            drawWalls(ctx, scales) {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(0, 0, 255, 1)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                let scaledVertex = this.scaledWallVertex(this.walls[0], scales);
+                ctx.moveTo(scaledVertex[0], scaledVertex[1]);
+                for (const vertex of this.walls) {
+                    scaledVertex = this.scaledWallVertex(vertex, scales);
+                    ctx.lineTo(scaledVertex[0], scaledVertex[1]);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                ctx.restore();
+            },
+            beforeDraw(chart, args, options) {
+                const { ctx, scales } = chart;
+                if(this.walls.length==0) {
+                    return;
+                }
+                this.drawWalls(ctx, scales);
+            }
+        }
+
+        const datalabels = {
+            color: 'blue',
+            font: {
+                size: 24
+            },
+            padding: 0,
+            formatter(value) {
+                return '>'
+            },
+            rotation(ctx) {
+                const index = ctx.dataIndex;
+                return ctx.dataset.data[index].theta;
+            }
+        };
+
+        const pose_chart_config = {
+            type: 'scatter',
+            data: data,
+            options: {
+                animation: false,
+                aspectRatio: 1,
+                responsive: true,
+                plugins: {
+                    datalabels
+                },
+                scales: {
+                    x: {
+                        suggestedMin: 0,
+                        suggestedMax: 1500,
+                    },
+                    y: {
+                        suggestedMin: 0,
+                        suggestedMax: 1500,
+                    }
+                }
+            },
+            plugins: [ChartDataLabels, mapPlotter]
+        };
+        const pose_ctx = document.getElementById('poses').getContext('2d');
+        let pose_chart = new Chart(pose_ctx, pose_chart_config);
+
+        let awaiting_update = false;
+        let update_timeout = null;
+        let last_pose_time = null;
+
+        function triggerChartUpdate()  {
+            if (awaiting_update) {
+                return;
+            }
+            awaiting_update = true;
+
+            if (update_timeout) {
+                clearTimeout(update_timeout);
+            }
+
+            update_timeout = setTimeout(() => {
+                awaiting_update = false;
+                update_timeout = null;
+                pose_chart.update();
+            }, 100);
+        }
+
+        mqttClient.subscribe('localisation/#')
+
+        let message_count = 0;
+        let dropped_count = 0;
+
+        // Heartbeat to detect event loop freezes
+        let last_heartbeat = Date.now();
+        setInterval(() => {
+            const now = Date.now();
+            const gap = now - last_heartbeat;
+            if (gap > 1500) {
+                const timestamp = new Date(now).toLocaleTimeString('en-US', {
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                console.log(`${timestamp} ❤️ Heartbeat freeze: ${gap}ms`);
+            }
+            last_heartbeat = now;
+        }, 1000);
+
+        mqttClient.on('message', (topic, message) => {
+            const now = performance.now();
+
+            if (topic === 'localisation/poses') {
+                message_count++;
+                const now = performance.now();
+                const backend_ts = data.update_pose_data(message);
+
+                if (backend_ts) {
+                    const browser_ts = Date.now();
+                    const delivery_delay = browser_ts - backend_ts;
+                    if (delivery_delay > 1000 || delivery_delay < -1000) {
+                        const timestamp = new Date().toLocaleTimeString('en-US', {
+                            hour12: false,
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                        });
+                        console.log(
+                            `${timestamp} Delivery delay: ${delivery_delay.toFixed(0)}ms`
+                        );
+                    }
+                }
+
+                if (last_pose_time !== null) {
+                    const gap = now - last_pose_time;
+                    if (gap > 1000) {
+                        const timestamp = new Date().toLocaleTimeString('en-US', {
+                            hour12: false,
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                        });
+                        console.log(
+                            `${timestamp} #${message_count} Gap: ${gap.toFixed(0)}ms, ` +
+                            `dropped: ${dropped_count}`
+                        );
+                        dropped_count = 0;
+                    }
+                }
+                last_pose_time = now;
+
+                if (awaiting_update) {
+                    dropped_count++;
+                    return;
+                }
+                triggerChartUpdate();
+            } else if (topic === 'localisation/map') {
+                const payload = JSON.parse(message);
+                mapPlotter.walls = payload.walls;
+                triggerChartUpdate();
+            }
+        });
+    </script>
+{% endblock %}
