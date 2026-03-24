@@ -1,6 +1,10 @@
 import ast
+import os
 from pathlib import Path
 
+
+TARGET_SOURCE_FOLDER = os.environ.get("SMOKE_TEST_SOURCE_FOLDER", "robot")
+TARGET_DIR = Path(os.environ.get("SMOKE_TEST_TARGET_DIR", ".")).resolve()
 
 def encoder_payload_keys(service_path: Path) -> set[str]:
     module = ast.parse(service_path.read_text())
@@ -34,9 +38,12 @@ def encoder_payload_keys(service_path: Path) -> set[str]:
 
 
 def run_smoke_check() -> None:
-    service_path = (
-        Path(__file__).resolve().parents[1] / "inventor_hat_service.py"
-    )
+    service_path = TARGET_DIR / TARGET_SOURCE_FOLDER / "inventor_hat_service.py"
+    if not service_path.exists():
+        raise FileNotFoundError(
+            f"Smoke test target file does not exist: {service_path} "
+            "(set SMOKE_TEST_TARGET_DIR and/or SMOKE_TEST_SOURCE_FOLDER)"
+        )
     keys = encoder_payload_keys(service_path)
 
     required = {
@@ -52,6 +59,8 @@ def run_smoke_check() -> None:
 
     print("smoke_inventor_hat_service: PASS")
     print(f"payload keys: {sorted(keys)}")
+    print(f"target dir: {TARGET_DIR}")
+    print(f"source folder: {TARGET_SOURCE_FOLDER}")
 
 
 if __name__ == "__main__":
