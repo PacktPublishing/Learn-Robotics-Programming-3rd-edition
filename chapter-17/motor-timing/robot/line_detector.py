@@ -33,12 +33,12 @@ class LineDetector:
         else:
             length = width
 
-        theta = theta + 180
+        theta = (-theta) % 180
 
         theta = np.deg2rad(theta)
         end = (
             int(center_x + length/2 * np.cos(theta)),
-            int(center_y + length/2 * np.sin(theta))
+            int(center_y - length/2 * np.sin(theta))
         )
         cv2.line(resized, (int(center_x), int(center_y)), end, RED, 2)
         return end[0] - MIDDLE
