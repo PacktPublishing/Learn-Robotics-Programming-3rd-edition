@@ -5,6 +5,7 @@ piper = pip.packages(
     name="Install piper TTS Python packages",
     packages=[
         "piper-tts",
+        "pathvalidate",
         "sounddevice",
     ],
     virtualenv=virtual_env.robot_venv
