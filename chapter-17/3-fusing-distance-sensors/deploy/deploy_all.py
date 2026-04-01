@@ -4,4 +4,5 @@ from deploy import \
     deploy_mqtt, \
     configure_pi, \
     update_code, \
-    deploy_services
+    deploy_services, \
+    deploy_speaking
