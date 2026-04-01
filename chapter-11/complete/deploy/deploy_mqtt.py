@@ -3,9 +3,9 @@ from pyinfra.operations import \
 
 
 mosquitto_packages = apt.packages(
-    name="Install mosquitto", 
+    name="Install mosquitto",
     packages=[
-        "mosquitto", 
+        "mosquitto",
         "mosquitto-clients",
         "python3-paho-mqtt"
     ],
@@ -18,6 +18,14 @@ if mosquitto_packages.changed:
     server.shell(
         f"mosquitto_passwd -c -b /etc/mosquitto/passwd {mqtt_username} {mqtt_password}",
         _sudo=True)
+    files.file(
+        name="Ensure mosquitto password file exists",
+        path="/etc/mosquitto/passwd",
+        present=True,
+        user="mosquitto",
+        group="mosquitto",
+        _sudo=True
+    )
 
 mosquitto_files = files.put(
     name="Configure mosquitto",
