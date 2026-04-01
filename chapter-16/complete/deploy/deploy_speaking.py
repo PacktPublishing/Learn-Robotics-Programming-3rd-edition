@@ -7,7 +7,7 @@ piper = pip.packages(
         "piper-tts",
         "sounddevice",
     ],
-    virtual_env=virtual_env.robot_venv
+    virtualenv=virtual_env.robot_venv
 )
 
 if piper.changed:
@@ -18,5 +18,5 @@ pip.packages(
     packages=[
         "vosk",
     ],
-    virtual_env=virtual_env.robot_venv
+    virtualenv=virtual_env.robot_venv
 )
