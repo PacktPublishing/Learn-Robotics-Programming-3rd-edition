@@ -45,11 +45,11 @@ class VoiceAgent:
         with sd.InputStream(samplerate=sample_rate, channels=1, dtype='int16') as stream:
             while True:
                 audio_data = stream.read(int(0.2 * sample_rate))
-                command = self.recognise_audio(audio_data)
+                command = self.recognize_audio(audio_data)
                 if command:
                     self.handle_command(command)
 
-    def recognise_audio(self, audio_data):
+    def recognize_audio(self, audio_data):
         if self.recognizer.AcceptWaveform(audio_data[0].tobytes()):
             result = json.loads(self.recognizer.Result())
             text = result.get('text', '')
