@@ -7,5 +7,6 @@ apt.update(
 
 upgrade = apt.upgrade(
     name="Upgrade all packages",
+    dist=True,
     _sudo=True,
 )

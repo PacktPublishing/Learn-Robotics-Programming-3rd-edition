@@ -5,4 +5,5 @@ from deploy import \
     configure_pi, \
     update_code, \
     deploy_services, \
+    deploy_vision, \
     deploy_speaking

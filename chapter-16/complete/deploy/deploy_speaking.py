@@ -1,5 +1,14 @@
 from deploy import virtual_env
-from pyinfra.operations import pip, server
+from pyinfra.operations import apt, pip, server
+
+audio_packages = apt.packages(
+    name="Install audio hardware packages",
+    packages=[
+        "libportaudio2",
+        "pipewire-alsa",
+    ],
+    _sudo=True
+)
 
 piper = pip.packages(
     name="Install piper TTS Python packages",
