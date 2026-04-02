@@ -3,7 +3,7 @@ import json
 import sounddevice as sd
 from vosk import Model, KaldiRecognizer
 
-from common.speaking import speak
+from common.speaking import VoiceSynthesizer, check_audio_devices
 from common.mqtt_behavior import connect
 
 sample_rate = 44100
@@ -12,6 +12,8 @@ wake_word = "robot"
 
 class VoiceAgent:
     def __init__(self):
+        check_audio_devices()
+        self.synthesizer = VoiceSynthesizer()
         self.client = connect()
 
         self.utterances = {
@@ -41,7 +43,7 @@ class VoiceAgent:
         )
 
     def start(self):
-        speak("Robot ready for commands.")
+        self.synthesizer.speak("Robot ready for commands.")
         with sd.InputStream(samplerate=sample_rate, channels=1, dtype='int16') as stream:
             while True:
                 audio_data = stream.read(int(0.2 * sample_rate))
@@ -69,37 +71,37 @@ class VoiceAgent:
             print("Running command:", command)
             task()
         else:
-            speak("I didn't understand that task.")
+            self.synthesizer.speak("I didn't understand that task.")
 
     def start_tracking_faces(self):
         self.client.publish("launcher/start", "face_detector")
         self.client.publish("launcher/start", "look_at_face")
-        speak("I'm now looking at faces!")
+        self.synthesizer.speak("I'm now looking at faces!")
 
     def stop_tracking_faces(self):
         self.client.publish("launcher/stop", "face_detector")
         self.client.publish("launcher/stop", "look_at_face")
-        speak("I'm no longer looking at faces.")
+        self.synthesizer.speak("I'm no longer looking at faces.")
 
     def start_following_lines(self):
         self.client.publish("launcher/start", "line_detector")
         self.client.publish("launcher/start", "line_follower")
-        speak("I'm now following lines!")
+        self.synthesizer.speak("I'm now following lines!")
 
     def stop_following_lines(self):
         self.client.publish("launcher/stop", "line_follower")
         self.client.publish("launcher/stop", "line_detector")
-        speak("I'm no longer following lines.")
+        self.synthesizer.speak("I'm no longer following lines.")
 
     def start_tracking_objects(self):
         self.client.publish("launcher/start", "colored_object_detector")
         self.client.publish("launcher/start", "object_follower")
-        speak("I'm now tracking objects!")
+        self.synthesizer.speak("I'm now tracking objects!")
 
     def stop_tracking_objects(self):
         self.client.publish("launcher/stop", "colored_object_detector")
         self.client.publish("launcher/stop", "object_follower")
-        speak("I'm no longer tracking objects.")
+        self.synthesizer.speak("I'm no longer tracking objects.")
 
 behavior = VoiceAgent()
 behavior.start()
