@@ -1,4 +1,4 @@
-import json
+import ujson as json
 import time
 
 from adafruit_extended_bus import ExtendedI2C as I2C
