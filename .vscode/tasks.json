@@ -120,6 +120,22 @@
 				"cwd": "${workspaceFolder}"
 			},
 			"problemMatcher": []
+		},
+		{
+			"label": "Link env files (pyinfra, local)",
+			"type": "shell",
+			"command": "poetry",
+			"args": [
+				"run",
+				"pyinfra",
+				"@local",
+				"local_tools/link_env_json.py",
+				"-y"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
 		}
 	],
 	"inputs": [
