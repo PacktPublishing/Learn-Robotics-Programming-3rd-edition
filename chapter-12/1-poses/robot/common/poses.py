@@ -1,20 +1,21 @@
 import numpy as np
 
+class Poses(np.ndarray):
+    Pose = np.dtype([('x', np.float32), ('y', np.float32), ('theta', np.float32)])
 
-def rotated_poses(poses, rotation):
-    return poses + [0, 0, rotation]
+    def __new__(cls, input_array):
+        return np.asarray(input_array, dtype=cls.Pose).view(cls)
 
+    def rotate(self, rotation) -> 'Poses':
+        result = self.copy()
+        result['theta'] += rotation
+        return result
 
-## Ideas for initial pose experiments:
-# Displaying the pose - show in Javascript
-# Rotate
-# Translate
-# Rotate
+    def translate(self, length) -> 'Poses':
+        result = self.copy()
+        result['x'] += np.cos(self['theta']) * length
+        result['y'] += np.sin(self['theta']) * length
+        return result
 
-
-def translated_poses(poses, length):
-    translated_poses = np.copy(poses)
-    translated_poses[:, 0] += np.cos(translated_poses[:, 2]) * length
-    translated_poses[:, 1] += np.sin(translated_poses[:, 2]) * length
-
-    return translated_poses
+    def append(self, other) -> 'Poses':
+        return np.concatenate([self, other]).view(Poses)
