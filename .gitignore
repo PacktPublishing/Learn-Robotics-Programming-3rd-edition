@@ -12,3 +12,4 @@ dist/
 *.passwd
 .ipynb_checkpoints
 *.pdf
+.venv/

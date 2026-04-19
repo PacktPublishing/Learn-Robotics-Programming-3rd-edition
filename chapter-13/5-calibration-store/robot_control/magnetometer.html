@@ -1,0 +1,57 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Magnetometer visualization{% endblock %}
+{% block content %}
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <button id="start">Start</button>
+    <button id="stop">Stop</button>
+    <div>
+        <canvas id="plot" style="width: 80%; height: 80%;"></canvas>
+    </div>
+    Status: <samp id="status"></samp>
+
+    <script type="module">
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+
+        let mqttClient = connect();
+        publish_when_clicked(mqttClient, "start", "launcher/start", "imu_service");
+        publish_when_clicked(mqttClient, "stop", "launcher/stop", "imu_service");
+
+        const canvas = document.getElementById('plot');
+        const engine = new BABYLON.Engine(canvas, true);
+        const scene = new BABYLON.Scene(engine);
+        const camera = new BABYLON.FreeCamera("camera", new BABYLON.Vector3(0, 20, 30));
+        camera.setTarget(BABYLON.Vector3.Zero());
+        const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0));
+        light.intensity = 0.7;
+        const arrow = BABYLON.MeshBuilder.CreateLathe(
+            "arrow",
+            {
+                shape: [
+                    new BABYLON.Vector3(0, 0, 0),
+                    new BABYLON.Vector3(2.5, 0, 0),
+                    new BABYLON.Vector3(2.5, 5, 0),
+                    new BABYLON.Vector3(5, 5, 0),
+                    new BABYLON.Vector3(0, 10, 0),
+                    new BABYLON.Vector3(0, 0, 0),
+                ]
+            }
+        );
+
+        mqttClient.subscribe('sensors/imu/#');
+        mqttClient.on('message', (topic, message) => {
+            switch (topic) {
+                case 'sensors/imu/magnetometer':
+                    const { x, y, z } = JSON.parse(message);
+                    arrow.alignWithNormal(new BABYLON.Vector3(x, z, y));
+                    break;
+                case 'sensors/imu/status':
+                    document.getElementById('status').innerText = message;
+                    break;
+            }
+        });
+
+        engine.runRenderLoop(() => {
+            scene.render();
+        });
+    </script>
+{% endblock %}
