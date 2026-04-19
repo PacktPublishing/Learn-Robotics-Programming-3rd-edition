@@ -26,3 +26,25 @@ At the top level:
 - local_tools - a collection of tools for local testing and development
 - inventory.py - the PyInfra inventory file
 - dotfiles, pyproject files - configuration for development environment, linters, formatters, etc.
+
+## Poetry setup and troubleshooting (Ubuntu)
+
+If `poetry install` appears to hang on Ubuntu, especially after output like `Using keyring backend 'SecretService Keyring'`, disable Poetry keyring integration and retry.
+
+```bash
+poetry config keyring.enabled false
+poetry install --no-interaction
+```
+
+This repository is configured for Python 3.12+.
+
+```bash
+poetry run python --version
+```
+
+If needed, recreate the lock file after Python constraint changes:
+
+```bash
+poetry lock
+poetry install --no-interaction
+```
