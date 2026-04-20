@@ -10,15 +10,22 @@
     </div>
     <script src="libs/chart.js"></script>
     <script src="libs/chartjs-plugin-datalabels.js"></script>
+    <script src="libs/keydrown.js"></script>
 
     <script type="module">
         import { connect, publish_when_clicked } from './mqtt_client.js';
+        import { setup_keyboard_drive } from './keyboard_drive.js';
+        import { create_timeseries_chart } from './chart_helper.js';
         let mqttClient = connect();
 
         publish_when_clicked(mqttClient, "start", "launcher/start", "localisation");
         publish_when_clicked(mqttClient, "stop", "launcher/stop", "localisation");
         publish_when_clicked(mqttClient, "start_moving", "launcher/start", "fixed_distance_avoider");
         publish_when_clicked(mqttClient, "stop_moving", "launcher/stop", "fixed_distance_avoider");
+
+        setup_keyboard_drive({
+            mqtt_client: mqttClient,
+        });
 
         const data = {
             datasets: [{

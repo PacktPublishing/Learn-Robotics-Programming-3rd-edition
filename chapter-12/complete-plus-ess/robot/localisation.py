@@ -24,10 +24,10 @@ class Localisation:
         self.previous_left_distance = 0
         self.previous_right_distance = 0
 
-        self.trans_noise_from_trans = 0.15/100
-        self.trans_noise_from_rot = 0.1/100
-        self.rot_noise_from_rot = 0.15/100
-        self.rot_noise_from_trans = 0.05/100  # increased to cover systematic wheel-eccentricity drift
+        self.trans_noise_from_trans = 0.01/100
+        self.trans_noise_from_rot = 0.05/100
+        self.rot_noise_from_rot = 0.2/100
+        self.rot_noise_from_trans = 0.175/100
 
         self.boundary_model = BoundaryObservationModel()
 
@@ -96,9 +96,9 @@ class Localisation:
         publish_json(client, "localisation/ess", {"ess": ess})
 
         # Act
-        if ess < ess_threshold:
-            self.poses = self.poses.resample(self.weights, population_size)
-            self.weights = np.ones(population_size) / population_size
+        # if ess < ess_threshold:
+        self.poses = self.poses.resample(self.weights, population_size)
+        self.weights = np.ones(population_size) / population_size
 
         # self.write_trace(
         #     distance_data,
@@ -109,8 +109,8 @@ class Localisation:
         #     ess,
         # )
 
-            publish_sample = self.poses.resample(self.weights, 200)
-            self.publish_poses(client, publish_sample)
+        publish_sample = self.poses.resample(self.weights, 200)
+        self.publish_poses(client, publish_sample)
 
     def write_trace(
         self,
