@@ -3,8 +3,6 @@
 {% block content %}
     <button id="start">Start</button>
     <button id="stop">Stop</button>
-    <button id="start_moving">Start moving</button>
-    <button id="stop_moving">Stop moving</button>
     <div style="height: 60vh; width: 60vh;">
         <canvas id="poses"></canvas>
     </div>
@@ -23,8 +21,6 @@
 
         publish_when_clicked(mqttClient, "start", "launcher/start", "localisation");
         publish_when_clicked(mqttClient, "stop", "launcher/stop", "localisation");
-        publish_when_clicked(mqttClient, "start_moving", "launcher/start", "fixed_distance_avoider");
-        publish_when_clicked(mqttClient, "stop_moving", "launcher/stop", "fixed_distance_avoider");
 
         setup_keyboard_drive({
             mqtt_client: mqttClient,

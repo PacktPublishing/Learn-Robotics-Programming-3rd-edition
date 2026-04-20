@@ -149,6 +149,11 @@ files.download(
     src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2",
     dest="robot_control/libs/chartjs-plugin-datalabels.js"
 ) # https://v2_2_0--chartjs-plugin-datalabels.netlify.app/guide/
+files.download(
+    name="Download keydrown",
+    src="https://cdn.jsdelivr.net/npm/keydrown@1.3.0/dist/keydrown.min.js",
+    dest="robot_control/libs/keydrown.js"
+)
 
 # Loop over all the files in the robot_control directory
 pages_folder = files.directory(
