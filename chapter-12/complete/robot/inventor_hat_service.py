@@ -58,9 +58,9 @@ def stop_tilt(client=None, userdata=None, msg=None):
 
 def set_motor_wheels(client, userdata, msg):
     left, right = json.loads(msg.payload)
-    left_motor.enable()
+    # left_motor.enable()
     left_motor.speed(left)
-    right_motor.enable()
+    # right_motor.enable()
     right_motor.speed(right)
 
 

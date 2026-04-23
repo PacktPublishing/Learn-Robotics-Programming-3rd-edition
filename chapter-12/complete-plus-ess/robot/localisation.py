@@ -19,6 +19,7 @@ rng = np.random.default_rng()
 class Localisation:
     def __init__(self):
         self.poses = Poses.generate(population_size, (arena.left, arena.right), (arena.bottom, arena.top), (0, 2 * np.pi))
+        self.weights = np.ones(population_size) / population_size
 
         self.wheel_distance = 136
         self.previous_left_distance = 0
@@ -31,7 +32,6 @@ class Localisation:
 
         self.boundary_model = BoundaryObservationModel()
 
-        self.weights = np.ones(population_size) / population_size
         self.step = 0
         # if trace_file_mode not in ("a", "w"):
         #     raise ValueError("LOCALISATION_TRACE_MODE must be 'a' or 'w'")
@@ -96,9 +96,9 @@ class Localisation:
         publish_json(client, "localisation/ess", {"ess": ess})
 
         # Act
-        # if ess < ess_threshold:
-        self.poses = self.poses.resample(self.weights, population_size)
-        self.weights = np.ones(population_size) / population_size
+        if ess < ess_threshold:
+            self.poses = self.poses.resample(self.weights, population_size)
+            self.weights = np.ones(population_size) / population_size
 
         # self.write_trace(
         #     distance_data,
