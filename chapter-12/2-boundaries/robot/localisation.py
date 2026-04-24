@@ -1,7 +1,7 @@
 import numpy as np
 
 from common.mqtt_behavior import connect, publish_json
-from common.poses import rotated_poses, translated_poses
+from common.poses import Poses
 
 walls = [
     (0, 1500),
@@ -14,9 +14,9 @@ walls = [
 
 class Localisation:
     def __init__(self):
-        self.poses = np.array([(500, 500, 0), (150, 100, np.pi / 3)])
-        self.poses = np.append(self.poses, rotated_poses(self.poses, np.pi/2), 0)
-        self.poses = translated_poses(self.poses, 100)
+        self.poses = Poses([(500, 500, 0), (150, 100, np.pi / 3)])
+        self.poses = self.poses.append(self.poses.rotate(np.pi/2))
+        self.poses = self.poses.append(self.poses.translate(100))
 
     def publish_poses(self, client):
         # send_poses = rotate_poses(self.poses)

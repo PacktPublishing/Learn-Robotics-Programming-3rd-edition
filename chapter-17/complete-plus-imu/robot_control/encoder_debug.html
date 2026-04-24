@@ -1,0 +1,42 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Encoder debug{% endblock %}
+{% block content %}
+    <table>
+        <tr>
+            <th></th>
+            <th>Left</th>
+            <th>Right</th>
+        </tr>
+        <tr>
+            <th>Distance (mm)</th>
+            <td><samp id="left_distance">0</samp></td>
+            <td><samp id="right_distance">0</samp></td> 
+        </tr>
+        <tr>
+            <th>Speed (mm/s)</th>
+            <td><samp id="left_mm_per_sec">0</samp></td>
+            <td><samp id="right_mm_per_sec">0</samp></td>
+        </tr>
+    </table>
+
+    <script src="libs/keydrown.js"></script>
+    <script type="module">
+        import { connect } from './mqtt_client.js';
+        import { setup_keyboard_drive } from './keyboard_drive.js';
+
+        const mqttClient = connect();
+        setup_keyboard_drive({ mqtt_client: mqttClient });
+
+        mqttClient.subscribe('sensors/encoders/data');
+        mqttClient.on('message', (topic, message) => {
+            if (topic !== 'sensors/encoders/data') {
+                return;
+            }
+            const data = JSON.parse(message);
+            document.getElementById('left_distance').innerText = data.left_distance.toFixed(2);
+            document.getElementById('right_distance').innerText = data.right_distance.toFixed(2);
+            document.getElementById('left_mm_per_sec').innerText = data.left_mm_per_sec.toFixed(2);
+            document.getElementById('right_mm_per_sec').innerText = data.right_mm_per_sec.toFixed(2);
+        });
+    </script>
+{% endblock %}
