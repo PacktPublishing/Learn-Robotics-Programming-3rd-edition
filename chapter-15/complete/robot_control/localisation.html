@@ -3,22 +3,28 @@
 {% block content %}
     <button id="start">Start</button>
     <button id="stop">Stop</button>
-    <button id="start_moving">Start moving</button>
-    <button id="stop_moving">Stop moving</button>
     <div style="height: 60vh; width: 60vh;">
         <canvas id="poses"></canvas>
     </div>
+    <div class="line_chart">
+        <canvas id="ess_plot"></canvas>
+    </div>
     <script src="libs/chart.js"></script>
     <script src="libs/chartjs-plugin-datalabels.js"></script>
+    <script src="libs/keydrown.js"></script>
 
     <script type="module">
         import { connect, publish_when_clicked } from './mqtt_client.js';
+        import { create_timeseries_chart } from './chart_helper.js';
+        import { setup_keyboard_drive } from './keyboard_drive.js';
         let mqttClient = connect();
 
         publish_when_clicked(mqttClient, "start", "launcher/start", "localisation");
         publish_when_clicked(mqttClient, "stop", "launcher/stop", "localisation");
-        publish_when_clicked(mqttClient, "start_moving", "launcher/start", "fixed_distance_avoider");
-        publish_when_clicked(mqttClient, "stop_moving", "launcher/stop", "fixed_distance_avoider");
+
+        setup_keyboard_drive({
+            mqtt_client: mqttClient,
+        });
 
         const data = {
             datasets: [{
@@ -110,6 +116,7 @@
         };
         const pose_ctx = document.getElementById('poses').getContext('2d');
         let pose_chart = new Chart(pose_ctx, pose_chart_config);
+        const ess_chart = create_timeseries_chart('ess_plot', ['ess']);
 
         let awaiting_update = false;
         function triggerChartUpdate()  {
@@ -134,6 +141,13 @@
                     const payload = JSON.parse(message);
                     mapPlotter.walls = payload.walls;
                     triggerChartUpdate();
+                    break;
+                case 'localisation/ess':
+                    const ess_data = JSON.parse(message);
+                    ess_chart.update_data({
+                        time: Date.now() / 1000,
+                        ess: ess_data.ess,
+                    });
                     break;
             }
         });

@@ -9,25 +9,30 @@ from common.poses import Poses
 from observation_models.boundary import BoundaryObservationModel
 
 population_size = 20000
+ess_threshold = population_size // 10
 rng = np.random.default_rng()
 
 class Localisation:
     def __init__(self):
         self.poses = Poses.generate(population_size, (arena.left, arena.right), (arena.bottom, arena.top), (0, 2 * np.pi))
+        self.weights = np.ones(population_size) / population_size
 
         self.wheel_distance = 136
         self.previous_left_distance = 0
         self.previous_right_distance = 0
 
-        self.trans_noise_from_trans = 0.2/100
-        self.trans_noise_from_rot = 0.1/100
+        self.trans_noise_from_trans = 0.01/100
+        self.trans_noise_from_rot = 0.05/100
         self.rot_noise_from_rot = 0.2/100
-        self.rot_noise_from_trans = 0.01/100
+        self.rot_noise_from_trans = 0.175/100
 
         self.boundary_model = BoundaryObservationModel()
 
     def apply_observational_models(self):
         return self.boundary_model.calculate_weights(self.poses)
+
+    def calculate_ess(self):
+        return 1 / np.sum(self.weights ** 2)
 
     def convert_encoders_to_motion(self, left_distance_delta, right_distance_delta):
         # Special case, straight line
@@ -67,12 +72,19 @@ class Localisation:
         trans_samples, rot_samples = self.randomise_motion(
             translation, rotation)
         self.poses = self.poses.move(rot_samples, trans_samples)
-        weights = self.apply_observational_models()
+        self.weights *= self.apply_observational_models()
+        weight_sum = np.sum(self.weights)
+        self.weights /= weight_sum
+        ess = self.calculate_ess()
 
         # Act
-        publish_sample = self.poses.resample(weights, 200)
-        self.poses = self.poses.resample(weights, population_size)
+        if ess < ess_threshold:
+            self.poses = self.poses.resample(self.weights, population_size)
+            self.weights = np.ones(population_size) / population_size
+
+        publish_sample = self.poses.resample(self.weights, 200)
         self.publish_poses(client, publish_sample)
+        publish_json(client, "localisation/ess", {"ess": ess})
 
     def publish_poses(self, client, poses):
         publish_json(client, "localisation/poses", poses.tolist())
