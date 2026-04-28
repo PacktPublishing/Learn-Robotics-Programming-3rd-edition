@@ -10,30 +10,35 @@ from observation_models.boundary import BoundaryObservationModel
 from observation_models.distance import DistanceObservationModel
 
 population_size = 20000
+ess_threshold = population_size // 10
 rng = np.random.default_rng()
+boundary_model_influence = 0.5
+distance_model_influence = 0.5
 
 class Localisation:
     def __init__(self):
         self.poses = Poses.generate(population_size, (arena.left, arena.right), (arena.bottom, arena.top), (0, 2 * np.pi))
-        self.weights = np.full(population_size, 1.0 / population_size)
-        self.localisation_seq = 0
+        self.weights = np.ones(population_size) / population_size
 
         self.wheel_distance = 136
         self.previous_left_distance = 0
         self.previous_right_distance = 0
 
-        self.trans_noise_from_trans = 0.2/100
-        self.trans_noise_from_rot = 0.1/100
+        self.trans_noise_from_trans = 0.01/100
+        self.trans_noise_from_rot = 0.05/100
         self.rot_noise_from_rot = 0.2/100
-        self.rot_noise_from_trans = 0.01/100
+        self.rot_noise_from_trans = 0.175/100
 
         self.boundary_model = BoundaryObservationModel()
         self.distance_model = DistanceObservationModel()
 
     def apply_observational_models(self):
-        boundary_weights = self.boundary_model.calculate_weights(self.poses)
-        distance_weights = self.distance_model.calculate_weights(self.poses)
+        boundary_weights = self.boundary_model.calculate_weights(self.poses) ** boundary_model_influence
+        distance_weights = self.distance_model.calculate_weights(self.poses) ** distance_model_influence
         return boundary_weights * distance_weights
+
+    def calculate_ess(self):
+        return 1 / np.sum(self.weights ** 2)
 
     def convert_encoders_to_motion(self, left_distance_delta, right_distance_delta):
         # Special case, straight line
@@ -73,19 +78,26 @@ class Localisation:
         trans_samples, rot_samples = self.randomise_motion(
             translation, rotation)
         self.poses = self.poses.move(rot_samples, trans_samples)
-        weights = self.apply_observational_models()
+        self.weights *= self.apply_observational_models()
+        weight_sum = np.sum(self.weights)
+        self.weights /= weight_sum
+        ess = self.calculate_ess()
 
         # Act
-        publish_sample = self.poses.resample(weights, 200)
-        self.poses = self.poses.resample(weights, population_size)
+        if ess < ess_threshold:
+            self.poses = self.poses.resample(self.weights, population_size)
+            self.weights = np.ones(population_size) / population_size
+
+        publish_sample = self.poses.resample(self.weights, 200)
         self.publish_poses(client, publish_sample)
+        publish_json(client, "localisation/ess", {"ess": ess})
 
     def on_distance_readings(self, client, userdata, msg):
         sensor_data = np.array(json.loads(msg.payload))
         sensor_readings = sensor_data.reshape((8, 8))
         self.distance_model.handle_sensor_readings(sensor_readings)
 
-    def publish_poses(self, client, poses, seq, timestamp_ms, source_encoder_seq, source_encoder_timestamp_ms):
+    def publish_poses(self, client, poses):
         publish_json(client, "localisation/poses", poses.tolist())
 
     def start(self):
