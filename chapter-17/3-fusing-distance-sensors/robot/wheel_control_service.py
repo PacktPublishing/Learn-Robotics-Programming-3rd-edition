@@ -54,8 +54,8 @@ class WheelControlService:
         self.left_pid.handle_config_messages(data, 'wheel_control')
         self.right_pid.handle_config_messages(data, 'wheel_control')
 
-    def start(self):
-        client = connect(start_loop=False)
+    def on_connect(self, client, userdata, flags, rc):
+        print("Connected with result code %s", rc)
         client.subscribe("sensors/encoders/data")
         client.message_callback_add("sensors/encoders/data",
                                     self.on_encoders_data)
@@ -73,6 +73,9 @@ class WheelControlService:
                                     self.on_wheel_speed_mm)
         client.subscribe("all/stop")
         client.message_callback_add("all/stop", self.all_stop)
+
+    def start(self):
+        client = connect(start_loop=False, on_connect=self.on_connect)
 
         client.loop_forever()
 

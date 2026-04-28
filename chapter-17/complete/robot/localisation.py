@@ -18,21 +18,19 @@ distance_model_influence = 0.5
 class Localisation:
     def __init__(self):
         self.poses = Poses.generate(population_size, (arena.left, arena.right), (arena.bottom, arena.top), (0, 2 * np.pi))
+        self.weights = np.ones(population_size) / population_size
 
         self.wheel_distance = 136
         self.previous_left_distance = 0
         self.previous_right_distance = 0
 
-        self.trans_noise_from_trans = 0.2/100
-        self.trans_noise_from_rot = 0.1/100
+        self.trans_noise_from_trans = 0.01/100
+        self.trans_noise_from_rot = 0.05/100
         self.rot_noise_from_rot = 0.2/100
-        self.rot_noise_from_trans = 0.05/100
+        self.rot_noise_from_trans = 0.175/100
 
         self.boundary_model = BoundaryObservationModel()
         self.distance_model = DistanceObservationModel()
-
-        self.weights = np.ones(population_size) / population_size
-        self.step = 0
 
     def apply_observational_models(self):
         boundary_weights = self.boundary_model.calculate_weights(self.poses) ** boundary_model_influence
@@ -82,12 +80,8 @@ class Localisation:
         self.poses = self.poses.move(rot_samples, trans_samples)
         self.weights *= self.apply_observational_models()
         weight_sum = np.sum(self.weights)
-        if not np.isfinite(weight_sum) or weight_sum == 0:
-            self.weights = np.ones(population_size) / population_size
-        else:
-            self.weights /= weight_sum
-        ess = float(self.calculate_ess())
-        publish_json(client, "localisation/ess", {"ess": ess})
+        self.weights /= weight_sum
+        ess = self.calculate_ess()
 
         # Act
         if ess < ess_threshold:
@@ -96,6 +90,7 @@ class Localisation:
 
         publish_sample = self.poses.resample(self.weights, 200)
         self.publish_poses(client, publish_sample)
+        publish_json(client, "localisation/ess", {"ess": ess})
 
     def on_distance_readings(self, client, userdata, msg):
         sensor_data = np.array(json.loads(msg.payload))

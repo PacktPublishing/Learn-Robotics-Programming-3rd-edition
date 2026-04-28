@@ -149,6 +149,7 @@ code = files.put(
 deploy_service("smooth_distance_avoider",
                "robot/smooth_distance_avoider.py",
                False, common_changed or code.changed)
+
 code = files.put(
     name="Update localisation",
     src="robot/localisation.py",

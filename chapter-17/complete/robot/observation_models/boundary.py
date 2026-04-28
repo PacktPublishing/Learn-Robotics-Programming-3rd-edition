@@ -1,7 +1,6 @@
 import numpy as np
 
 from common import arena
-from common.poses import Poses
 
 low_probability = 0.1
 crosshair_radius = 50.0  # mm on each side of boundary
@@ -18,7 +17,6 @@ crosshair_points = np.array(
 
 Pose2D = np.dtype([('x', np.float32), ('y', np.float32)])
 
-Pose2D = np.dtype([('x', np.float64), ('y', np.float64)])
 
 class BoundaryObservationModel:
     def in_boundary(self, poses):
