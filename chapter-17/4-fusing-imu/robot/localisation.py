@@ -10,6 +10,7 @@ from observation_models.boundary import BoundaryObservationModel
 from observation_models.distance import DistanceObservationModel
 
 population_size = 20000
+ess_threshold = population_size // 10
 rng = np.random.default_rng()
 boundary_model_influence = 0.5
 distance_model_influence = 0.5
@@ -79,11 +80,12 @@ class ImuMotionData:
 class Localisation:
     def __init__(self):
         self.poses = Poses.generate(population_size, (arena.left, arena.right), (arena.bottom, arena.top), (0, 2 * np.pi))
+        self.weights = np.ones(population_size) / population_size
 
-        self.trans_noise_from_trans = 0.2/100
-        self.trans_noise_from_rot = 0.1/100
+        self.trans_noise_from_trans = 0.01/100
+        self.trans_noise_from_rot = 0.05/100
         self.rot_noise_from_rot = 0.2/100
-        self.rot_noise_from_trans = 0.01/100
+        self.rot_noise_from_trans = 0.175/100
 
         self.boundary_model = BoundaryObservationModel()
         self.distance_model = DistanceObservationModel()
@@ -94,6 +96,9 @@ class Localisation:
         boundary_weights = self.boundary_model.calculate_weights(self.poses) ** boundary_model_influence
         distance_weights = self.distance_model.calculate_weights(self.poses) ** distance_model_influence
         return boundary_weights * distance_weights
+
+    def calculate_ess(self):
+        return 1 / np.sum(self.weights ** 2)
 
     def randomise_motion(self, translation, rotation):
         trans_scale = self.trans_noise_from_trans * abs(translation) \
@@ -118,12 +123,19 @@ class Localisation:
             translation, rotation)
 
         self.poses = self.poses.move(rot_samples, trans_samples)
-        weights = self.apply_observational_models()
+        self.weights *= self.apply_observational_models()
+        weight_sum = np.sum(self.weights)
+        self.weights /= weight_sum
+        ess = self.calculate_ess()
 
         # Act
-        publish_sample = self.poses.resample(weights, 200)
-        self.poses = self.poses.resample(weights, population_size)
+        if ess < ess_threshold:
+            self.poses = self.poses.resample(self.weights, population_size)
+            self.weights = np.ones(population_size) / population_size
+
+        publish_sample = self.poses.resample(self.weights, 200)
         self.publish_poses(client, publish_sample)
+        publish_json(client, "localisation/ess", {"ess": ess})
 
     def on_distance_readings(self, client, userdata, msg):
         sensor_data = np.array(json.loads(msg.payload))

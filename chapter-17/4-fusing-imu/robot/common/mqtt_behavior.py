@@ -2,9 +2,9 @@ import paho.mqtt.client as mqtt
 import time
 import ujson as json
 
-def load_config(config_path='robot_control/.env.json'):
+def load_config():
     """Load configuration from .env.json file"""
-    with open(config_path, 'r') as f:
+    with open('robot_control/.env.json', 'r') as f:
         return json.load(f)
 
 def default_on_connect(client, userdata, flags, rc):
@@ -16,9 +16,9 @@ def default_on_disconnect(client, userdata, rc):
         print("Unexpected disconnection, attempting to reconnect...")
         client.reconnect()
 
-def connect(on_connect=default_on_connect, start_loop=True, config_path=None):
+def connect(on_connect=default_on_connect, start_loop=True):
     print("Using details from env config")
-    env_config = load_config(config_path) if config_path else load_config()
+    env_config = load_config()
     mqtt_username = env_config["MQTT_USERNAME"]
     mqtt_password = env_config["MQTT_PASSWORD"]
 
