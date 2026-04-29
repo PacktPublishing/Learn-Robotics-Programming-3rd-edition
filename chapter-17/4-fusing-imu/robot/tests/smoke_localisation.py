@@ -130,33 +130,69 @@ def test_encoder_motion_data(loc):
 
 
 def test_imu_motion_data(loc):
-    """ImuMotionData tracks yaw deltas and responds to calibration status."""
+    """ImuMotionData accumulates wrap-aware yaw deltas into pending_theta.
+    The BNO055's internal NDOF Kalman fusion already handles sensor noise and
+    vibration, so no additional LP filter is applied here."""
     imu = loc.ImuMotionData()
     assert imu.previous_yaw is None
     assert imu.pending_theta == 0.0
 
-    # normalize_angle wraps to (-pi, pi]
+    # normalize_angle wraps to (-π, π]
     assert abs(imu.normalize_angle(0.0)) < 1e-9
     assert abs(imu.normalize_angle(2 * np.pi)) < 1e-9
     assert abs(imu.normalize_angle(np.pi + 0.1) - (-np.pi + 0.1)) < 1e-9
 
     mock_msg = MagicMock()
 
-    # First on_imu_data sets previous_yaw but accumulates nothing (no previous)
+    # First on_imu_data: seeds previous_yaw, accumulates nothing
     mock_msg.payload = json.dumps({"yaw": 1.0}).encode()
     imu.on_imu_data(MagicMock(), None, mock_msg)
     assert abs(imu.previous_yaw - 1.0) < 1e-9
-    delta = imu.consume_data()
-    assert delta == 0.0, f"First reading should yield zero delta, got {delta}"
+    assert imu.pending_theta == 0.0
 
-    # Second reading accumulates delta
+    # Second reading: delta = normalize(1.5 - 1.0) = 0.5; pending_theta = 0.5
     mock_msg.payload = json.dumps({"yaw": 1.5}).encode()
     imu.on_imu_data(MagicMock(), None, mock_msg)
-    delta2 = imu.consume_data()
-    assert abs(delta2 - 0.5) < 1e-9, f"Expected delta 0.5, got {delta2}"
+    assert abs(imu.pending_theta - 0.5) < 1e-9, \
+        f"pending_theta mismatch: {imu.pending_theta}"
 
-    # consume_data resets pending_theta
-    assert imu.pending_theta == 0.0
+    # Third reading accumulates further
+    mock_msg.payload = json.dumps({"yaw": 1.8}).encode()
+    imu.on_imu_data(MagicMock(), None, mock_msg)
+    assert abs(imu.pending_theta - 0.8) < 1e-9, \
+        f"pending_theta mismatch after 3rd reading: {imu.pending_theta}"
+
+    # consume_data returns accumulated delta and resets
+    delta = imu.consume_data()
+    assert abs(delta - 0.8) < 1e-9, f"consume_data mismatch: {delta}"
+    assert imu.pending_theta == 0.0, "pending_theta not reset after consume"
+
+    # --- Wrap-around cases ---
+    # Helper: simulate two consecutive IMU readings and return the consumed delta.
+    def _wrap_delta(from_yaw, to_yaw):
+        imu_w = loc.ImuMotionData()
+        msg = MagicMock()
+        msg.payload = json.dumps({"yaw": from_yaw}).encode()
+        imu_w.on_imu_data(MagicMock(), None, msg)  # seeds previous_yaw
+        msg.payload = json.dumps({"yaw": to_yaw}).encode()
+        imu_w.on_imu_data(MagicMock(), None, msg)
+        return imu_w.consume_data()
+
+    # 1. Just under 2π → just over 0  (small positive turn crossing 0/2π boundary)
+    d = _wrap_delta(2 * np.pi - 0.05, 0.05)
+    assert abs(d - 0.1) < 1e-9, f"0/2π crossing: expected 0.1, got {d:.6f}"
+
+    # 2. Just over 0 → just under 2π  (small negative turn crossing 0/2π boundary)
+    d = _wrap_delta(0.05, 2 * np.pi - 0.05)
+    assert abs(d - (-0.1)) < 1e-9, f"2π/0 crossing: expected -0.1, got {d:.6f}"
+
+    # 3. Just under +π → just over +π  (expressed as -(π-0.05) in wrapped coords)
+    d = _wrap_delta(np.pi - 0.05, -(np.pi - 0.05))
+    assert abs(d - 0.1) < 1e-9, f"+π crossing (under→over): expected 0.1, got {d:.6f}"
+
+    # 4. Just over +π → just under +π  (small negative turn back across +π boundary)
+    d = _wrap_delta(-(np.pi - 0.05), np.pi - 0.05)
+    assert abs(d - (-0.1)) < 1e-9, f"+π crossing (over→under): expected -0.1, got {d:.6f}"
 
     # on_status_update subscribes to IMU euler topic when sys == 3 (fully calibrated)
     mock_client = MagicMock()
@@ -219,15 +255,14 @@ def test_on_distance_readings(instance):
 def test_update(instance):
     """update() runs without raising; publishes poses and ESS."""
     mock_client = MagicMock()
+    mock_msg = MagicMock()
 
     # Feed encoder data so motion is non-trivial
-    mock_msg = MagicMock()
     mock_msg.payload = json.dumps({"left_distance": 50, "right_distance": 60}).encode()
     instance.encoder_data.on_encoders_data(mock_client, None, mock_msg)
 
     instance.update(mock_client)
 
-    # publish_json calls client.publish for both poses and ESS
     assert mock_client.publish.called
     print("test_update: PASS")
 
