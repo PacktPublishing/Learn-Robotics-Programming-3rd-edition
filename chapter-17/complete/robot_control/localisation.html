@@ -5,6 +5,7 @@
     <button id="stop">Stop</button>
     <button id="start_moving">Start moving</button>
     <button id="stop_moving">Stop moving</button>
+    IMU Status: <samp id="imu_status"></samp>
     <div style="height: 60vh; width: 60vh;">
         <canvas id="poses"></canvas>
     </div>
@@ -17,8 +18,8 @@
 
     <script type="module">
         import { connect, publish_when_clicked } from './mqtt_client.js';
-        import { create_timeseries_chart } from './chart_helper.js';
         import { setup_keyboard_drive } from './keyboard_drive.js';
+        import { create_timeseries_chart } from './chart_helper.js';
         let mqttClient = connect();
 
         publish_when_clicked(mqttClient, "start", "launcher/start", "localisation");
@@ -132,8 +133,12 @@
         }
 
         mqttClient.subscribe('localisation/#')
+        mqttClient.subscribe('sensors/imu/status');
         mqttClient.on('message', (topic, message) => {
             switch (topic) {
+                case 'sensors/imu/status':
+                    document.getElementById('imu_status').innerText = message;
+                    break;
                 case 'localisation/poses':
                     if (awaiting_update) {
                         return;
