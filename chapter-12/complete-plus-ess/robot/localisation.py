@@ -96,6 +96,7 @@ class Localisation:
         publish_json(client, "localisation/ess", {"ess": ess})
 
         # Act
+        publish_sample = self.poses.resample(self.weights, 200)
         if ess < ess_threshold:
             self.poses = self.poses.resample(self.weights, population_size)
             self.weights = np.ones(population_size) / population_size
@@ -109,7 +110,6 @@ class Localisation:
         #     ess,
         # )
 
-        publish_sample = self.poses.resample(self.weights, 200)
         self.publish_poses(client, publish_sample)
 
     def write_trace(
