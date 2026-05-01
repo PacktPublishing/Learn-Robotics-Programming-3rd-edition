@@ -16,6 +16,11 @@ class Poses(np.ndarray):
         poses['theta'] = rng.uniform(theta_range[0], theta_range[1], count)
         return poses.view(cls)
 
+    def rotate(self, rotation) -> 'Poses':
+        result = self.copy()
+        result['theta'] += rotation
+        return result
+
     def translate(self, length) -> 'Poses':
         result = self.copy()
         result['x'] += np.cos(self['theta']) * length
@@ -26,10 +31,6 @@ class Poses(np.ndarray):
     def positions(self) -> np.ndarray:
         return self.view(np.float32).reshape(-1, 3)[:, :2]
 
-    def rotate(self, rotation) -> 'Poses':
-        result = self.copy()
-        result['theta'] += rotation
-        return result
 
     def append(self, other) -> 'Poses':
         return np.concatenate([self, other]).view(Poses)
