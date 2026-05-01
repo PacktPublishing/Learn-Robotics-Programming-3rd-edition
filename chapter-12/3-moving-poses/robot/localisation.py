@@ -4,7 +4,7 @@ import time
 import numpy as np
 
 from common.mqtt_behavior import connect, publish_json
-from common.poses import rotated_poses, translated_poses
+from common.poses import Poses
 
 walls = [
     (0, 1500),
@@ -18,11 +18,7 @@ population_size = 200
 
 class Localisation:
     def __init__(self):
-        self.poses = np.column_stack((
-            np.random.uniform(0, 1500, population_size),
-            np.random.uniform(0, 1500, population_size),
-            np.random.uniform(0, 2 * np.pi, population_size)
-        ))
+        self.poses = Poses.generate(population_size, (0, 1500), (0, 1500), (0, 2 * np.pi))
         self.wheel_distance = 0
         self.config_ready = False
         self.previous_left_distance = 0
@@ -64,9 +60,9 @@ class Localisation:
         # Think
         mid_distance, theta = self.convert_encoders_to_motion(left_distance_delta, right_distance_delta)
         # Act
-        self.poses = rotated_poses(self.poses, theta / 2)
-        self.poses = translated_poses(self.poses, mid_distance)
-        self.poses = rotated_poses(self.poses, theta / 2)
+        self.poses = self.poses.rotate(theta / 2)
+        self.poses = self.poses.translate(mid_distance)
+        self.poses = self.poses.rotate(theta / 2)
         self.publish_poses(client)
 
     def start(self):

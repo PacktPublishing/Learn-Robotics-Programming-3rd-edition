@@ -4,7 +4,7 @@ import time
 import numpy as np
 
 from common.mqtt_behavior import connect, publish_json
-from common.poses import rotated_poses, translated_poses
+from common.poses import Poses
 
 walls = [
     (0, 1500),
@@ -19,11 +19,7 @@ low_probability = 10 ** -10
 
 class Localisation:
     def __init__(self):
-        self.poses = np.column_stack((
-            np.random.uniform(0, 1500, population_size),
-            np.random.uniform(0, 1500, population_size),
-            np.random.uniform(0, 2 * np.pi, population_size)
-        ))
+        self.poses = Poses.generate(population_size, (0, 1500), (0, 1500), (0, 2 * np.pi))
         self.wheel_distance = 0
 
         self.alpha_trans_trans = 1.2/100
@@ -37,11 +33,11 @@ class Localisation:
 
     def in_boundary(self):
         inside_walls = np.logical_and(
-            np.logical_and(self.poses[:, 0] > 0, self.poses[:, 0] < 1500),
-            np.logical_and(self.poses[:, 1] > 0, self.poses[:, 1] < 1500)
+            np.logical_and(self.poses['x'] > 0, self.poses['x'] < 1500),
+            np.logical_and(self.poses['y'] > 0, self.poses['y'] < 1500)
         )
         not_in_cutouts = np.logical_not(
-            np.logical_and(self.poses[:, 0] < 1000, self.poses[:, 1] > 500)
+            np.logical_and(self.poses['x'] < 1000, self.poses['y'] > 500)
         )
         return np.logical_and(inside_walls, not_in_cutouts)
 
@@ -84,9 +80,9 @@ class Localisation:
         return trans_samples, rot_samples
 
     def move_poses(self, rotation, translation):
-        self.poses = rotated_poses(self.poses, rotation)
-        self.poses = translated_poses(self.poses, translation)
-        self.poses = rotated_poses(self.poses, rotation)
+        self.poses = self.poses.rotate(rotation)
+        self.poses = self.poses.translate(translation)
+        self.poses = self.poses.rotate(rotation)
 
     def on_encoders_data(self, client, userdata, msg):
         # Sense
