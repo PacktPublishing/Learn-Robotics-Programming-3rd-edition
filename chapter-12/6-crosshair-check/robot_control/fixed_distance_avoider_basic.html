@@ -1,0 +1,29 @@
+{% extends "robot_control/page.html.j2" %}
+{% block title %}Fixed distance avoider{% endblock %}
+{% block content %}
+    <button id="start_avoider">Start avoider</button>
+    <button id="stop_avoider">Stop avoider</button>
+
+    <div style="width: 400px; height: 400px;">
+        <canvas id="distance_chart" width="400" height="400"></canvas>
+    </div>
+
+    <script type="module">
+        import 'https://cdn.jsdelivr.net/npm/chart.js';
+        import { connect, publish_when_clicked } from './mqtt_client.js';
+        import { make_distance_chart } from './distance_chart.js';
+        let mqttClient = connect();
+
+        publish_when_clicked(mqttClient, "start_avoider", "launcher/start", "fixed_distance_avoider");
+        publish_when_clicked(mqttClient, "stop_avoider", "launcher/stop", "fixed_distance_avoider");
+        const chart = make_distance_chart(mqttClient);
+
+        mqttClient.subscribe('sensors/distance_mm');
+        mqttClient.on('message', (topic, message) => {
+            if (topic == 'sensors/distance_mm') {
+                const distance_data = JSON.parse(message);
+                chart.update_data(distance_data);
+            }
+        });
+    </script>
+{% endblock %}
