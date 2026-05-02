@@ -18,9 +18,8 @@ class Localisation:
         self.poses = self.poses.append(self.poses.rotate(np.pi/2))
         self.poses = self.poses.append(self.poses.translate(100))
 
-    def publish_poses(self, client):
-        # send_poses = rotate_poses(self.poses)
-        publish_json(client, "localisation/poses", self.poses.tolist())
+    def publish_poses(self, client, poses):
+        publish_json(client, "localisation/poses", poses.tolist())
 
     def publish_map(self, client):
         publish_json(client, "localisation/map", {
@@ -29,7 +28,7 @@ class Localisation:
 
     def start(self):
         client = connect()
-        self.publish_poses(client)
+        self.publish_poses(client, self.poses)
         self.publish_map(client)
 
 service = Localisation()

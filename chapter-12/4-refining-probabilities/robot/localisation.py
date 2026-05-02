@@ -49,11 +49,6 @@ class Localisation:
 
         return trans_samples, rot_samples
 
-    def move_poses(self, rotation, translation):
-        self.poses = self.poses.rotate(rotation)
-        self.poses = self.poses.translate(translation)
-        self.poses = self.poses.rotate(rotation)
-
     def on_encoders_data(self, client, userdata, msg):
         # Sense
         distance_data = json.loads(msg.payload)
@@ -74,9 +69,8 @@ class Localisation:
         weights = self.apply_observational_models()
 
         # Act
-        publish_sample = self.poses.resample(weights, 200)
-        self.poses = self.poses.resample(weights, population_size)
-        self.publish_poses(client, publish_sample)
+        self.publish_poses(client, self.poses[weights > 0.5])
+
     def publish_poses(self, client, poses):
         publish_json(client, "localisation/poses", poses.tolist())
 
@@ -90,6 +84,7 @@ class Localisation:
                                     self.on_encoders_data)
         while True:
             time.sleep(0.1)
+
 
 service = Localisation()
 service.start()

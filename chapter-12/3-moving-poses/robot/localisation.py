@@ -30,9 +30,8 @@ class Localisation:
         if 'robot/wheel_distance' in data:
             self.wheel_distance = data['robot/wheel_distance']
 
-    def publish_poses(self, client):
-        # send_poses = rotate_poses(self.poses)
-        publish_json(client, "localisation/poses", self.poses.tolist())
+    def publish_poses(self, client, poses):
+        publish_json(client, "localisation/poses", poses.tolist())
 
     def publish_map(self, client):
         publish_json(client, "localisation/map", {
@@ -63,11 +62,11 @@ class Localisation:
         self.poses = self.poses.rotate(theta / 2)
         self.poses = self.poses.translate(mid_distance)
         self.poses = self.poses.rotate(theta / 2)
-        self.publish_poses(client)
+        self.publish_poses(client, self.poses)
 
     def start(self):
         client = connect()
-        self.publish_poses(client)
+        self.publish_poses(client, self.poses)
         self.publish_map(client)
         print("Waiting for config")
         client.subscribe("config/updated")
