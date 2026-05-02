@@ -2,7 +2,7 @@ import numpy as np
 
 from common import arena
 
-low_probability = 0.01
+low_probability = 0.1
 crosshair_radius = 50.0  # mm on each side of boundary
 crosshair_points = np.array(
     [
@@ -33,7 +33,9 @@ class BoundaryObservationModel:
         return self.observe_crosshair(poses)
 
     def observe_crosshair(self, poses):
-        crosshair_positions = poses.positions[:, np.newaxis, :] + crosshair_points[np.newaxis, :, :]
+        crosshair_positions = (
+            poses.positions[:, np.newaxis, :] + crosshair_points[np.newaxis, :, :]
+        )
 
         flat_positions = crosshair_positions.reshape(-1, 2)
         samples = np.empty(flat_positions.shape[0], dtype=Pose2D)
