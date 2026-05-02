@@ -15,7 +15,7 @@ crosshair_points = np.array(
     dtype=np.float32,
 )
 
-Pose2D = np.dtype([('x', np.float32), ('y', np.float32)])
+Point2D = np.dtype([('x', np.float32), ('y', np.float32)])
 
 
 class BoundaryObservationModel:
@@ -38,7 +38,7 @@ class BoundaryObservationModel:
         )
 
         flat_positions = crosshair_positions.reshape(-1, 2)
-        samples = np.empty(flat_positions.shape[0], dtype=Pose2D)
+        samples = np.empty(flat_positions.shape[0], dtype=Point2D)
         samples['x'] = flat_positions[:, 0]
         samples['y'] = flat_positions[:, 1]
 

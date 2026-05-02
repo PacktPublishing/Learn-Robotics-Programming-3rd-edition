@@ -6,7 +6,7 @@ from common.poses import Poses
 low_probability = 0.1
 crosshair_radius = 100.0  # mm on each side of boundary
 
-Pose2D = np.dtype([('x', np.float64), ('y', np.float64)])
+Point2D = np.dtype([('x', np.float64), ('y', np.float64)])
 
 class BoundaryObservationModel:
     def in_boundary(self, poses):
@@ -42,7 +42,7 @@ class BoundaryObservationModel:
         crosshair_positions = poses.positions[:, np.newaxis, :] + crosshair_points  # shape (num_poses, 5, 2)
         # Make the boundary observation for all points in the crosshair
         # flatten
-        flat_positions = crosshair_positions.reshape(-1,2).view(Pose2D)  # shape (num_poses * 5, 2)
+        flat_positions = crosshair_positions.reshape(-1,2).view(Point2D)  # shape (num_poses * 5, 2)
         flat_weights = np.where(self.in_boundary(flat_positions), 1.0, low_probability)
         all_weights=flat_weights.reshape(-1, 5)  # shape (num_poses, 5)
         # Create a mean weight for each pose based on the crosshair points
