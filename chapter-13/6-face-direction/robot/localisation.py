@@ -19,8 +19,7 @@ class Localisation:
         self.poses = Poses.generate(population_size, (arena.left, arena.right), (arena.bottom, arena.top), (0, 2 * np.pi))
         self.weights = np.ones(population_size) / population_size
 
-        self.wheel_distance = 0
-        self.config_ready = False
+        self.wheel_distance = 136
         self.left_distance = DeltaValue()
         self.right_distance = DeltaValue()
         self.yaw = DeltaValue()
@@ -58,12 +57,6 @@ class Localisation:
         rot_samples = rng.normal(rotation, rot_scale, population_size)
 
         return trans_samples, rot_samples
-
-    def on_config_updated(self, client, userdata, message):
-        self.config_ready = True
-        data = json.loads(message.payload)
-        if 'robot/wheel_distance' in data:
-            self.wheel_distance = data['robot/wheel_distance']
 
     def on_encoders_data(self, client, userdata, msg):
         # Sense
@@ -117,16 +110,6 @@ class Localisation:
     def start(self):
         client = connect()
         arena.publish_map(client)
-        print("Waiting for config")
-        client.subscribe("config/updated")
-        client.message_callback_add("config/updated",
-                                    self.on_config_updated)
-        publish_json(client, "config/get", [
-                        "robot/wheel_distance",
-                        ])
-        while not self.config_ready:
-            time.sleep(0.1)
-        print("Config received. Now waiting for sensor data...")
 
         client.subscribe("sensors/encoders/data")
         client.publish("sensors/encoders/control/reset")
