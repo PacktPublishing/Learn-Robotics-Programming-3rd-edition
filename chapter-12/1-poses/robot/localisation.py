@@ -15,6 +15,7 @@ class Localisation:
     def start(self):
         client = connect()
         self.publish_poses(client, self.poses)
+        client.loop_stop()
 
 service = Localisation()
 service.start()

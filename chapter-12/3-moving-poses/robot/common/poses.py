@@ -1,5 +1,7 @@
 import numpy as np
 
+rng = np.random.default_rng()
+
 class Poses(np.ndarray):
     Pose = np.dtype([('x', np.float32), ('y', np.float32), ('theta', np.float32)])
 
@@ -9,9 +11,9 @@ class Poses(np.ndarray):
     @classmethod
     def generate(cls, count, x_range, y_range, theta_range) -> 'Poses':
         poses = np.empty((count,), dtype=cls.Pose)
-        poses['x'] = np.random.uniform(x_range[0], x_range[1], count)
-        poses['y'] = np.random.uniform(y_range[0], y_range[1], count)
-        poses['theta'] = np.random.uniform(theta_range[0], theta_range[1], count)
+        poses['x'] = rng.uniform(x_range[0], x_range[1], count)
+        poses['y'] = rng.uniform(y_range[0], y_range[1], count)
+        poses['theta'] = rng.uniform(theta_range[0], theta_range[1], count)
         return poses.view(cls)
 
     def rotate(self, rotation) -> 'Poses':
@@ -24,6 +26,11 @@ class Poses(np.ndarray):
         result['x'] += np.cos(self['theta']) * length
         result['y'] += np.sin(self['theta']) * length
         return result
+
+    def move(self, rotation, translation) -> 'Poses':
+        return self.rotate(rotation) \
+            .translate(translation) \
+            .rotate(rotation)
 
     def append(self, other) -> 'Poses':
         return np.concatenate([self, other]).view(Poses)

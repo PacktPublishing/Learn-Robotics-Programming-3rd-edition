@@ -3,40 +3,24 @@ import time
 
 import numpy as np
 
+from common import arena
 from common.mqtt_behavior import connect, publish_json
 from common.poses import Poses
 
-walls = [
-    (0, 1500),
-    (1500, 1500),
-    (1500, 500),
-    (1000, 500),
-    (1000, 0),
-    (0, 0)
-]
 population_size = 200
+rng = np.random.default_rng()
 
 class Localisation:
     def __init__(self):
-        self.poses = Poses.generate(population_size, (0, 1500), (0, 1500), (0, 2 * np.pi))
-        self.wheel_distance = 0
-        self.config_ready = False
+        self.poses = Poses.generate(population_size, (arena.left, arena.right), (arena.bottom, arena.top), (0, 2 * np.pi))
+        self.wheel_distance = 136
         self.previous_left_distance = 0
         self.previous_right_distance = 0
 
-    def on_config_updated(self, client, userdata, message):
-        self.config_ready = True
-        data = json.loads(message.payload)
-        if 'robot/wheel_distance' in data:
-            self.wheel_distance = data['robot/wheel_distance']
-
-    def publish_poses(self, client, poses):
-        publish_json(client, "localisation/poses", poses.tolist())
-
-    def publish_map(self, client):
-        publish_json(client, "localisation/map", {
-            "walls": walls
-        })
+        self.trans_noise_from_trans = 0.01/100
+        self.trans_noise_from_rot = 0.05/100
+        self.rot_noise_from_rot = 0.2/100
+        self.rot_noise_from_trans = 0.175/100
 
     def convert_encoders_to_motion(self, left_distance_delta, right_distance_delta):
         # Special case, straight line
@@ -48,36 +32,43 @@ class Localisation:
 
         return mid_distance, theta
 
+    def randomise_motion(self, translation, rotation):
+        trans_scale = self.trans_noise_from_trans * abs(translation) \
+            + self.trans_noise_from_rot * abs(rotation)
+        rot_scale = self.rot_noise_from_rot * abs(rotation) \
+            + self.rot_noise_from_trans * abs(translation)
+
+        trans_samples = rng.normal(translation, trans_scale, population_size)
+        rot_samples = rng.normal(rotation, rot_scale, population_size)
+        return trans_samples, rot_samples
+
     def on_encoders_data(self, client, userdata, msg):
         # Sense
         distance_data = json.loads(msg.payload)
-        left_distance_delta = distance_data['left_distance'] - self.previous_left_distance
-        right_distance_delta = distance_data['right_distance'] - self.previous_right_distance
+        left_distance_delta = (distance_data['left_distance'] -
+                               self.previous_left_distance)
+        right_distance_delta = (distance_data['right_distance'] -
+                                self.previous_right_distance)
         self.previous_left_distance = distance_data['left_distance']
         self.previous_right_distance = distance_data['right_distance']
 
         # Think
-        mid_distance, theta = self.convert_encoders_to_motion(left_distance_delta, right_distance_delta)
+        translation, theta = self.convert_encoders_to_motion(
+            left_distance_delta, right_distance_delta)
+        rotation = theta / 2
+        trans_samples, rot_samples = self.randomise_motion(
+            translation, rotation)
+        self.poses = self.poses.move(rot_samples, trans_samples)
+
         # Act
-        self.poses = self.poses.rotate(theta / 2)
-        self.poses = self.poses.translate(mid_distance)
-        self.poses = self.poses.rotate(theta / 2)
         self.publish_poses(client, self.poses)
+
+    def publish_poses(self, client, poses):
+        publish_json(client, "localisation/poses", poses.tolist())
 
     def start(self):
         client = connect()
-        self.publish_poses(client, self.poses)
-        self.publish_map(client)
-        print("Waiting for config")
-        client.subscribe("config/updated")
-        client.message_callback_add("config/updated",
-                                    self.on_config_updated)
-        publish_json(client, "config/get", [
-                        "robot/wheel_distance",
-                        ])
-        while not self.config_ready:
-            time.sleep(0.1)
-        print("Config received. Now wiating for sensor data...")
+        arena.publish_map(client)
 
         client.subscribe("sensors/encoders/data")
         client.publish("sensors/encoders/control/reset")
