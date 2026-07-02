@@ -7,7 +7,7 @@ requires-python = ">=3.11"
 # Common dependencies needed by both simulation and services environments
 dependencies = [
     "paho-mqtt>=2.1.0",
-    "ujson>=5.12.1",
+    "ujson>=5.13.0",
     "numpy>=2.4.0",
 ]
 
