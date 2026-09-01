@@ -6,8 +6,8 @@ version, enables tailscaled via systemd, and authenticates using a reusable
 auth key from .env.json. Safe to re-run: if the robot is already connected
 under the expected hostname, the `tailscale up` step is skipped.
 
-Run from this folder:
-    poetry run pyinfra inventory.py configure_tailscale.py
+Run from the repo root (where inventory.py lives):
+    poetry run pyinfra inventory.py tailscale_integration/configure_tailscale.py
 
 Prerequisites:
   - .env.json in this folder, copied from .env.json.example, with
@@ -18,6 +18,7 @@ Prerequisites:
 import io
 import json
 import shlex
+from pathlib import Path
 
 from pyinfra import host
 from pyinfra.facts.server import Command, OsRelease
@@ -25,7 +26,7 @@ from pyinfra.operations import apt, files, server, systemd
 
 TAILSCALE_VERSION = "1.98.2"
 
-with open(".env.json") as f:
+with open(Path(__file__).parent / ".env.json") as f:
     env_config = json.load(f)
 
 authkey = env_config.get("TAILSCALE_AUTHKEY", "")
