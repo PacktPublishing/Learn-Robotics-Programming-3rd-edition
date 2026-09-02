@@ -61,6 +61,17 @@ expected hostname, the join step is skipped entirely.
   pointing any further `pyinfra` run at the robot over the tailnet route —
   a non-interactive pyinfra run has no way to complete that check itself
   and will just hang or fail.
+- **Don't change Tailscale config over a Tailscale connection.** Once the
+  robot is joined, it's tempting to repoint `inventory.py` at its tailnet
+  hostname/IP and run pyinfra over that — it works, and it's the whole
+  point of doing this. But if `pyinfra` is connected to the robot *via*
+  Tailscale, and the deploy you're running changes Tailscale's own
+  configuration (a different `tailscale up` flag, a fresh/rotated auth
+  key, disabling `--ssh`, etc.), a failure or unexpected state change
+  partway through can cut the connection pyinfra is using to make the
+  change — locking you out until you can reach the robot another way.
+  When you're specifically changing Tailscale configuration, connect over
+  mDNS or a plain LAN IP instead, not over Tailscale.
 
 ## More detail
 
