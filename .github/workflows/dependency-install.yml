@@ -1,0 +1,63 @@
+# Bare CI: prove every locked Python project still installs, so dependency
+# bumps (e.g. Dependabot) are known-good. Projects are discovered, not listed,
+# so new ones are picked up without editing this file.
+name: Dependency install
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      poetry: ${{ steps.find.outputs.poetry }}
+      uv: ${{ steps.find.outputs.uv }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: find
+        run: |
+          # Poetry projects: pyproject.toml with a [tool.poetry] table.
+          poetry=$(grep -rl --include=pyproject.toml '^\[tool\.poetry\]' . \
+            | xargs -r -n1 dirname | sort | jq -R . | jq -sc .)
+          # uv projects: a uv.lock sits beside the pyproject.toml.
+          uv=$(find . -name uv.lock -not -path './.git/*' \
+            | xargs -r -n1 dirname | sort | jq -R . | jq -sc .)
+          echo "poetry=${poetry}" >> "$GITHUB_OUTPUT"
+          echo "uv=${uv}" >> "$GITHUB_OUTPUT"
+
+  poetry-install:
+    needs: discover
+    if: needs.discover.outputs.poetry != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJson(needs.discover.outputs.poetry) }}
+    name: poetry install (${{ matrix.project }})
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - run: pipx install poetry
+      - run: poetry install
+        working-directory: ${{ matrix.project }}
+
+  uv-sync:
+    needs: discover
+    if: needs.discover.outputs.uv != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJson(needs.discover.outputs.uv) }}
+    name: uv sync --locked (${{ matrix.project }})
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+      - run: uv sync --locked --all-extras
+        working-directory: ${{ matrix.project }}
