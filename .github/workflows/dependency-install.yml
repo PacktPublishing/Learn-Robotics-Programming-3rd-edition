@@ -17,7 +17,7 @@ jobs:
       poetry: ${{ steps.find.outputs.poetry }}
       uv: ${{ steps.find.outputs.uv }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - id: find
         run: |
           # Poetry projects: pyproject.toml with a [tool.poetry] table.
@@ -39,8 +39,8 @@ jobs:
         project: ${{ fromJson(needs.discover.outputs.poetry) }}
     name: poetry install (${{ matrix.project }})
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
       - run: pipx install poetry
@@ -57,7 +57,7 @@ jobs:
         project: ${{ fromJson(needs.discover.outputs.uv) }}
     name: uv sync --locked (${{ matrix.project }})
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
       - run: uv sync --locked --all-extras
         working-directory: ${{ matrix.project }}
