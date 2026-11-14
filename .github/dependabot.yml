@@ -1,8 +1,30 @@
-# Keeps the SHA-pinned actions in .github/workflows current. Dependabot
-# rewrites both the SHA and the "# vX.Y.Z" comment.
+# Version updates for every ecosystem in the repo. For actions, Dependabot
+# rewrites both the SHA and the "# vX.Y.Z" comment on SHA-pinned workflows.
 version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
+    schedule:
+      interval: weekly
+  # Python: the root project is Poetry (pip ecosystem); the others use uv.
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: uv
+    directory: /code_diagrams
+    schedule:
+      interval: weekly
+  - package-ecosystem: uv
+    directory: /local_tools/simulation
+    schedule:
+      interval: weekly
+  # Simulation container: base image and compose services.
+  - package-ecosystem: docker
+    directory: /local_tools/simulation
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker-compose
+    directory: /local_tools/simulation
     schedule:
       interval: weekly
